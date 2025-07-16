@@ -14,7 +14,265 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      departments: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          department_id: string
+          department_name: string
+          description: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          department_id?: string
+          department_name: string
+          description?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          department_id?: string
+          department_name?: string
+          description?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      kpi_categories: {
+        Row: {
+          category_id: string
+          category_name: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          kpi_category_key: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          category_id?: string
+          category_name: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          kpi_category_key?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          category_id?: string
+          category_name?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          kpi_category_key?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      kpi_kpi_categories: {
+        Row: {
+          category_id: string
+          created_at: string
+          kpi_id: string
+        }
+        Insert: {
+          category_id: string
+          created_at?: string
+          kpi_id: string
+        }
+        Update: {
+          category_id?: string
+          created_at?: string
+          kpi_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kpi_kpi_categories_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "kpi_categories"
+            referencedColumns: ["category_id"]
+          },
+          {
+            foreignKeyName: "kpi_kpi_categories_kpi_id_fkey"
+            columns: ["kpi_id"]
+            isOneToOne: false
+            referencedRelation: "kpis"
+            referencedColumns: ["kpi_id"]
+          },
+        ]
+      }
+      kpis: {
+        Row: {
+          channel: string
+          created_at: string
+          created_by: string | null
+          data_type: Database["public"]["Enums"]["kpi_data_type"]
+          definition_url: string | null
+          department_id: string
+          description: string | null
+          effort: number | null
+          impact: number | null
+          is_active: boolean
+          kpi_id: string
+          kpi_key: string
+          kpi_name: string
+          location: string
+          monday_item_id: string | null
+          priority: number | null
+          role_resp: string
+          symbol_position: Database["public"]["Enums"]["symbol_position"]
+          target_frequency: Database["public"]["Enums"]["kpi_target_frequency"]
+          target_value: number | null
+          unit_of_measure: Database["public"]["Enums"]["kpi_unit_of_measure"]
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          channel?: string
+          created_at?: string
+          created_by?: string | null
+          data_type: Database["public"]["Enums"]["kpi_data_type"]
+          definition_url?: string | null
+          department_id: string
+          description?: string | null
+          effort?: number | null
+          impact?: number | null
+          is_active?: boolean
+          kpi_id?: string
+          kpi_key?: string
+          kpi_name: string
+          location: string
+          monday_item_id?: string | null
+          priority?: number | null
+          role_resp: string
+          symbol_position?: Database["public"]["Enums"]["symbol_position"]
+          target_frequency?: Database["public"]["Enums"]["kpi_target_frequency"]
+          target_value?: number | null
+          unit_of_measure: Database["public"]["Enums"]["kpi_unit_of_measure"]
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          channel?: string
+          created_at?: string
+          created_by?: string | null
+          data_type?: Database["public"]["Enums"]["kpi_data_type"]
+          definition_url?: string | null
+          department_id?: string
+          description?: string | null
+          effort?: number | null
+          impact?: number | null
+          is_active?: boolean
+          kpi_id?: string
+          kpi_key?: string
+          kpi_name?: string
+          location?: string
+          monday_item_id?: string | null
+          priority?: number | null
+          role_resp?: string
+          symbol_position?: Database["public"]["Enums"]["symbol_position"]
+          target_frequency?: Database["public"]["Enums"]["kpi_target_frequency"]
+          target_value?: number | null
+          unit_of_measure?: Database["public"]["Enums"]["kpi_unit_of_measure"]
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kpis_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["department_id"]
+          },
+        ]
+      }
+      snapshots: {
+        Row: {
+          created_at: string
+          date_value: string | null
+          kpi_id: string
+          numeric_value: number | null
+          snapshot_data: Json | null
+          snapshot_date: string
+          snapshot_id: string
+          text_value: string | null
+        }
+        Insert: {
+          created_at?: string
+          date_value?: string | null
+          kpi_id: string
+          numeric_value?: number | null
+          snapshot_data?: Json | null
+          snapshot_date: string
+          snapshot_id?: string
+          text_value?: string | null
+        }
+        Update: {
+          created_at?: string
+          date_value?: string | null
+          kpi_id?: string
+          numeric_value?: number | null
+          snapshot_data?: Json | null
+          snapshot_date?: string
+          snapshot_id?: string
+          text_value?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "snapshots_kpi_id_fkey"
+            columns: ["kpi_id"]
+            isOneToOne: false
+            referencedRelation: "kpis"
+            referencedColumns: ["kpi_id"]
+          },
+        ]
+      }
+      sprint_boards: {
+        Row: {
+          id: string
+          inserted_at: string
+          is_active: boolean
+          is_archived: boolean
+          monday_id: number
+          name: string
+          sprint_end_date: string
+          sprint_start_date: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          inserted_at?: string
+          is_active?: boolean
+          is_archived?: boolean
+          monday_id: number
+          name: string
+          sprint_end_date: string
+          sprint_start_date: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          inserted_at?: string
+          is_active?: boolean
+          is_archived?: boolean
+          monday_id?: number
+          name?: string
+          sprint_end_date?: string
+          sprint_start_date?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +281,34 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      kpi_data_type:
+        | "numeric"
+        | "percentage"
+        | "currency"
+        | "boolean"
+        | "text"
+        | "date"
+      kpi_target_frequency:
+        | "daily"
+        | "weekly"
+        | "monthly"
+        | "quarterly"
+        | "yearly"
+      kpi_unit_of_measure:
+        | "EUR"
+        | "USD"
+        | "GBP"
+        | "years"
+        | "months"
+        | "weeks"
+        | "days"
+        | "hours"
+        | "minutes"
+        | "percent"
+        | "count"
+        | "ratio"
+        | "text"
+      symbol_position: "left" | "right"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +435,38 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      kpi_data_type: [
+        "numeric",
+        "percentage",
+        "currency",
+        "boolean",
+        "text",
+        "date",
+      ],
+      kpi_target_frequency: [
+        "daily",
+        "weekly",
+        "monthly",
+        "quarterly",
+        "yearly",
+      ],
+      kpi_unit_of_measure: [
+        "EUR",
+        "USD",
+        "GBP",
+        "years",
+        "months",
+        "weeks",
+        "days",
+        "hours",
+        "minutes",
+        "percent",
+        "count",
+        "ratio",
+        "text",
+      ],
+      symbol_position: ["left", "right"],
+    },
   },
 } as const
