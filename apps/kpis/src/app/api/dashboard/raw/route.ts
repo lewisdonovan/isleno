@@ -47,7 +47,6 @@ export async function GET(req: NextRequest) {
             getLeadsFromCollaborators(session, { limit: 1, onlyFirst: true }),
         ]);
 
-        // eslint-disable-next-line no-console
         const kpiItemsByGroup: Record<string, any[]> = {};
         for (const g of groups) {
             kpiItemsByGroup[g.id] = await getKpisByGroup(session, g.id);

@@ -2,8 +2,6 @@ import { useState, useEffect } from 'react';
 import { DateTime } from 'luxon';
 import { calculatePhaseCapacity, PhaseCapacity } from '@/lib/services/operationalService';
 import {
-  getAllTimelineBasedCashflowEvents,
-  calculateTimelineBasedLiquidity,
   type TimelineCashflowEvent
 } from '@/lib/gantt/services';
 import { projectsDataService } from '@/lib/services/projectsDataService';

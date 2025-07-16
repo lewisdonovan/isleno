@@ -13,7 +13,6 @@ interface TaskListHeaderProps {
 
 export default function TaskListHeader({ 
   headerHeight, 
-  rowWidth, 
   fontFamily, 
   fontSize,
   isDark,

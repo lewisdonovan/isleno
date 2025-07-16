@@ -21,6 +21,7 @@ export type Database = {
           department_id: string
           department_name: string
           description: string | null
+          key: string
           updated_at: string
           updated_by: string | null
         }
@@ -30,6 +31,7 @@ export type Database = {
           department_id?: string
           department_name: string
           description?: string | null
+          key: string
           updated_at?: string
           updated_by?: string | null
         }
@@ -39,6 +41,7 @@ export type Database = {
           department_id?: string
           department_name?: string
           description?: string | null
+          key?: string
           updated_at?: string
           updated_by?: string | null
         }
@@ -50,6 +53,7 @@ export type Database = {
           category_name: string
           created_at: string
           created_by: string | null
+          department_id: string | null
           description: string | null
           kpi_category_key: string
           updated_at: string
@@ -60,6 +64,7 @@ export type Database = {
           category_name: string
           created_at?: string
           created_by?: string | null
+          department_id?: string | null
           description?: string | null
           kpi_category_key?: string
           updated_at?: string
@@ -70,12 +75,21 @@ export type Database = {
           category_name?: string
           created_at?: string
           created_by?: string | null
+          department_id?: string | null
           description?: string | null
           kpi_category_key?: string
           updated_at?: string
           updated_by?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_kpi_categories_department"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["department_id"]
+          },
+        ]
       }
       kpi_kpi_categories: {
         Row: {
