@@ -72,7 +72,6 @@ export default function ProjectGantt({
 
   const { 
     tasks, 
-    metrics, 
     isLoading, 
     error, 
     projects,
@@ -82,7 +81,7 @@ export default function ProjectGantt({
   } = useGanttData(dateRange);
 
   // Custom hooks for extracted logic
-  const { containerRef, containerWidth, calculateColumnWidth } = useGanttLayout(viewMode, dateRange);
+  const { containerRef, calculateColumnWidth } = useGanttLayout(viewMode, dateRange);
   const {
     handleTaskChange,
     handleTaskDelete,

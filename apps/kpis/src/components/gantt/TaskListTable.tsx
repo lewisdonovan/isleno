@@ -17,10 +17,8 @@ interface TaskListTableProps {
 
 export default function TaskListTable({ 
   rowHeight, 
-  rowWidth, 
   fontFamily, 
   fontSize, 
-  locale, 
   tasks, 
   selectedTaskId, 
   setSelectedTask,

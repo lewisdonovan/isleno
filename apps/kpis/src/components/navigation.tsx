@@ -11,7 +11,6 @@ import { ModeToggle } from '@/components/mode-toggle'
 
 export function Navigation() {
   const pathname = usePathname()
-  const isKpisDashboard = pathname.startsWith('/boards')
   const brandName = 'Isleño'
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isLoading, setIsLoading] = useState(true)

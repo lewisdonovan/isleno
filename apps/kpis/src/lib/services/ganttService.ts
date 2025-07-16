@@ -1,7 +1,7 @@
 import { DateTime } from 'luxon';
 import { Task } from 'gantt-task-react';
 import { DateRange } from '@/types/gantt';
-import { ProjectData, BusinessGanttTask, GanttProject, GanttMetrics, CashflowEvent } from '@/types/projects';
+import { GanttProject, GanttMetrics } from '@/types/projects';
 import { PHASE_COLOR_MAP } from '@/lib/constants/projectConstants';
 import { projectsDataService } from './projectsDataService';
 
@@ -36,9 +36,9 @@ export async function fetchGanttProjects(dateRange: DateRange): Promise<GanttPro
 export async function fetchGanttTasks(
   dateRange: DateRange, 
   projectCollapseStates: Record<string, boolean> = {}
-): Promise<BusinessGanttTask[]> {
+): Promise<any[]> { // Changed return type to any[] as BusinessGanttTask is removed
   const projects = await projectsDataService.parseProjectsData();
-  const tasks: BusinessGanttTask[] = [];
+  const tasks: any[] = []; // Changed type to any[]
   
   // Filter projects within date range
   const filteredProjects = projects.filter(project => {

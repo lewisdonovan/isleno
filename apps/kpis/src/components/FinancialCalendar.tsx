@@ -3,8 +3,8 @@
 import { Calendar, dateFnsLocalizer, View, Views } from 'react-big-calendar';
 import { DateTime } from 'luxon';
 import { useMonthlyEvents } from '@/hooks/useCalendarData';
-import { CalendarEvent, EventType, SupportedLocale } from '@/types/calendar';
-import { useState, useMemo, useCallback } from 'react';
+import { CalendarEvent, SupportedLocale } from '@/types/calendar';
+import { useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';

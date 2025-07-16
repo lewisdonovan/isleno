@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { 
   fetchGanttProjects, 
   fetchGanttTasks, 

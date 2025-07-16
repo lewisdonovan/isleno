@@ -1,6 +1,6 @@
 import { DateTime } from 'luxon';
 import { MondayProjectsData, BoardItem, BoardColumnValue } from '@/types/monday';
-import { ProjectData, CashflowEvent, PROJECT_STAGES, PHASE_MAPPING } from '@/types/projects';
+import { ProjectData, CashflowEvent, PROJECT_STAGES } from '@/types/projects';
 import { FINANCIAL_ESTIMATES } from '@/lib/constants/projectConstants';
 
 // Types are now imported from @/types/projects
