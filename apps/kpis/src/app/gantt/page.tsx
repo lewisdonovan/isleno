@@ -18,7 +18,7 @@ function calculateLiquidityOnDate(projects: any[], targetDate: DateTime): number
   
   // Get all cash flows from all projects
   const allCashFlows = projects.flatMap(project => 
-    project.cashFlows.map((cf: any) => ({
+    (project.cashFlows || []).map((cf: any) => ({
       ...cf,
       date: DateTime.fromJSDate(cf.date.toJSDate ? cf.date.toJSDate() : cf.date),
       amount: cf.type === 'income' ? cf.amount : -cf.amount
@@ -44,7 +44,7 @@ function calculateLiquidityOnDate(projects: any[], targetDate: DateTime): number
 function getDetailedCashFlowAnalysis(projects: any[], fromDate: DateTime, toDate: DateTime) {
   // Get all cash flows in the date range
   const allCashFlows = projects.flatMap(project => 
-    project.cashFlows.map((cf: any) => ({
+    (project.cashFlows || []).map((cf: any) => ({
       ...cf,
       projectName: project.name,
       date: DateTime.fromJSDate(cf.date.toJSDate ? cf.date.toJSDate() : cf.date),
@@ -368,9 +368,9 @@ function GanttPageContent() {
   const [projectsData, setProjectsData] = useState<any[]>([]);
 
   // Debug: Log when projects data changes
-  console.log('Projects data updated:', projectsData.length, 'projects');
-  if (projectsData.length > 0) {
-    const totalCashFlows = projectsData.reduce((sum, p) => sum + p.cashFlows.length, 0);
+  console.log('Projects data updated:', projectsData?.length || 0, 'projects');
+  if (projectsData && projectsData.length > 0) {
+    const totalCashFlows = projectsData.reduce((sum, p) => sum + (p.cashFlows?.length || 0), 0);
     console.log('Total cash flows across all projects:', totalCashFlows);
   }
 
