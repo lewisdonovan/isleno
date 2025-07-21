@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "prebuild": "npm run build --workspace @isleno/utils && npm run build --workspace @isleno/monday-client",
     "dev": "next dev",
     "dev:turbo": "next dev --turbopack",
     "build": "next build",
