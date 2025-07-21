@@ -1,6 +1,20 @@
 {
   "$schema": "https://turbo.build/schema.json",
   "globalDependencies": ["**/.env.*local", "**/.env"],
+  "globalEnv": [
+    "MONDAY_API_TOKEN",
+    "MONDAY_CLIENT_ID",
+    "MONDAY_CLIENT_SECRET",
+    "MONDAY_REDIRECT_URI",
+    "BOARD_ID_PROPERTY_DATABASE",
+    "BOARD_ID_HIGH_LEVEL_DEVELOPMENT",
+    "SUPABASE_SERVICE_ROLE_KEY",
+    "ISLENO_KPI_KEY",
+    "MONDAY_API_URL",
+    "SUPABASE_URL",
+    "SUPABASE_ANON_KEY",
+    "PROJECT_ID"
+  ],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],

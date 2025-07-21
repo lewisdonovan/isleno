@@ -1,0 +1,21 @@
+{
+  "name": "@isleno/utils",
+  "version": "1.0.0",
+  "description": "Shared utilities for the Isleno platform",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@isleno/types": "*"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "peerDependencies": {
+    "@isleno/types": "*"
+  }
+} 

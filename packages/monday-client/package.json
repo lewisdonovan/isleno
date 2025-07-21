@@ -1,0 +1,23 @@
+{
+  "name": "@isleno/monday-client",
+  "version": "1.0.0",
+  "description": "Monday.com GraphQL client for server-side operations",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@isleno/types": "*",
+    "mustache": "^4.2.0"
+  },
+  "devDependencies": {
+    "@types/mustache": "^4.2.6",
+    "typescript": "^5.0.0"
+  },
+  "peerDependencies": {
+    "@isleno/types": "*"
+  }
+}
