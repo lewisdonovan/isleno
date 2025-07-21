@@ -124,6 +124,53 @@ export type Database = {
           },
         ]
       }
+      kpi_snapshot_configs: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          graphql_query: string | null
+          id: string
+          kpi_id: string | null
+          notes: string | null
+          source_board_ids: Json | null
+          transform_function: string | null
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          graphql_query?: string | null
+          id?: string
+          kpi_id?: string | null
+          notes?: string | null
+          source_board_ids?: Json | null
+          transform_function?: string | null
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          graphql_query?: string | null
+          id?: string
+          kpi_id?: string | null
+          notes?: string | null
+          source_board_ids?: Json | null
+          transform_function?: string | null
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kpi_snapshot_configs_kpi_id_fkey"
+            columns: ["kpi_id"]
+            isOneToOne: false
+            referencedRelation: "kpis"
+            referencedColumns: ["kpi_id"]
+          },
+        ]
+      }
       kpis: {
         Row: {
           channel: string

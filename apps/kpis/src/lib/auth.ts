@@ -104,3 +104,39 @@ export async function mondayRequest<TData, TVariables = Record<string, unknown>>
 
   return payload.data
 }
+
+/**
+ * Validates the x-api-key header against the ISLENO_KPI_KEY environment variable
+ * @param request - The NextRequest object
+ * @returns AuthResult with success or error information
+ */
+export function validateApiKey(request: NextRequest): AuthResult {
+  const apiKey = request.headers.get('x-api-key');
+  const expectedKey = process.env.ISLENO_KPI_KEY;
+
+  if (!expectedKey) {
+    return {
+      success: false,
+      error: 'Server misconfiguration: ISLENO_KPI_KEY not set',
+      status: 500,
+    };
+  }
+
+  if (!apiKey) {
+    return {
+      success: false,
+      error: 'Missing x-api-key header',
+      status: 401,
+    };
+  }
+
+  if (apiKey !== expectedKey) {
+    return {
+      success: false,
+      error: 'Invalid API key',
+      status: 403,
+    };
+  }
+
+  return { success: true };
+}
