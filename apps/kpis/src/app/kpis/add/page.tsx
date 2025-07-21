@@ -36,7 +36,7 @@ import { useRouter } from 'next/navigation';
 const CodeMirror = dynamic(() => import('@uiw/react-codemirror'), { ssr: false });
 
 export default function AddKpiPage() {
-  const [step, setStep] = useState(2);
+  const [step, setStep] = useState(1);
   const [kpiId, setKpiId] = useState<string | null>(null);
   const [kpiForm, setKpiForm] = useState({
     kpi_name: '',
