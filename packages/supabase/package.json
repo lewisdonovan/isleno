@@ -4,7 +4,7 @@
   "description": "Supabase utilities and type generation",
   "main": "index.js",
   "scripts": {
-    "gentypes": "dotenv -e .env -- sh -c 'yes | npx -y supabase gen types typescript --project-id $PROJECT_ID --schema public > ../types/db/public.ts'",
+    "gentypes": "dotenv -e .env -- sh -c 'yes | npx -y supabase gen types typescript --project-id $SUPABASE_PROJECT_ID --schema public > ../types/db/public.ts'",
     "build": "echo \"Supabase package - no build needed\"",
     "lint": "echo \"Supabase package - no lint needed\"",
     "type-check": "echo \"Supabase package - no type-check needed\""

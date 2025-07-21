@@ -1,0 +1,9 @@
+{
+  "instructions": [
+    "When editing or adding environment variables, always update .env.example (without values) as the source of truth.",
+    "A pre-commit hook checks that all variables in turbo.json globalEnv are present in .env.example. If not, the commit will fail.",
+    "Extra variables in .env.example are allowed for documentation, but every variable in turbo.json globalEnv must be present in .env.example.",
+    "If you encounter build errors related to missing environment variables (especially in Vercel), check .env.example and turbo.json first.",
+    "Never commit secrets or actual values to .env or .env.example—only variable names in .env.example."
+  ]
+} 

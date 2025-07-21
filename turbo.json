@@ -2,18 +2,20 @@
   "$schema": "https://turbo.build/schema.json",
   "globalDependencies": ["**/.env.*local", "**/.env"],
   "globalEnv": [
+    "SUPABASE_SERVICE_ROLE_KEY",
+    "SUPABASE_PROJECT_ID",
+    "SUPABASE_URL",
+    "SUPABASE_ANON_KEY",
+    "NEXT_PUBLIC_SUPABASE_URL",
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY",
     "MONDAY_API_TOKEN",
+    "MONDAY_API_URL",
     "MONDAY_CLIENT_ID",
     "MONDAY_CLIENT_SECRET",
     "MONDAY_REDIRECT_URI",
     "BOARD_ID_PROPERTY_DATABASE",
     "BOARD_ID_HIGH_LEVEL_DEVELOPMENT",
-    "SUPABASE_SERVICE_ROLE_KEY",
-    "ISLENO_KPI_KEY",
-    "MONDAY_API_URL",
-    "SUPABASE_URL",
-    "SUPABASE_ANON_KEY",
-    "PROJECT_ID"
+    "ISLENO_API_KEY"
   ],
   "tasks": {
     "build": {
