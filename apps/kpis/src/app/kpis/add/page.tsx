@@ -4,12 +4,9 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
-import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import dynamic from 'next/dynamic';
 import { useTheme } from 'next-themes';
-import { StreamLanguage } from '@codemirror/language';
 import { javascript } from '@codemirror/lang-javascript';
 import { okaidia } from '@uiw/codemirror-theme-okaidia';
 import { githubLight } from '@uiw/codemirror-theme-github';
@@ -37,7 +34,6 @@ const CodeMirror = dynamic(() => import('@uiw/react-codemirror'), { ssr: false }
 
 export default function AddKpiPage() {
   const [step, setStep] = useState(1);
-  const [kpiId, setKpiId] = useState<string | null>(null);
   const [kpiForm, setKpiForm] = useState({
     kpi_name: '',
     department_id: '',
@@ -110,7 +106,7 @@ export default function AddKpiPage() {
         setError(data.error || 'Failed to create KPI');
         return;
       }
-      setKpiId(data.kpi_id);
+      // setKpiId(data.kpi_id); // This line was removed as kpiId is no longer used
       setStep(2);
     } catch (err: any) {
       setError(err.message || 'Network error');

@@ -27,6 +27,9 @@ interface KpiTimeSeriesChartProps {
 }
 
 export default function KpiTimeSeriesChart({ kpi, snapshots, loading = false }: KpiTimeSeriesChartProps) {
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [filename, setFilename] = useState(kpi.kpi_name.replace(/[^a-zA-Z0-9_-]+/g, '_'));
+
   const chartData = snapshots
     .filter(snapshot => snapshot.numeric_value !== null)
     .map(snapshot => ({
@@ -94,9 +97,6 @@ export default function KpiTimeSeriesChart({ kpi, snapshots, loading = false }: 
   };
 
   const percentageChange = calculatePercentageChange();
-
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [filename, setFilename] = useState(kpi.kpi_name.replace(/[^a-zA-Z0-9_-]+/g, '_'));
 
   // Prepare CSV data for this KPI
   const csvRows = snapshots.map(s => ({
