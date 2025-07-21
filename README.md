@@ -118,3 +118,18 @@ When referencing other packages in the monorepo, use the `workspace:*` protocol:
 - [pnpm Workspaces Documentation](https://pnpm.io/workspaces)
 - [Turborepo Documentation](https://turbo.build/repo/docs)
 - [Next.js 15 Documentation](https://nextjs.org/docs) 
+
+# Environment Variable Management
+
+**Read this before editing any environment variables!**
+
+- If you add any variables to your `.env` file, you MUST also add them to `.env.example` (but without a value).
+- We have a pre-commit hook that checks all variable names defined in `.env.example` and ensures they are present in the `globalEnv` property in `turbo.json`.
+- This guarantees that all required environment variables are available at build time across the monorepo (including in Vercel and CI).
+- If you start getting build errors related to missing environment variables (especially in Vercel), check `.env.example` and `turbo.json` first.
+- Extra variables in `.env.example` (for documentation) are allowed, but every variable in `turbo.json`'s `globalEnv` **must** be present in `.env.example`.
+
+**Summary:**
+- `.env.example` is the source of truth for required environment variables.
+- `turbo.json`'s `globalEnv` must always match `.env.example`.
+- The pre-commit hook will block commits if this is not the case. 
