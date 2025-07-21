@@ -10,6 +10,12 @@ import {
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { format } from "date-fns";
 import type { Database } from "@isleno/types/db/public";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { arrayToCsv, downloadStringAsFile } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import { Download } from "lucide-react";
 
 type Kpi = Database['public']['Tables']['kpis']['Row'];
 type Snapshot = Database['public']['Tables']['snapshots']['Row'];
@@ -89,6 +95,25 @@ export default function KpiTimeSeriesChart({ kpi, snapshots, loading = false }: 
 
   const percentageChange = calculatePercentageChange();
 
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [filename, setFilename] = useState(kpi.kpi_name.replace(/[^a-zA-Z0-9_-]+/g, '_'));
+
+  // Prepare CSV data for this KPI
+  const csvRows = snapshots.map(s => ({
+    date: s.snapshot_date,
+    value: s.numeric_value,
+    kpi_id: s.kpi_id,
+    kpi_name: kpi.kpi_name,
+    channel: kpi.channel || '',
+    unit: kpi.unit_of_measure || '',
+  }));
+
+  const handleDownload = () => {
+    const csv = arrayToCsv(csvRows);
+    downloadStringAsFile(csv, filename + '.csv');
+    setDialogOpen(false);
+  };
+
   return (
     <Card className="h-full">
       <CardHeader className="pb-3">
@@ -101,17 +126,49 @@ export default function KpiTimeSeriesChart({ kpi, snapshots, loading = false }: 
               <CardDescription className="text-xs line-clamp-2">{kpi.description}</CardDescription>
             )}
           </div>
-          {percentageChange !== null && (
-            <div className={`text-sm font-medium ${
-              percentageChange > 0 
-                ? 'text-green-600 dark:text-green-400' 
-                : percentageChange < 0 
-                ? 'text-red-600 dark:text-red-400'
-                : 'text-muted-foreground'
-            }`}>
-              {percentageChange > 0 ? '+' : ''}{percentageChange.toFixed(1)}%
-            </div>
-          )}
+          <div className="flex flex-col items-end gap-2">
+            {percentageChange !== null && (
+              <div className={`text-sm font-medium ${
+                percentageChange > 0 
+                  ? 'text-green-600 dark:text-green-400' 
+                  : percentageChange < 0 
+                  ? 'text-red-600 dark:text-red-400'
+                  : 'text-muted-foreground'
+              }`}>
+                {percentageChange > 0 ? '+' : ''}{percentageChange.toFixed(1)}%
+              </div>
+            )}
+            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <Download className="h-4 w-4 mr-1" />
+                  Export CSV
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Export KPI Data</DialogTitle>
+                  <DialogDescription>Download the snapshot data for this KPI as a CSV file.</DialogDescription>
+                </DialogHeader>
+                <div className="flex items-center gap-2">
+                  <Input
+                    value={filename}
+                    onChange={e => setFilename(e.target.value.replace(/[^a-zA-Z0-9_-]+/g, '_'))}
+                    className="w-full"
+                    placeholder="Filename"
+                  />
+                  <span className="text-muted-foreground select-none">.csv</span>
+                </div>
+                <DialogFooter>
+                  <Button onClick={handleDownload} type="button">
+                    <Download className="h-4 w-4 mr-1" />
+                    Download
+                  </Button>
+                  <Button variant="ghost" onClick={() => setDialogOpen(false)} type="button">Cancel</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
       </CardHeader>
               <CardContent className="pt-0">

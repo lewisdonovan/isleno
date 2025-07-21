@@ -10,10 +10,13 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { BarChart3, TrendingUp, TrendingDown, Filter, X, CalendarDays, Users } from "lucide-react";
+import { BarChart3, TrendingUp, TrendingDown, Filter, X, CalendarDays, Users, Download } from "lucide-react";
 import KpiTimeSeriesChart from "@/components/KpiTimeSeriesChart";
 import DateRangePicker from "@/components/DateRangePicker";
 import type { Database } from "@isleno/types/db/public";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { arrayToCsv, downloadStringAsFile } from "@/lib/utils";
 
 interface KpiCategoryClientProps {
   _initialDepartment: Database['public']['Tables']['departments']['Row'];
@@ -31,6 +34,8 @@ export default function KpiCategoryClient({
   const [loading, setLoading] = useState(false);
   const [dateRange, setDateRange] = useState({ startDate: '', endDate: '' });
   const [selectedChannels, setSelectedChannels] = useState<string[]>([]);
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
+  const [exportFilename, setExportFilename] = useState(_initialCategory.category_name.replace(/[^a-zA-Z0-9_-]+/g, '_'));
 
   const loadSnapshots = useCallback(async () => {
     try {
@@ -119,6 +124,25 @@ export default function KpiCategoryClient({
     .sort((a, b) => Math.abs(b.percentageChange!) - Math.abs(a.percentageChange!))
     .slice(0, 3); // Top 3 biggest movers
   }, [filteredKpis, snapshots]);
+
+  // Prepare CSV data for all filtered KPIs
+  const allCsvRows = filteredKpis.flatMap(kpi => {
+    const kpiSnapshots = snapshots.filter(s => s.kpi_id === kpi.kpi_id);
+    return kpiSnapshots.map(s => ({
+      date: s.snapshot_date,
+      value: s.numeric_value,
+      kpi_id: s.kpi_id,
+      kpi_name: kpi.kpi_name,
+      channel: kpi.channel || '',
+      unit: kpi.unit_of_measure || '',
+    }));
+  });
+
+  const handleExportAll = () => {
+    const csv = arrayToCsv(allCsvRows);
+    downloadStringAsFile(csv, exportFilename + '.csv');
+    setExportDialogOpen(false);
+  };
 
   return (
     <div className="space-y-6">
@@ -275,9 +299,41 @@ export default function KpiCategoryClient({
                   </div>
                 )}
               </CardTitle>
-              <CardDescription>
-                Recent performance data for KPIs in this category
-              </CardDescription>
+              <div className="flex items-center justify-between">
+                <CardDescription>
+                  Recent performance data for KPIs in this category
+                </CardDescription>
+                <Dialog open={exportDialogOpen} onOpenChange={setExportDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <Download className="h-4 w-4 mr-1" />
+                      Export All CSV
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Export All KPI Data</DialogTitle>
+                      <DialogDescription>Download all snapshot data in the current view as a CSV file.</DialogDescription>
+                    </DialogHeader>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        value={exportFilename}
+                        onChange={e => setExportFilename(e.target.value.replace(/[^a-zA-Z0-9_-]+/g, '_'))}
+                        className="w-full"
+                        placeholder="Filename"
+                      />
+                      <span className="text-muted-foreground select-none">.csv</span>
+                    </div>
+                    <DialogFooter>
+                      <Button onClick={handleExportAll} type="button">
+                        <Download className="h-4 w-4 mr-1" />
+                        Download
+                      </Button>
+                      <Button variant="ghost" onClick={() => setExportDialogOpen(false)} type="button">Cancel</Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              </div>
             </CardHeader>
           </Card>
           
