@@ -180,6 +180,7 @@ export type Database = {
           definition_url: string | null
           department_id: string
           description: string | null
+          direction: Database["public"]["Enums"]["kpi_direction"]
           effort: number | null
           impact: number | null
           is_active: boolean
@@ -189,6 +190,7 @@ export type Database = {
           location: string
           monday_item_id: string | null
           priority: number | null
+          red_value: number
           role_resp: string
           symbol_position: Database["public"]["Enums"]["symbol_position"]
           target_frequency: Database["public"]["Enums"]["kpi_target_frequency"]
@@ -196,6 +198,7 @@ export type Database = {
           unit_of_measure: Database["public"]["Enums"]["kpi_unit_of_measure"]
           updated_at: string
           updated_by: string | null
+          yellow_value: number
         }
         Insert: {
           channel?: string
@@ -205,6 +208,7 @@ export type Database = {
           definition_url?: string | null
           department_id: string
           description?: string | null
+          direction?: Database["public"]["Enums"]["kpi_direction"]
           effort?: number | null
           impact?: number | null
           is_active?: boolean
@@ -214,6 +218,7 @@ export type Database = {
           location: string
           monday_item_id?: string | null
           priority?: number | null
+          red_value?: number
           role_resp: string
           symbol_position?: Database["public"]["Enums"]["symbol_position"]
           target_frequency?: Database["public"]["Enums"]["kpi_target_frequency"]
@@ -221,6 +226,7 @@ export type Database = {
           unit_of_measure: Database["public"]["Enums"]["kpi_unit_of_measure"]
           updated_at?: string
           updated_by?: string | null
+          yellow_value?: number
         }
         Update: {
           channel?: string
@@ -230,6 +236,7 @@ export type Database = {
           definition_url?: string | null
           department_id?: string
           description?: string | null
+          direction?: Database["public"]["Enums"]["kpi_direction"]
           effort?: number | null
           impact?: number | null
           is_active?: boolean
@@ -239,6 +246,7 @@ export type Database = {
           location?: string
           monday_item_id?: string | null
           priority?: number | null
+          red_value?: number
           role_resp?: string
           symbol_position?: Database["public"]["Enums"]["symbol_position"]
           target_frequency?: Database["public"]["Enums"]["kpi_target_frequency"]
@@ -246,6 +254,7 @@ export type Database = {
           unit_of_measure?: Database["public"]["Enums"]["kpi_unit_of_measure"]
           updated_at?: string
           updated_by?: string | null
+          yellow_value?: number
         }
         Relationships: [
           {
@@ -349,6 +358,7 @@ export type Database = {
         | "boolean"
         | "text"
         | "date"
+      kpi_direction: "up" | "down"
       kpi_target_frequency:
         | "daily"
         | "weekly"
@@ -505,6 +515,7 @@ export const Constants = {
         "text",
         "date",
       ],
+      kpi_direction: ["up", "down"],
       kpi_target_frequency: [
         "daily",
         "weekly",
