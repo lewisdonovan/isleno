@@ -31,7 +31,7 @@ export const transformRegistry: TransformRegistry = {
   countItemsWhereLinkedItemColumnTruthy,
   countItemsWhereLinkedItemHasLinkedItems,
   countItemsWhereNestedLinkedItemHasLinkedItems,
-};
+}; 
 
 /**
  * Get a transform function by name
