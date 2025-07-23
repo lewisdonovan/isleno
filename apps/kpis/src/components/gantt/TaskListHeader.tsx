@@ -1,6 +1,7 @@
 "use client";
 
 import { SupportedLocale } from '@/types/calendar';
+import { useTranslations } from 'next-intl';
 
 interface TaskListHeaderProps {
   headerHeight: number;
@@ -16,8 +17,9 @@ export default function TaskListHeader({
   fontFamily, 
   fontSize,
   isDark,
-  locale
+  // locale
 }: TaskListHeaderProps) {
+  const t = useTranslations('gantt');
   return (
     <div 
       className="table-header-container"
@@ -35,7 +37,7 @@ export default function TaskListHeader({
         color: isDark ? '#f1f5f9' : '#1e293b'
       }}
     >
-      {locale === 'es' ? 'Nombre' : 'Name'}
+      {t('name')}
     </div>
   );
 } 

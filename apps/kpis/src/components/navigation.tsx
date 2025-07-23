@@ -3,15 +3,27 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { Table, BarChart3, LogOut, User, Calendar, BarChart2 } from 'lucide-react'
+import { Table, BarChart3, LogOut, User, Calendar, BarChart2, Globe, Sun, Moon, Monitor, ChevronDown } from 'lucide-react'
 import Image from 'next/image'
 import { useCurrentUser } from '@/hooks/useCurrentUser'
 import { useEffect, useState } from 'react'
-import { ModeToggle } from '@/components/mode-toggle'
+import { useTranslations } from 'next-intl'
+import { useLocale } from '@/components/locale-provider'
+import { useTheme } from 'next-themes'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 
 export function Navigation() {
   const pathname = usePathname()
-  const brandName = 'Isleño'
+  const t = useTranslations('navigation')
+  const { locale, setLocale } = useLocale()
+  const { theme, setTheme } = useTheme()
+
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const { user, isLoading: userLoading } = useCurrentUser()
@@ -58,10 +70,9 @@ export function Navigation() {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-6">
               <Link href="/" className="text-xl font-bold">
-                {brandName}
+                {t('brand')}
               </Link>
             </div>
-            <ModeToggle />
           </div>
         </div>
       </nav>
@@ -74,7 +85,7 @@ export function Navigation() {
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-6">
             <Link href="/" className="text-xl font-bold">
-              {brandName}
+              {t('brand')}
             </Link>
             {isAuthenticated && (
               <div className="flex items-center space-x-2">
@@ -85,7 +96,7 @@ export function Navigation() {
                     className="flex items-center space-x-2"
                   >
                     <Calendar className="h-4 w-4" />
-                    <span>Calendar</span>
+                    <span>{t('calendar')}</span>
                   </Button>
                 </Link>
                 <Link href="/gantt">
@@ -95,7 +106,7 @@ export function Navigation() {
                     className="flex items-center space-x-2"
                   >
                     <BarChart2 className="h-4 w-4" />
-                    <span>Timeline</span>
+                    <span>{t('timeline')}</span>
                   </Button>
                 </Link>
                 <Link href="/cashflow">
@@ -105,7 +116,7 @@ export function Navigation() {
                     className="flex items-center space-x-2"
                   >
                     <BarChart3 className="h-4 w-4" />
-                    <span>Cashflow</span>
+                    <span>{t('cashflow')}</span>
                   </Button>
                 </Link>
                 <Link href="/boards">
@@ -115,7 +126,7 @@ export function Navigation() {
                     className="flex items-center space-x-2"
                   >
                     <Table className="h-4 w-4" />
-                    <span>Boards</span>
+                    <span>{t('boards')}</span>
                   </Button>
                 </Link>
                 <Link href="/charts">
@@ -125,7 +136,7 @@ export function Navigation() {
                     className="flex items-center space-x-2"
                   >
                     <BarChart3 className="h-4 w-4" />
-                    <span>Charts</span>
+                    <span>{t('charts')}</span>
                   </Button>
                 </Link>
                 <Link href="/kpis">
@@ -134,46 +145,69 @@ export function Navigation() {
                     size="sm"
                     className="flex items-center space-x-2"
                   >
-                    <span>KPIs</span>
+                    <span>{t('kpis')}</span>
                   </Button>
                 </Link>
               </div>
             )}
           </div>
-          <div className="flex items-center space-x-4">
-            <ModeToggle />
-            {isAuthenticated && (
-              <>
-                {user && (
-                  <div className="flex items-center space-x-3">
-                    {getAvatarUrl() ? (
-                      <div className="relative">
-                        <Image
-                          src={getAvatarUrl()!}
-                          alt={user.name}
-                          width={32}
-                          height={32}
-                          className="rounded-full object-cover"
-                        />
-                      </div>
+          <div className="flex items-center">
+            {isAuthenticated ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="flex items-center space-x-2">
+                    {user && getAvatarUrl() ? (
+                      <Image
+                        src={getAvatarUrl()!}
+                        alt={user.name}
+                        width={32}
+                        height={32}
+                        className="rounded-full object-cover"
+                      />
                     ) : (
                       <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center">
                         <User className="h-4 w-4 text-muted-foreground" />
                       </div>
                     )}
-                    <span className="text-sm font-medium">{user.name}</span>
-                  </div>
-                )}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleLogout}
-                  className="flex items-center space-x-2"
-                >
-                  <LogOut className="h-4 w-4" />
-                  <span>Logout</span>
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  {/* Language Switcher */}
+                  <DropdownMenuItem onClick={() => setLocale(locale === 'en' ? 'es' : 'en')}>
+                    <Globe className="mr-2 h-4 w-4" />
+                    <span>{t('language')}</span>
+                    <span className="ml-auto">{locale === 'en' ? '🇬🇧 EN' : '🇪🇸 ES'}</span>
+                  </DropdownMenuItem>
+                  
+                  {/* Theme Switcher */}
+                  <DropdownMenuItem onClick={() => setTheme(theme === 'light' ? 'dark' : theme === 'dark' ? 'system' : 'light')}>
+                    {theme === 'dark' ? (
+                      <Moon className="mr-2 h-4 w-4" />
+                    ) : theme === 'light' ? (
+                      <Sun className="mr-2 h-4 w-4" />
+                    ) : (
+                      <Monitor className="mr-2 h-4 w-4" />
+                    )}
+                    <span>{t('theme')}</span>
+                    <span className="ml-auto">{theme === 'light' ? t('light') : theme === 'dark' ? t('dark') : t('system')}</span>
+                  </DropdownMenuItem>
+                  
+                  <DropdownMenuSeparator />
+                  
+                  {/* Logout */}
+                  <DropdownMenuItem onClick={handleLogout} variant="destructive">
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>{t('logout')}</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Link href="/auth/login">
+                <Button variant="ghost" size="sm">
+                  {t('login')}
                 </Button>
-              </>
+              </Link>
             )}
           </div>
         </div>

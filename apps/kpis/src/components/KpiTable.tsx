@@ -1,6 +1,7 @@
 "use client";
 import clsx from "clsx";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { useTranslations } from 'next-intl';
 import type { Closer } from "@/types/kpis";
 
 interface KpiTableProps {
@@ -20,6 +21,8 @@ export default function KpiTable({
   hiddenKpis,
   hiddenClosers,
 }: KpiTableProps) {
+  const t = useTranslations('kpis');
+  
   return (
     <section className="my-6">
       <h2 className="text-xl font-semibold mb-2">{title}</h2>
@@ -27,14 +30,14 @@ export default function KpiTable({
         <table className="w-full text-sm">
           <thead className="bg-muted">
             <tr>
-              <th className="sticky left-0 bg-muted px-3 py-2">Closer</th>
+              <th className="sticky left-0 bg-muted px-3 py-2">{t('closer')}</th>
               {kpiOrder
                 .filter((key) => !hiddenKpis.has(key))
                 .map((key) => (
                   <th key={key} className="px-3 py-2 whitespace-nowrap">
                     <Tooltip>
                       <TooltipTrigger>{key}</TooltipTrigger>
-                      <TooltipContent>{`Objective: ${
+                      <TooltipContent>{`${t('objective')}: ${
                         kpiObjectives[key] ?? "—"
                       }`}</TooltipContent>
                     </Tooltip>

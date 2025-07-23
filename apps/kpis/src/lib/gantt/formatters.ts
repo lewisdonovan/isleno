@@ -24,6 +24,7 @@ export const formatDateRange = (start: DateTime, end: DateTime, locale: Supporte
 /**
  * Format date for task duration display
  */
-export const formatTaskDuration = (start: Date, end: Date) => {
-  return `${DateTime.fromJSDate(start).toFormat('MMM dd')} - ${DateTime.fromJSDate(end).toFormat('MMM dd')}`;
+export const formatTaskDuration = (start: Date, end: Date, locale: SupportedLocale = 'en') => {
+  const localeString = locale === 'es' ? 'es-ES' : 'en-US';
+  return `${DateTime.fromJSDate(start).setLocale(localeString).toFormat('MMM dd')} - ${DateTime.fromJSDate(end).setLocale(localeString).toFormat('MMM dd')}`;
 }; 

@@ -25,6 +25,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ChevronLeft, ChevronRight, Calendar, Expand, Shrink, CalendarIcon } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { useTranslations } from 'next-intl';
 
 interface ProjectGanttProps {
   locale?: SupportedLocale;
@@ -42,6 +43,7 @@ export default function ProjectGantt({
   onProjectsDataChange
 }: ProjectGanttProps) {
   const { resolvedTheme } = useTheme();
+  const t = useTranslations('gantt');
   
   const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.Month);
   const [mounted, setMounted] = useState(false);
@@ -143,15 +145,7 @@ export default function ProjectGantt({
     }));
   }, [tasks]);
 
-
-
-
-
   const colors = getGanttColors(isDark);
-
-
-
-
 
   // Currency formatter bound to current locale
   const localFormatCurrency = useCallback((amount: number, currency = 'EUR') => 
@@ -216,7 +210,7 @@ export default function ProjectGantt({
         <Card>
           <CardHeader>
             <CardTitle>
-              {locale === 'es' ? 'Cronograma de Proyectos' : 'Project Timeline'}
+              {t('projectTimeline')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -238,10 +232,7 @@ export default function ProjectGantt({
           <CardContent className="p-6">
             <div className="text-center">
               <p className="text-red-600">
-                {locale === 'es' 
-                  ? 'Error al cargar los datos del cronograma' 
-                  : 'Error loading timeline data'
-                }
+                {t('errorLoading')}
               </p>
               <p className="text-sm text-muted-foreground mt-2">
                 {typeof error === 'string' ? error : error.message}
@@ -260,13 +251,10 @@ export default function ProjectGantt({
           <div className="flex justify-between items-start">
             <div>
               <CardTitle className="text-lg">
-                {locale === 'es' ? 'Cronograma de Proyectos' : 'Project Timeline'}
+                {t('projectTimeline')}
               </CardTitle>
               <p className="text-xs text-muted-foreground mt-1">
-                {locale === 'es' 
-                  ? 'Visualiza fases de proyectos y flujos de efectivo a lo largo del tiempo'
-                  : 'Visualize project phases and cash flows over time'
-                }
+                {t('timelineDescription')}
               </p>
             </div>
             
@@ -287,13 +275,13 @@ export default function ProjectGantt({
                 <PopoverContent className="w-auto p-3" align="start">
                   <div className="space-y-3">
                     <div className="text-sm font-medium">
-                      {locale === 'es' ? 'Rango de fechas' : 'Date Range'}
+                      {t('dateRange')}
                     </div>
                     
                     {/* Quick presets */}
                     <div className="space-y-2">
                       <div className="text-xs text-muted-foreground">
-                        {locale === 'es' ? 'Preselecciones rápidas:' : 'Quick presets:'}
+                        {t('quickPresets')}
                       </div>
                       <div className="grid grid-cols-2 gap-2">
                         <Button
@@ -302,7 +290,7 @@ export default function ProjectGantt({
                           onClick={() => setDateRange(createYearRange())}
                           className="h-7 text-xs"
                         >
-                          {locale === 'es' ? 'Este año' : 'This Year'}
+                          {t('thisYear')}
                         </Button>
                         <Button
                           variant="outline"
@@ -310,7 +298,7 @@ export default function ProjectGantt({
                           onClick={() => setDateRange(createMonthRange(6, 6))}
                           className="h-7 text-xs"
                         >
-                          {locale === 'es' ? '12 meses' : '12 Months'}
+                          {t('twelveMonths')}
                         </Button>
                         <Button
                           variant="outline"
@@ -318,7 +306,7 @@ export default function ProjectGantt({
                           onClick={() => setDateRange(createMonthRange(12, 12))}
                           className="h-7 text-xs"
                         >
-                          {locale === 'es' ? '24 meses' : '24 Months'}
+                          {t('twentyFourMonths')}
                         </Button>
                         <Button
                           variant="outline"
@@ -326,7 +314,7 @@ export default function ProjectGantt({
                           onClick={goToToday}
                           className="h-7 text-xs"
                         >
-                          {locale === 'es' ? 'Hoy' : 'Today'}
+                          {t('today')}
                         </Button>
                       </div>
                     </div>
@@ -340,8 +328,8 @@ export default function ProjectGantt({
                 size="sm"
                 onClick={toggleAllProjectsHandler}
                 title={allProjectsExpanded 
-                  ? (locale === 'es' ? 'Colapsar todos los proyectos' : 'Collapse all projects')
-                  : (locale === 'es' ? 'Expandir todos los proyectos' : 'Expand all projects')
+                  ? t('collapseAllProjects')
+                  : t('expandAllProjects')
                 }
               >
                 {allProjectsExpanded ? (
@@ -356,9 +344,9 @@ export default function ProjectGantt({
               {/* View Mode Buttons */}
               <div className="flex gap-1">
                 {[
-                  { mode: ViewMode.Month, label: locale === 'es' ? 'Mes' : 'Month' },
-                  { mode: ViewMode.Week, label: locale === 'es' ? 'Semana' : 'Week' },
-                  { mode: ViewMode.Day, label: locale === 'es' ? 'Día' : 'Day' },
+                  { mode: ViewMode.Month, label: t('month') },
+                  { mode: ViewMode.Week, label: t('week') },
+                  { mode: ViewMode.Day, label: t('day') },
                 ].map(({ mode, label }) => (
                   <Button
                     key={mode}
@@ -391,7 +379,7 @@ export default function ProjectGantt({
                     onClick={() => onLocaleChange(locale === 'en' ? 'es' : 'en')}
                     className="text-xs h-7"
                   >
-                    {locale === 'en' ? '🇪🇸 ES' : '🇺🇸 EN'}
+                    {locale === 'en' ? '🇪🇸 ES' : '🇬🇧 EN'}
                   </Button>
                 </>
               )}
@@ -407,17 +395,7 @@ export default function ProjectGantt({
                 className="text-xs px-2 py-0 h-5"
                 style={{ backgroundColor: colors.bg, color: colors.text }}
               >
-                {locale === 'es' ? {
-                  purchase: 'Compra',
-                  construction: 'Construcción', 
-                  sale: 'Venta',
-                  rental: 'Alquiler'
-                }[phaseType as keyof typeof PHASE_COLORS] : {
-                  purchase: 'Purchase',
-                  construction: 'Construction',
-                  sale: 'Sale', 
-                  rental: 'Rental'
-                }[phaseType as keyof typeof PHASE_COLORS]}
+                {t(phaseType as 'purchase' | 'construction' | 'sale' | 'rental')}
               </Badge>
             ))}
           </div>
@@ -431,7 +409,7 @@ export default function ProjectGantt({
                   tasks={ganttTasks}
                   viewMode={viewMode}
                   viewDate={dateRange.start.toJSDate()}
-                  locale={locale as string}
+                  locale={locale === 'es' ? 'es-ES' : 'en-US'}
                   listCellWidth={GANTT_CONFIG.TASK_LIST_WIDTH}
                   columnWidth={calculateColumnWidth()}
                   rowHeight={GANTT_CONFIG.ROW_HEIGHT}
@@ -468,7 +446,7 @@ export default function ProjectGantt({
               <div className="flex items-center justify-center h-64 text-muted-foreground">
                 <div className="text-center">
                   <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>{locale === 'es' ? 'No hay tareas para mostrar' : 'No tasks to display'}</p>
+                  <p>{t('noTasksToDisplay')}</p>
                 </div>
               </div>
             )}

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import KpiCategoryClient from "@/components/KpiCategoryClient";
 import type { Database } from "@isleno/types/db/public";
+import { getLocaleFromCookies } from "@/lib/locale";
 
 interface PageProps {
   params: Promise<{
@@ -15,6 +16,24 @@ interface PageProps {
 
 export default async function CategoryPage({ params }: PageProps) {
   const { department: departmentKey, category: categoryKey } = await params;
+  const locale = await getLocaleFromCookies();
+  const t = (key: string) => {
+    const messages = {
+      en: {
+        backToCategories: "Back to Categories",
+        kpiCategory: "KPI Category",
+        errorLoadingKPIs: "Error loading KPIs:",
+        errorLoadingKPIDetails: "Error loading KPI details:"
+      },
+      es: {
+        backToCategories: "Volver a Categorías",
+        kpiCategory: "Categoría de KPI",
+        errorLoadingKPIs: "Error al cargar KPIs:",
+        errorLoadingKPIDetails: "Error al cargar detalles de KPI:"
+      }
+    };
+    return messages[locale as keyof typeof messages]?.[key as keyof typeof messages.en] || key;
+  };
 
   // First, get the department to validate it exists
   const { data: department, error: departmentError } = await supabaseServer
@@ -49,7 +68,7 @@ export default async function CategoryPage({ params }: PageProps) {
     console.error("Error fetching KPI relations:", kpiRelationsError);
     return (
       <div className="p-6">
-        <div className="text-red-500">Error loading KPIs: {kpiRelationsError.message}</div>
+        <div className="text-red-500">{t('errorLoadingKPIs')} {kpiRelationsError.message}</div>
       </div>
     );
   }
@@ -70,7 +89,7 @@ export default async function CategoryPage({ params }: PageProps) {
       console.error("Error fetching KPIs:", kpisError);
       return (
         <div className="p-6">
-          <div className="text-red-500">Error loading KPI details: {kpisError.message}</div>
+          <div className="text-red-500">{t('errorLoadingKPIDetails')} {kpisError.message}</div>
         </div>
       );
     }
@@ -83,13 +102,13 @@ export default async function CategoryPage({ params }: PageProps) {
         <Link href={`/kpis/${departmentKey}`}>
           <Button variant="ghost" size="sm">
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Categories
+            {t('backToCategories')}
           </Button>
         </Link>
         <div className="space-y-1">
           <h1 className="text-3xl font-bold tracking-tight">{category.category_name}</h1>
           <p className="text-muted-foreground">
-            {department.department_name} • KPI Category
+            {department.department_name} • {t('kpiCategory')}
           </p>
           {category.description && (
             <p className="text-sm text-muted-foreground">{category.description}</p>
