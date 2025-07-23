@@ -17,6 +17,7 @@ import type { Database } from "@isleno/types/db/public";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { arrayToCsv, downloadStringAsFile } from "@/lib/utils";
+import KpiWeeklyTable from "@/components/KpiWeeklyTable";
 
 interface KpiCategoryClientProps {
   _initialDepartment: Database['public']['Tables']['departments']['Row'];
@@ -286,8 +287,9 @@ export default function KpiCategoryClient({
           </div>
         </div>
 
-        {/* Charts Grid */}
+        {/* Charts Grid */}  
         <div className="lg:col-span-3">
+          <KpiWeeklyTable initialKpis={filteredKpis} />
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
