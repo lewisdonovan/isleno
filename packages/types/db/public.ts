@@ -268,6 +268,53 @@ export type Database = {
           },
         ]
       }
+      profiles: {
+        Row: {
+          created_at: string
+          department_id: string | null
+          full_name: string | null
+          id: string
+          invoice_approval_alias: string | null
+          job_title: string | null
+          language: string | null
+          location: string | null
+          monday_user_id: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          department_id?: string | null
+          full_name?: string | null
+          id: string
+          invoice_approval_alias?: string | null
+          job_title?: string | null
+          language?: string | null
+          location?: string | null
+          monday_user_id?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          department_id?: string | null
+          full_name?: string | null
+          id?: string
+          invoice_approval_alias?: string | null
+          job_title?: string | null
+          language?: string | null
+          location?: string | null
+          monday_user_id?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["department_id"]
+          },
+        ]
+      }
       snapshots: {
         Row: {
           created_at: string
@@ -392,6 +439,54 @@ export type Database = {
           sprint_end_date?: string
           sprint_start_date?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      user_monday_tokens: {
+        Row: {
+          created_at: string
+          id: string
+          monday_access_token: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          monday_access_token: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          monday_access_token?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
