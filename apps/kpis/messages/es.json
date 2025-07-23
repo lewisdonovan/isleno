@@ -242,5 +242,25 @@
     "trace": "Rastro",
     "fatal": "Fatal",
     "critical": "Crítico"
+  },
+  "KpiDashboard": {
+    "title": "Dashboard de KPIs"
+  },
+  "MondayLink": {
+    "linkButton": "Conectar Cuenta de Monday.com",
+    "relinkButton": "Reconectar Cuenta de Monday.com",
+    "linkedStatus": "Conectada",
+    "notLinkedStatus": "No Conectada",
+    "linkSuccessTitle": "Cuenta de Monday.com Conectada",
+    "linkSuccessDescription": "Tu cuenta de Monday.com ha sido conectada exitosamente.",
+    "linkErrorTitle": "Error al Conectar la Cuenta de Monday.com",
+    "linkErrorDescription": "Ocurrió un error al conectar tu cuenta: {error}",
+    "configErrorTitle": "Error de Configuración",
+    "configErrorDescription": "La integración con Monday.com no está configurada correctamente."
+  },
+  "MondayData": {
+    "title": "Mis Paneles de Monday.com",
+    "fetchError": "Error al obtener datos de Monday.com.",
+    "noData": "No se encontraron paneles."
   }
 } 

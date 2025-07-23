@@ -242,5 +242,25 @@
     "trace": "Trace",
     "fatal": "Fatal",
     "critical": "Critical"
+  },
+  "KpiDashboard": {
+    "title": "KPI Dashboard"
+  },
+  "MondayLink": {
+    "linkButton": "Connect Monday.com Account",
+    "relinkButton": "Reconnect Monday.com Account",
+    "linkedStatus": "Linked",
+    "notLinkedStatus": "Not Linked",
+    "linkSuccessTitle": "Monday.com Account Linked",
+    "linkSuccessDescription": "Your Monday.com account has been successfully linked.",
+    "linkErrorTitle": "Failed to Link Monday.com Account",
+    "linkErrorDescription": "An error occurred while linking your account: {error}",
+    "configErrorTitle": "Configuration Error",
+    "configErrorDescription": "Monday.com integration is not configured correctly."
+  },
+  "MondayData": {
+    "title": "My Monday.com Boards",
+    "fetchError": "Failed to fetch data from Monday.com.",
+    "noData": "No boards found."
   }
 } 
