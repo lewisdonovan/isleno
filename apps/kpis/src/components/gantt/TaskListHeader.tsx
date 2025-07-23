@@ -17,7 +17,7 @@ export default function TaskListHeader({
   fontFamily, 
   fontSize,
   isDark,
-  locale
+  // locale
 }: TaskListHeaderProps) {
   const t = useTranslations('gantt');
   return (
