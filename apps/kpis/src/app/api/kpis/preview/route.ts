@@ -9,7 +9,6 @@ export async function POST(request: NextRequest) {
   if (!authResult.success || !authResult.session) {
     return NextResponse.json({ error: authResult.error || 'Unauthorized' }, { status: authResult.status || 401 });
   }
-  const session = authResult.session;
 
   try {
     const body = await request.json();
@@ -67,6 +66,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ rawData, transformOutput }, { status: 200 });
   } catch (error) {
+    console.error('Error in kpis/preview route:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 } 

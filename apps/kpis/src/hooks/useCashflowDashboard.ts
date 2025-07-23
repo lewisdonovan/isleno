@@ -199,10 +199,9 @@ export function useCashflowDashboard() {
         }
 
          // Phase capacity calculation
-         const phaseCapacity = await calculatePhaseCapacity(DateTime.now());
+        const phaseCapacity = await calculatePhaseCapacity(DateTime.now());
 
          // Timeline-based cashflow events
-         const cashflowEvents = await projectsDataService.getAllCashflowEvents();
         const currentLiquidity = await projectsDataService.calculateProjectedLiquidity(DateTime.now(), 500000);
         const projectedLiquidityIn30Days = await projectsDataService.calculateProjectedLiquidity(DateTime.now().plus({ days: 30 }), 500000);
         const projectedLiquidityIn90Days = await projectsDataService.calculateProjectedLiquidity(DateTime.now().plus({ days: 90 }), 500000);

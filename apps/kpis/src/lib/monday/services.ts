@@ -24,7 +24,6 @@ const PAGE_SIZE   = 500;
 
 function debug(tag: string, info: unknown) {
   if (process.env.DEBUG_MONDAY === 'true') {
-    // eslint-disable-next-line no-console
     console.log(`[${tag}]`, JSON.stringify(info, null, 2));
   }
 }
