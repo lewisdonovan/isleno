@@ -153,7 +153,7 @@ export function AppSidebar() {
       <SidebarHeader>
         <div className="flex items-center justify-center p-4 group-data-[collapsible=icon]:w-full group-data-[collapsible=icon]:justify-center">
           <Link href="/" className="flex items-center space-x-2 text-center justify-center group-data-[collapsible=icon]:justify-center">
-            <div className={`w-8 h-8 bg-background border group-data-[collapsible=icon]:mx-auto`}>
+            <div className={`w-8 h-8 group-data-[collapsible=icon]:mx-auto`}>
               <Image
                 src={"/logo_icon.jpg"}
                 alt="Isleño"
