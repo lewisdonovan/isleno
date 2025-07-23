@@ -15,7 +15,11 @@
     "MONDAY_REDIRECT_URI",
     "BOARD_ID_PROPERTY_DATABASE",
     "BOARD_ID_HIGH_LEVEL_DEVELOPMENT",
-    "ISLENO_API_KEY"
+    "ISLENO_API_KEY",
+    "ODOO_URL",
+    "ODOO_DB_NAME",
+    "ODOO_API_KEY",
+    "ODOO_USER_ID"
   ],
   "tasks": {
     "build": {

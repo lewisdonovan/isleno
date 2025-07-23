@@ -10,7 +10,6 @@ import { useTheme } from 'next-themes';
 import { javascript } from '@codemirror/lang-javascript';
 import { okaidia } from '@uiw/codemirror-theme-okaidia';
 import { githubLight } from '@uiw/codemirror-theme-github';
-import type { Database } from '@isleno/types/db/public';
 import { Constants } from '@isleno/types/db/public';
 import { getAvailableTransformFunctions } from '@isleno/utils';
 import useSWR from 'swr';

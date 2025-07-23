@@ -1,6 +1,9 @@
-import type { NextConfig } from "next";
+const path = require('path');
 
-const nextConfig: NextConfig = {
+require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
+
+/** @type {import('next').NextConfig} */
+const nextConfig = {
   images: {
     remotePatterns: [
       {
@@ -21,8 +24,14 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: '*.isleno.es',
+        port: '',
+        pathname: '/**',
+      }
     ],
   },
 };
 
-export default nextConfig;
+module.exports = nextConfig;

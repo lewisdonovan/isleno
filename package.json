@@ -17,10 +17,13 @@
     "prepare": "husky install"
   },
   "devDependencies": {
-    "turbo": "^2.3.4",
-    "husky": "^8.0.0"
+    "husky": "^8.0.0",
+    "turbo": "^2.3.4"
   },
   "engines": {
     "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "cmdk": "^1.1.1"
   }
 }
