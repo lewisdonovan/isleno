@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CalendarIcon } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { useTranslations } from 'next-intl';
 
 // Helper function to calculate liquidity on a specific date
 function calculateLiquidityOnDate(projects: any[], targetDate: DateTime): number {
@@ -104,6 +105,7 @@ function GanttMetricsCards({
 }) {
   const { data: metrics, isLoading, error } = useGanttMetrics(dateRange);
   const [liquidityDate, setLiquidityDate] = useState(() => DateTime.now());
+  const t = useTranslations('gantt');
 
   if (isLoading || error || !metrics) {
     return (
@@ -150,22 +152,14 @@ function GanttMetricsCards({
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-sm">
-            {locale === 'es' ? 'Capacidad de Fases' : 'Phase Capacity'}
+          {t('phaseCapacity')}  
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-2">
           {Object.entries((metrics as any).capacityUtilization || {}).map(([phase, utilization]) => (
             <div key={phase} className="flex justify-between items-center text-sm">
               <span className="capitalize">
-                {locale === 'es' ? {
-                  purchase: 'Compra',
-                  construction: 'Construcción',
-                  sale: 'Venta',
-                }[phase] : {
-                  purchase: 'Purchase',
-                  construction: 'Construction', 
-                  sale: 'Sale',
-                }[phase]}:
+                {t(phase as 'purchase' | 'construction' | 'sale' | 'rental')}:
               </span>
               <span className={`font-semibold ${
                 (utilization as number) >= 1.0 ? 'text-red-600' : 
@@ -182,7 +176,7 @@ function GanttMetricsCards({
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-sm">
-            {locale === 'es' ? 'Presupuesto Activo' : 'Active Budget'}
+            {t('activeBudget')}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -190,7 +184,7 @@ function GanttMetricsCards({
             {formatCurrency((metrics as any).totalActiveBudget || 0)}
           </p>
           <p className="text-xs text-muted-foreground">
-            {locale === 'es' ? 'En proyectos activos' : 'In active projects'}
+            {t('inActiveProjects')}
           </p>
         </CardContent>
       </Card>
@@ -199,7 +193,7 @@ function GanttMetricsCards({
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-sm">
-            {locale === 'es' ? 'Flujo Neto de Caja' : 'Net Cash Flow'}
+            {t('netCashFlow')}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -211,7 +205,7 @@ function GanttMetricsCards({
           <div className="space-y-1">
             <div className="flex justify-between text-xs">
               <span className="text-green-600">
-                {locale === 'es' ? 'Ingresos:' : 'Income:'}
+                {t('income')}
               </span>
               <span className="font-semibold">
                 {formatCurrency(cashFlowAnalysis?.totalIncome ?? 0)}
@@ -219,7 +213,7 @@ function GanttMetricsCards({
             </div>
             <div className="flex justify-between text-xs">
               <span className="text-red-600">
-                {locale === 'es' ? 'Gastos:' : 'Expenses:'}
+                {t('expenses')}
               </span>
               <span className="font-semibold">
                 {formatCurrency(cashFlowAnalysis?.totalExpenses ?? 0)}
@@ -233,7 +227,7 @@ function GanttMetricsCards({
        <Card>
          <CardHeader className="pb-3">
            <CardTitle className="text-sm">
-             {locale === 'es' ? 'Liquidez Proyectada' : 'Projected Liquidity'}
+             {t('projectedLiquidity')}
            </CardTitle>
          </CardHeader>
          <CardContent className="space-y-2">
@@ -257,7 +251,7 @@ function GanttMetricsCards({
                <PopoverContent className="w-auto p-3" align="start">
                  <div className="space-y-3">
                    <div className="text-sm font-medium">
-                     {locale === 'es' ? 'Fecha para proyección' : 'Date for projection'}
+                     {t('dateForProjection')}
                    </div>
                    <div className="grid grid-cols-2 gap-2">
                      <Button
@@ -266,7 +260,7 @@ function GanttMetricsCards({
                        onClick={() => setLiquidityDate(DateTime.now())}
                        className="h-7 text-xs"
                      >
-                       {locale === 'es' ? 'Hoy' : 'Today'}
+                       {t('today')}
                      </Button>
                      <Button
                        variant="outline"
@@ -274,7 +268,7 @@ function GanttMetricsCards({
                        onClick={() => setLiquidityDate(DateTime.now().plus({ months: 1 }))}
                        className="h-7 text-xs"
                      >
-                       {locale === 'es' ? '+1 mes' : '+1 month'}
+                       {t('plus1Month')}
                      </Button>
                      <Button
                        variant="outline"
@@ -282,7 +276,7 @@ function GanttMetricsCards({
                        onClick={() => setLiquidityDate(DateTime.now().plus({ months: 3 }))}
                        className="h-7 text-xs"
                      >
-                       {locale === 'es' ? '+3 meses' : '+3 months'}
+                       {t('plus3Months')}
                      </Button>
                      <Button
                        variant="outline"
@@ -290,7 +284,7 @@ function GanttMetricsCards({
                        onClick={() => setLiquidityDate(DateTime.now().plus({ months: 6 }))}
                        className="h-7 text-xs"
                      >
-                       {locale === 'es' ? '+6 meses' : '+6 months'}
+                       {t('plus6Months')}
                      </Button>
                    </div>
                  </div>
@@ -303,7 +297,7 @@ function GanttMetricsCards({
              <div className="border-t pt-2 space-y-1">
                <div className="flex justify-between text-xs">
                  <span className="text-muted-foreground">
-                   {locale === 'es' ? 'Mín. esperado:' : 'Min expected:'}
+                   {t('minExpected')}
                  </span>
                  <span className={`font-semibold ${
                    cashFlowAnalysis.minBalance < 0 ? 'text-red-600' : 'text-yellow-600'
@@ -313,7 +307,7 @@ function GanttMetricsCards({
                </div>
                <div className="flex justify-between text-xs">
                  <span className="text-muted-foreground">
-                   {locale === 'es' ? 'Fecha crítica:' : 'Critical date:'}
+                   {t('criticalDate')}
                  </span>
                  <span className="font-semibold text-xs">
                    {formatDate(cashFlowAnalysis.minBalanceDate)}
@@ -328,22 +322,22 @@ function GanttMetricsCards({
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-sm">
-            {locale === 'es' ? 'Estadísticas de Proyectos' : 'Project Stats'}
+            {t('projectStats')}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-1">
           <div className="flex justify-between text-sm">
-            <span>{locale === 'es' ? 'Completados:' : 'Completed:'}</span>
+            <span>{t('completed')}</span>
             <span className="font-semibold text-green-600">{(metrics as any).completedProjects || 0}</span>
           </div>
           <div className="flex justify-between text-sm">
-            <span>{locale === 'es' ? 'Activos:' : 'Active:'}</span>
+            <span>{t('active')}</span>
             <span className="font-semibold text-blue-600">{projects.length}</span>
           </div>
           <div className="flex justify-between text-sm">
-            <span>{locale === 'es' ? 'Duración prom:' : 'Avg duration:'}</span>
+            <span>{t('avgDuration')}</span>
             <span className="font-semibold">
-              {Math.round((metrics as any).averageProjectDuration || 6)}{locale === 'es' ? 'm' : 'mo'}
+              {Math.round((metrics as any).averageProjectDuration || 6)}{t('monthAbbr')}
             </span>
           </div>
         </CardContent>

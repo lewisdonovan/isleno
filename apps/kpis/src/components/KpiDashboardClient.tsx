@@ -4,9 +4,11 @@ import { useState, useMemo } from "react";
 import { useKpiDashboard } from "@/hooks/useKpiDashboard";
 import KpiTable from "@/components/KpiTable";
 import KpiConfigDrawer from "@/components/KpiConfigDrawer";
+import { useTranslations } from 'next-intl';
 
 export default function KpiDashboardClient({ start, end }: { start: string; end: string }) {
   const { data, error, isLoading } = useKpiDashboard(start, end);
+  const t = useTranslations('kpis');
   
   // State for KPI configuration
   const [kpiOrder, setKpiOrder] = useState<string[]>([]);
@@ -26,15 +28,15 @@ export default function KpiDashboardClient({ start, end }: { start: string; end:
   }, [data, kpiOrder.length]);
 
   if (isLoading) {
-    return <div>Loading KPI data...</div>;
+    return <div>{t('loadingKpiData')}</div>;
   }
 
   if (error) {
-    return <div>Error loading KPI data: {error.message}</div>;
+    return <div>{t('errorLoadingKpiData', { message: error.message })}</div>;
   }
 
   if (!data) {
-    return <div>No KPI data available</div>;
+    return <div>{t('noKpiDataAvailable')}</div>;
   }
 
   return (

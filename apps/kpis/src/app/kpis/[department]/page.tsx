@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ArrowLeft, FolderOpen } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { getLocaleFromCookies } from "@/lib/locale";
 
 interface PageProps {
   params: Promise<{
@@ -13,6 +14,26 @@ interface PageProps {
 
 export default async function DepartmentPage({ params }: PageProps) {
   const { department: departmentKey } = await params;
+  const locale = await getLocaleFromCookies();
+  const t = (key: string) => {
+    const messages = {
+      en: {
+        backToDepartments: "Back to Departments",
+        kpiCategories: "KPI Categories",
+        selectCategoryDescription: "Select a category to view its KPIs",
+        viewKPIs: "View KPIs",
+        noCategoriesFound: "No KPI categories found for this department."
+      },
+      es: {
+        backToDepartments: "Volver a Departamentos",
+        kpiCategories: "Categorías de KPI",
+        selectCategoryDescription: "Selecciona una categoría para ver sus KPIs",
+        viewKPIs: "Ver KPIs",
+        noCategoriesFound: "No se encontraron categorías de KPI para este departamento."
+      }
+    };
+    return messages[locale as keyof typeof messages]?.[key as keyof typeof messages.en] || key;
+  };
 
   // First, get the department to validate it exists and get its ID
   const { data: department, error: departmentError } = await supabaseServer
@@ -47,7 +68,7 @@ export default async function DepartmentPage({ params }: PageProps) {
         <Link href="/kpis">
           <Button variant="ghost" size="sm">
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Departments
+            {t('backToDepartments')}
           </Button>
         </Link>
         <div className="space-y-1">
@@ -62,10 +83,10 @@ export default async function DepartmentPage({ params }: PageProps) {
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <FolderOpen className="h-5 w-5" />
-            <span>KPI Categories</span>
+            <span>{t('kpiCategories')}</span>
           </CardTitle>
           <CardDescription>
-            Select a category to view its KPIs
+            {t('selectCategoryDescription')}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -84,7 +105,7 @@ export default async function DepartmentPage({ params }: PageProps) {
                   </div>
                   <Link href={`/kpis/${departmentKey}/${category.kpi_category_key}`}>
                     <Button size="sm">
-                      View KPIs
+                      {t('viewKPIs')}
                     </Button>
                   </Link>
                 </div>
@@ -93,7 +114,7 @@ export default async function DepartmentPage({ params }: PageProps) {
           ) : (
             <div className="text-center py-8 text-muted-foreground">
               <FolderOpen className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>No KPI categories found for this department.</p>
+              <p>{t('noCategoriesFound')}</p>
             </div>
           )}
         </CardContent>

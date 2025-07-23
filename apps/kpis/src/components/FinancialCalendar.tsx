@@ -13,6 +13,7 @@ import { format, parse, startOfWeek, getDay } from 'date-fns';
 import { enUS, es } from 'date-fns/locale';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import '@/styles/calendar.css';
+import { useTranslations } from 'next-intl';
 
 // Date-fns localizer for react-big-calendar
 const locales = {
@@ -63,6 +64,7 @@ export default function FinancialCalendar({
 }: FinancialCalendarProps) {
   const [currentDate, setCurrentDate] = useState(DateTime.now());
   const [currentView, setCurrentView] = useState<View>(Views.MONTH);
+  const t = useTranslations('calendar');
 
   const { data: events = [], isLoading, error } = useMonthlyEvents(currentDate);
 
@@ -141,17 +143,13 @@ export default function FinancialCalendar({
             size="sm"
             onClick={() => onNavigate('TODAY')}
           >
-            {locale === 'es' ? 'Hoy' : 'Today'}
+            {t('today')}
           </Button>
         </div>
         
         <div className="flex items-center gap-2">
                      <div className="flex gap-1">
              {(['month', 'week', 'day'] as View[]).map((viewType) => {
-               const labels = {
-                 es: { month: 'Mes', week: 'Semana', day: 'Día' },
-                 en: { month: 'Month', week: 'Week', day: 'Day' }
-               };
                return (
                  <Button
                    key={viewType}
@@ -159,7 +157,7 @@ export default function FinancialCalendar({
                    size="sm"
                    onClick={() => onView(viewType)}
                  >
-                   {labels[locale][viewType as keyof typeof labels.en]}
+                   {t(viewType as 'month' | 'week' | 'day')}
                  </Button>
                );
              })}
@@ -171,7 +169,7 @@ export default function FinancialCalendar({
               size="sm"
               onClick={() => onLocaleChange(locale === 'en' ? 'es' : 'en')}
             >
-              {locale === 'en' ? '🇪🇸 ES' : '🇺🇸 EN'}
+              {locale === 'en' ? '🇪🇸 ES' : '🇬🇧 EN'}
             </Button>
           )}
         </div>
@@ -185,7 +183,7 @@ export default function FinancialCalendar({
       <Card>
         <CardHeader>
           <CardTitle>
-            {locale === 'es' ? 'Calendario Financiero' : 'Financial Calendar'}
+            {t('financialCalendar')}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -204,12 +202,9 @@ export default function FinancialCalendar({
       <Card>
         <CardContent className="p-6">
           <div className="text-center">
-            <p className="text-red-600">
-              {locale === 'es' 
-                ? 'Error al cargar los datos del calendario' 
-                : 'Error loading calendar data'
-              }
-            </p>
+                      <p className="text-red-600">
+            {t('errorLoading')}
+          </p>
             <p className="text-sm text-muted-foreground mt-2">
               {error.message}
             </p>
@@ -224,23 +219,20 @@ export default function FinancialCalendar({
       <CardHeader>
         <div className="flex justify-between items-start">
           <div>
-            <CardTitle>
-              {locale === 'es' ? 'Calendario Financiero' : 'Financial Calendar'}
-            </CardTitle>
-            <p className="text-sm text-muted-foreground mt-1">
-              {locale === 'es' 
-                ? 'Seguimiento de ingresos y gastos por proyecto'
-                : 'Track income and expenses across projects'
-              }
-            </p>
+                      <CardTitle>
+            {t('financialCalendar')}
+          </CardTitle>
+          <p className="text-sm text-muted-foreground mt-1">
+            {t('calendarDescription')}
+          </p>
           </div>
           
           {/* Event type legend */}
           <div className="flex flex-wrap gap-2">
-            <Badge style={EVENT_STYLES.past_cost}>💸 {locale === 'es' ? 'Gastos' : 'Past Costs'}</Badge>
-            <Badge style={EVENT_STYLES.upcoming_cost}>📉 {locale === 'es' ? 'Próximos Gastos' : 'Upcoming Costs'}</Badge>
-            <Badge style={EVENT_STYLES.past_income}>💰 {locale === 'es' ? 'Ingresos' : 'Past Income'}</Badge>
-            <Badge style={EVENT_STYLES.upcoming_income}>📈 {locale === 'es' ? 'Próximos Ingresos' : 'Upcoming Income'}</Badge>
+            <Badge style={EVENT_STYLES.past_cost}>💸 {t('pastCosts')}</Badge>
+            <Badge style={EVENT_STYLES.upcoming_cost}>📉 {t('upcomingCosts')}</Badge>
+            <Badge style={EVENT_STYLES.past_income}>💰 {t('pastIncome')}</Badge>
+            <Badge style={EVENT_STYLES.upcoming_income}>📈 {t('upcomingIncome')}</Badge>
           </div>
         </div>
       </CardHeader>
@@ -264,18 +256,18 @@ export default function FinancialCalendar({
             }}
             culture={locale === 'es' ? 'es-ES' : 'en-US'}
             messages={locale === 'es' ? {
-              next: 'Siguiente',
-              previous: 'Anterior',
-              today: 'Hoy',
-              month: 'Mes',
-              week: 'Semana',
-              day: 'Día',
-              agenda: 'Agenda',
-              date: 'Fecha',
-              time: 'Hora',
-              event: 'Evento',
-              noEventsInRange: 'No hay eventos en este rango',
-              showMore: (total: number) => `+ ${total} más`,
+              next: t('next'),
+              previous: t('previous'),
+              today: t('today'),
+              month: t('month'),
+              week: t('week'),
+              day: t('day'),
+              agenda: t('agenda'),
+              date: t('date'),
+              time: t('time'),
+              event: t('event'),
+              noEventsInRange: t('noEventsInRange'),
+              showMore: (total: number) => t('showMore', { total }),
             } : undefined}
           />
         </div>

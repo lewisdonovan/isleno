@@ -9,7 +9,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "add-translation": "node scripts/add-translation.js"
   },
   "dependencies": {
     "@codemirror/lang-javascript": "^6.2.4",
@@ -49,6 +50,7 @@
     "luxon": "^3.6.1",
     "monday-sdk-js": "^0.5.6",
     "next": "15.3.4",
+    "next-intl": "^4.3.4",
     "next-themes": "^0.4.6",
     "react": "^19.0.0",
     "react-big-calendar": "^1.19.4",

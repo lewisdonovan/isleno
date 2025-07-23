@@ -18,6 +18,7 @@ import { Dialog, DialogContent, DialogTrigger, DialogTitle } from "@/components/
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
+import { useTranslations } from 'next-intl';
 
 interface KpiConfigDrawerProps {
   kpiOrder: string[];
@@ -50,16 +51,17 @@ export default function KpiConfigDrawer({
   // State for import textarea
   const [importText, setImportText] = useState("");
   const sensors = useSensors(useSensor(PointerSensor));
+  const t = useTranslations('kpis');
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline">Configure KPIs</Button>
+        <Button variant="outline">{t('configureKPIs')}</Button>
       </DialogTrigger>
       <DialogContent className="p-6 max-h-[90vh] overflow-y-auto">
         <DialogTitle className="text-2xl font-bold mb-4">
-          KPIs Configuration
+          {t('kpisConfiguration')}
         </DialogTitle>
-        <h3 className="text-lg font-semibold mb-4">Objectives</h3>
+        <h3 className="text-lg font-semibold mb-4">{t('objectives')}</h3>
         {kpiOrder.map((key) => (
           <div key={key} className="flex items-center gap-2 mb-2">
             <label className="w-40">{key}</label>
@@ -70,7 +72,7 @@ export default function KpiConfigDrawer({
             />
           </div>
         ))}
-        <h3 className="text-lg font-semibold my-4">Order KPIs</h3>
+        <h3 className="text-lg font-semibold my-4">{t('orderKPIs')}</h3>
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}
@@ -139,7 +141,7 @@ export default function KpiConfigDrawer({
           </div>
         ))}
       {/* Export / Import Config */}
-      <h3 className="text-lg font-semibold my-4">Exportar / Importar Configuración</h3>
+      <h3 className="text-lg font-semibold my-4">{t('exportImportConfig')}</h3>
       <div className="space-y-2">
         <button
           className="px-3 py-1 bg-blue-500 text-white rounded"
@@ -153,14 +155,14 @@ export default function KpiConfigDrawer({
             };
             const json = JSON.stringify(cfg, null, 2);
             navigator.clipboard.writeText(json);
-            alert('Configuración copiada al portapapeles');
+            alert(t('configCopied'));
           }}
         >
-          Exportar Config
+          {t('exportConfig')}
         </button>
         <div>
           <label htmlFor="import-config" className="block text-sm">
-            Pega JSON aquí para importar:
+            {t('pasteJsonToImport')}
           </label>
           <textarea
             id="import-config"
@@ -180,13 +182,13 @@ export default function KpiConfigDrawer({
                 setHiddenKpisGeneral(new Set(cfg.hiddenKpisGeneral));
                 setHiddenKpisCollab(new Set(cfg.hiddenKpisCollab));
                 setHiddenClosers(new Set(cfg.hiddenClosers));
-                alert('Configuración importada exitosamente');
+                alert(t('configImported'));
               } catch {
-                alert('JSON inválido');
+                alert(t('invalidJson'));
               }
             }}
           >
-            Importar Config
+            {t('importConfig')}
           </button>
         </div>
       </div>

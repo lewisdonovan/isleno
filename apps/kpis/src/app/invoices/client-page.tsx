@@ -33,6 +33,7 @@ import {
     CommandList,
   } from "@/components/ui/command"
 import { ChevronsUpDown } from "lucide-react";
+import { useTranslations } from 'next-intl';
 
 
 interface Invoice {
@@ -58,6 +59,7 @@ interface Supplier {
 }
 
 export default function InvoiceClientPage() {
+  const t = useTranslations('invoices');
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
@@ -141,7 +143,7 @@ export default function InvoiceClientPage() {
   }
 
   if (loading) {
-    return <div>Loading invoices...</div>;
+    return <div>{t('loadingInvoices')}</div>;
   }
 
   return (
@@ -150,11 +152,11 @@ export default function InvoiceClientPage() {
             <Table>
                 <TableHeader>
                 <TableRow>
-                    <TableHead>Supplier</TableHead>
-                    <TableHead>Invoice Date</TableHead>
-                    <TableHead>Due Date</TableHead>
-                    <TableHead>Subtotal</TableHead>
-                    <TableHead>Actions</TableHead>
+                    <TableHead>{t('supplier')}</TableHead>
+                    <TableHead>{t('invoiceDate')}</TableHead>
+                    <TableHead>{t('dueDate')}</TableHead>
+                    <TableHead>{t('subtotal')}</TableHead>
+                    <TableHead>{t('actions')}</TableHead>
                 </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -175,9 +177,9 @@ export default function InvoiceClientPage() {
                         </PopoverTrigger>
                         <PopoverContent className="p-0">
                             <Command>
-                                <CommandInput placeholder="Search supplier..." />
+                                <CommandInput placeholder={t('searchSupplier')} />
                                 <CommandList>
-                                    <CommandEmpty>No supplier found.</CommandEmpty>
+                                    <CommandEmpty>{t('noSupplierFound')}</CommandEmpty>
                                     <CommandGroup>
                                         {suppliers.map((supplier) => (
                                         <CommandItem
@@ -207,7 +209,7 @@ export default function InvoiceClientPage() {
                     </TableCell>
                     <TableCell>
                         <Button onClick={() => handleApprove(invoice.id)} disabled={loading} className="font-semibold">
-                        Approve
+                        {t('approve')}
                         </Button>
                     </TableCell>
                     </TableRow>
@@ -217,10 +219,10 @@ export default function InvoiceClientPage() {
             <Dialog open={isSubtotalDialogOpen} onOpenChange={setIsSubtotalDialogOpen}>
                 <DialogContent>
                     <DialogHeader>
-                    <DialogTitle>Edit Subtotal</DialogTitle>
+                    <DialogTitle>{t('editSubtotal')}</DialogTitle>
                     </DialogHeader>
                     <div>
-                        <p className="mb-4">Please ensure the subtotal matches the pre-tax amount on the invoice.</p>
+                        <p className="mb-4">{t('subtotalDescription')}</p>
                         <Input 
                             type="number"
                             value={newSubtotal}
@@ -229,9 +231,9 @@ export default function InvoiceClientPage() {
                     </div>
                     <DialogFooter>
                         <DialogClose asChild>
-                            <Button variant="outline">Cancel</Button>
+                            <Button variant="outline">{t('cancel')}</Button>
                         </DialogClose>
-                        <Button onClick={handleSubtotalSave}>Save</Button>
+                        <Button onClick={handleSubtotalSave}>{t('save')}</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
@@ -248,7 +250,7 @@ export default function InvoiceClientPage() {
                 </div>
             ) : (
                 <div className="sticky top-4 flex items-center justify-center h-full bg-muted rounded-md">
-                    <p className="text-muted-foreground">Select an invoice to view the attachment</p>
+                    <p className="text-muted-foreground">{t('selectInvoiceToView')}</p>
                 </div>
             )}
         </div>

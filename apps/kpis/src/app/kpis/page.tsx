@@ -3,8 +3,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { BarChart3, TrendingUp, Settings, Calendar, Building2 } from "lucide-react";
 import Link from "next/link";
+import { getLocaleFromCookies, t } from "@/lib/locale";
 
 export default async function KpisPage() {
+  const locale = await getLocaleFromCookies();
+  
   // Fetch all departments from the database
   const { data: departments, error } = await supabaseServer
     .from("departments")
@@ -15,7 +18,7 @@ export default async function KpisPage() {
     console.error("Error fetching departments:", error);
     return (
       <div className="p-6">
-        <div className="text-red-500">Error loading departments: {error.message}</div>
+        <div className="text-red-500">{t(locale, 'kpis', 'errorLoadingDepartments').replace('{message}', error.message)}</div>
       </div>
     );
   }
@@ -23,9 +26,9 @@ export default async function KpisPage() {
   return (
     <div className="p-6 space-y-6">
       <div className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight">KPI Dashboard</h1>
+        <h1 className="text-3xl font-bold tracking-tight">{t(locale, 'kpis', 'dashboard')}</h1>
         <p className="text-muted-foreground">
-          Monitor and analyze your key performance indicators by department
+          {t(locale, 'kpis', 'description')}
         </p>
       </div>
 
@@ -34,17 +37,17 @@ export default async function KpisPage() {
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <BarChart3 className="h-5 w-5" />
-              <span>Live KPIs</span>
+              <span>{t(locale, 'kpis', 'liveKPIs')}</span>
             </CardTitle>
             <CardDescription>
-              View real-time KPI data with date range filtering
+              {t(locale, 'kpis', 'liveKPIsDesc')}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Link href="/kpis/live">
               <Button className="w-full">
                 <TrendingUp className="h-4 w-4 mr-2" />
-                View Live KPIs
+                {t(locale, 'kpis', 'viewLiveKPIs')}
               </Button>
             </Link>
           </CardContent>
@@ -54,16 +57,16 @@ export default async function KpisPage() {
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <Calendar className="h-5 w-5" />
-              <span>Historical Data</span>
+              <span>{t(locale, 'kpis', 'historicalData')}</span>
             </CardTitle>
             <CardDescription>
-              Analyze KPI trends over time with historical data
+              {t(locale, 'kpis', 'historicalDataDesc')}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Button className="w-full" variant="outline" disabled>
               <Calendar className="h-4 w-4 mr-2" />
-              Coming Soon
+              {t(locale, 'kpis', 'comingSoon')}
             </Button>
           </CardContent>
         </Card>
@@ -72,16 +75,16 @@ export default async function KpisPage() {
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <Settings className="h-5 w-5" />
-              <span>KPI Management</span>
+              <span>{t(locale, 'kpis', 'kpiManagement')}</span>
             </CardTitle>
             <CardDescription>
-              Configure and manage your KPI definitions
+              {t(locale, 'kpis', 'kpiManagementDesc')}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Button className="w-full" variant="outline" disabled>
               <Settings className="h-4 w-4 mr-2" />
-              Coming Soon
+              {t(locale, 'kpis', 'comingSoon')}
             </Button>
           </CardContent>
         </Card>
@@ -91,10 +94,10 @@ export default async function KpisPage() {
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <Building2 className="h-5 w-5" />
-            <span>Departments</span>
+            <span>{t(locale, 'kpis', 'departments')}</span>
           </CardTitle>
           <CardDescription>
-            Browse KPIs organized by department
+            {t(locale, 'kpis', 'departmentsDesc')}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -113,7 +116,7 @@ export default async function KpisPage() {
                   </div>
                   <Link href={`/kpis/${department.key}`}>
                     <Button size="sm">
-                      View KPIs
+                      {t(locale, 'kpis', 'viewKPIs')}
                     </Button>
                   </Link>
                 </div>
@@ -122,7 +125,7 @@ export default async function KpisPage() {
           ) : (
             <div className="text-center py-8 text-muted-foreground">
               <Building2 className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>No departments found.</p>
+              <p>{t(locale, 'kpis', 'noDepartmentsFound')}</p>
             </div>
           )}
         </CardContent>
@@ -131,27 +134,27 @@ export default async function KpisPage() {
       <div className="mt-8">
         <Card>
           <CardHeader>
-            <CardTitle>Quick Stats</CardTitle>
+            <CardTitle>{t(locale, 'kpis', 'quickStats')}</CardTitle>
             <CardDescription>
-              Overview of your current KPI performance
+              {t(locale, 'kpis', 'quickStatsDesc')}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid gap-4 md:grid-cols-4">
               <div className="space-y-2">
-                <p className="text-sm font-medium text-muted-foreground">Departments</p>
+                <p className="text-sm font-medium text-muted-foreground">{t(locale, 'kpis', 'departmentsCount')}</p>
                 <p className="text-2xl font-bold">{departments?.length || 0}</p>
               </div>
               <div className="space-y-2">
-                <p className="text-sm font-medium text-muted-foreground">Categories</p>
+                <p className="text-sm font-medium text-muted-foreground">{t(locale, 'kpis', 'categories')}</p>
                 <p className="text-2xl font-bold">--</p>
               </div>
               <div className="space-y-2">
-                <p className="text-sm font-medium text-muted-foreground">Active KPIs</p>
+                <p className="text-sm font-medium text-muted-foreground">{t(locale, 'kpis', 'activeKPIs')}</p>
                 <p className="text-2xl font-bold">--</p>
               </div>
               <div className="space-y-2">
-                <p className="text-sm font-medium text-muted-foreground">Last Updated</p>
+                <p className="text-sm font-medium text-muted-foreground">{t(locale, 'kpis', 'lastUpdated')}</p>
                 <p className="text-2xl font-bold">--</p>
               </div>
             </div>

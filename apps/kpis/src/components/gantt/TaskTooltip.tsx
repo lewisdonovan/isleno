@@ -4,6 +4,7 @@ import { Task } from "gantt-task-react";
 import { DateTime } from 'luxon';
 import type { BusinessGanttTask } from '@/types/projects';
 import { SupportedLocale } from '@/types/calendar';
+import { useTranslations } from 'next-intl';
 
 interface TaskTooltipProps {
   task: Task;
@@ -19,9 +20,10 @@ export default function TaskTooltip({
   fontSize, 
   fontFamily, 
   businessTasks, 
-  locale,
+  locale: _locale,
   formatCurrency 
 }: TaskTooltipProps) {
+  const t = useTranslations('gantt');
   const businessTask = businessTasks.find((t: BusinessGanttTask) => t.id === task.id);
   
   if (!businessTask) return null;
@@ -39,27 +41,27 @@ export default function TaskTooltip({
       
       <div className="space-y-1 text-sm text-muted-foreground">
         <div>
-          <span className="font-medium">{locale === 'es' ? 'Zona:' : 'Zone:'}</span> {businessData.zone}
+          <span className="font-medium">{t('zone')}:</span> {businessData.zone}
         </div>
         <div>
-          <span className="font-medium">{locale === 'es' ? 'Tipo:' : 'Type:'}</span> {businessData.propertyType}
+          <span className="font-medium">{t('type')}:</span> {businessData.propertyType}
         </div>
         <div>
-          <span className="font-medium">{locale === 'es' ? 'Presupuesto:' : 'Budget:'}</span> {formatCurrency(businessData.budget)}
+          <span className="font-medium">{t('budget')}:</span> {formatCurrency(businessData.budget)}
         </div>
         <div>
-          <span className="font-medium">{locale === 'es' ? 'Gastado:' : 'Spent:'}</span> {formatCurrency(businessData.spent)}
+          <span className="font-medium">{t('spent')}:</span> {formatCurrency(businessData.spent)}
         </div>
         <div>
-          <span className="font-medium">{locale === 'es' ? 'Progreso:' : 'Progress:'}</span> {task.progress}%
+          <span className="font-medium">{t('progress')}:</span> {task.progress}%
         </div>
         <div>
-          <span className="font-medium">{locale === 'es' ? 'Duración:' : 'Duration:'}</span>{' '}
-          {DateTime.fromJSDate(task.start).toFormat('MMM dd')} - {DateTime.fromJSDate(task.end).toFormat('MMM dd')}
+          <span className="font-medium">{t('duration')}:</span>{' '}
+          {DateTime.fromJSDate(task.start).setLocale(_locale === 'es' ? 'es-ES' : 'en-US').toFormat('MMM dd')} - {DateTime.fromJSDate(task.end).setLocale(_locale === 'es' ? 'es-ES' : 'en-US').toFormat('MMM dd')}
         </div>
         {businessData.cashFlows.length > 0 && (
           <div className="mt-2 pt-2 border-t border-border">
-            <div className="font-medium">{locale === 'es' ? 'Flujos de Efectivo:' : 'Cash Flows:'}</div>
+            <div className="font-medium">{t('cashFlows')}:</div>
             {businessData.cashFlows.slice(0, 3).map((cf, index) => (
               <div key={index} className="text-xs">
                 {cf.amount > 0 ? '💰' : '💸'} {formatCurrency(Math.abs(cf.amount))}
