@@ -23,12 +23,14 @@ interface KpiCategoryClientProps {
   _initialDepartment: Database['public']['Tables']['departments']['Row'];
   _initialCategory: Database['public']['Tables']['kpi_categories']['Row'];
   initialKpis: Database['public']['Tables']['kpis']['Row'][];
+  kpiOrder?: readonly string[];
 }
 
 export default function KpiCategoryClient({
   _initialDepartment,
   _initialCategory,
-  initialKpis
+  initialKpis,
+  kpiOrder
 }: KpiCategoryClientProps) {
   const [kpis] = useState(initialKpis);
   const [snapshots, setSnapshots] = useState<Database['public']['Tables']['snapshots']['Row'][]>([]);
@@ -289,7 +291,9 @@ export default function KpiCategoryClient({
 
         {/* Charts Grid */}  
         <div className="lg:col-span-3">
-          <KpiWeeklyTable initialKpis={filteredKpis} />
+          <KpiWeeklyTable
+          initialKpis={filteredKpis}
+          kpiOrder={kpiOrder} />
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">

@@ -94,7 +94,21 @@ export default async function CategoryPage({ params }: PageProps) {
       );
     }
     kpis = kpisData || [];
+    console.log("Fetched KPIs:", kpis);
   }
+
+  //TODO: Define the order of KPIs in this category in DB and fetch it
+  let kpiSorting = [
+    "collabs_meetings",
+    "collabs_leads",
+    "collabs_qualified_leads",
+    "collabs_total_calls",
+    "collabs_meetings",
+    "collabs_viewings",
+    "collabs_qualified_viewings",
+    "collabs_negotiations",
+    "collabs_arras_signed_by_seller"
+  ];
 
   return (
     <div className="p-6 space-y-6">
@@ -120,6 +134,7 @@ export default async function CategoryPage({ params }: PageProps) {
         _initialDepartment={department}
         _initialCategory={category}
         initialKpis={kpis}
+        kpiOrder={kpiSorting}
       />
     </div>
   );

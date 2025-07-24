@@ -25,11 +25,12 @@ interface Interval {
 
 interface Props {
   initialKpis: Kpi[];
+  kpiOrder?: readonly string[];
 }
 
 // Componente ----------------------------------------------------------------
 
-export default function KpiWeeklyTable({ initialKpis }: Props) {
+export default function KpiWeeklyTable({ initialKpis, kpiOrder }: Props) {
   const [view, setView] = useState<ViewMode>("general");
   const [order, setOrder] = useState<OrderMode>("recent");
   const [weeks, setWeeks] = useState(4);
@@ -99,6 +100,15 @@ export default function KpiWeeklyTable({ initialKpis }: Props) {
     loadSnapshots();
   }, [loadSnapshots, view, order, weeks]);
 
+  const sortedFiltered = useMemo(() => {
+    const orderList = kpiOrder ?? [];
+    return [...filtered].sort((a, b) => {
+      const ai = orderList.indexOf(a.kpi_key);
+      const bi = orderList.indexOf(b.kpi_key);
+      return (ai === -1 ? Infinity : ai) - (bi === -1 ? Infinity : bi);
+    });
+  }, [filtered, kpiOrder]);
+
   // --------------------------------------------------------------- rows data
   const rows = useMemo(() => {
     const snapsByKpi = new Map<number, Snapshot[]>();
@@ -114,12 +124,20 @@ export default function KpiWeeklyTable({ initialKpis }: Props) {
       .pop()?.numeric_value ?? null;
 
     if (view === "general") {
+      return sortedFiltered.map(k => ({
+        key: k.kpi_id,
+        label: k.kpi_name,
+        values: intervals.map(int => pickLast(snapsByKpi.get(k.kpi_id) ?? [], int)),
+      }));
+    }
+
+    /* if (view === "general") {
       return filtered.map(k => ({
         key: k.kpi_id,
         label: k.kpi_name,
         values: intervals.map(int => pickLast(snapsByKpi.get(k.kpi_id) ?? [], int))
       }));
-    }
+    } */
 
     const groupMap = new Map<string, number[]>();
     if (view === "closer") filtered.forEach(k => groupMap.set(k.closer_name!, [...(groupMap.get(k.closer_name!) ?? []), k.kpi_id]));
