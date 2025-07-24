@@ -26,16 +26,24 @@ interface Interval {
 interface Props {
   initialKpis: Kpi[];
   kpiOrder?: readonly string[];
+  startDateISO: string;
+  endDateISO: string;
 }
 
 // Componente ----------------------------------------------------------------
 
-export default function KpiWeeklyTable({ initialKpis, kpiOrder }: Props) {
+export default function KpiWeeklyTable({ initialKpis, kpiOrder, startDateISO, endDateISO }: Props) {
   const [view, setView] = useState<ViewMode>("general");
   const [order, setOrder] = useState<OrderMode>("recent");
-  const [weeks, setWeeks] = useState(4);
   const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
   const [loading, setLoading] = useState(false);
+
+  const weeks = useMemo(() => {
+    if (!startDateISO || !endDateISO) return 4;            // fallback
+    const oneDay = 24 * 60 * 60 * 1000;
+    const diffDays = (new Date(endDateISO).getTime() - new Date(startDateISO).getTime()) / oneDay;
+    return Math.max(1, Math.ceil((diffDays + 1) / 7));     // siempre ≥1
+  }, [startDateISO, endDateISO]);
 
   // ---------------------------------------------------------------- filtered
   const filtered = useMemo(() => {
@@ -98,7 +106,7 @@ export default function KpiWeeklyTable({ initialKpis, kpiOrder }: Props) {
 
   useEffect(() => {
     loadSnapshots();
-  }, [loadSnapshots, view, order, weeks]);
+  }, [loadSnapshots, view, order]);
 
   const sortedFiltered = useMemo(() => {
     const orderList = kpiOrder ?? [];
@@ -185,10 +193,6 @@ export default function KpiWeeklyTable({ initialKpis, kpiOrder }: Props) {
               <SelectItem value="oldest">Week 1 is the Oldest</SelectItem>
             </SelectContent>
           </Select>
-          <div className="flex items-center gap-1">
-            <Input type="number" min={1} max={52} value={weeks} onChange={e => setWeeks(Number(e.target.value))} className="w-20" />
-            <span className="text-sm text-muted-foreground">weeks</span>
-          </div>
           <Button variant="secondary" onClick={loadSnapshots} disabled={loading}>Refresh</Button>
         </div>
       </CardHeader>

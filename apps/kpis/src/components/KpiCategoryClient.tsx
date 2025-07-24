@@ -272,8 +272,8 @@ export default function KpiCategoryClient({
                               )}
                             </div>
                             <div className={`flex items-center space-x-1 text-sm font-medium ml-2 ${item.percentageChange! > 0
-                                ? 'text-green-600 dark:text-green-400'
-                                : 'text-red-600 dark:text-red-400'
+                              ? 'text-green-600 dark:text-green-400'
+                              : 'text-red-600 dark:text-red-400'
                               }`}>
                               {item.percentageChange! > 0 ? (
                                 <TrendingUp className="h-3 w-3" />
@@ -304,7 +304,10 @@ export default function KpiCategoryClient({
         <div className="lg:col-span-3">
           <KpiWeeklyTable
             initialKpis={filteredKpis}
-            kpiOrder={kpiOrder} />
+            kpiOrder={kpiOrder}
+            startDateISO={dateRange.startDate}
+            endDateISO={dateRange.endDate}
+          />
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
