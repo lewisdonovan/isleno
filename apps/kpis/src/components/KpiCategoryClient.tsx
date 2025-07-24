@@ -44,7 +44,7 @@ export default function KpiCategoryClient({
     try {
       setLoading(true);
       const kpiIds = kpis.map(kpi => kpi.kpi_id);
-      
+
       if (kpiIds.length === 0) return;
 
       const params = new URLSearchParams({
@@ -54,13 +54,13 @@ export default function KpiCategoryClient({
       });
 
       const response = await fetch(`/api/kpis/snapshots?${params}`);
-      
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const result = await response.json();
-      
+
       if (result.error) {
         console.error("Error fetching snapshots:", result.error);
       } else {
@@ -92,9 +92,21 @@ export default function KpiCategoryClient({
 
   // Filter KPIs by selected channels
   const filteredKpis = useMemo(() => {
-    if (selectedChannels.length === 0) return kpis;
-    return kpis.filter(kpi => selectedChannels.includes(kpi.channel));
-  }, [kpis, selectedChannels]);
+    let list =
+      selectedChannels.length === 0
+        ? kpis
+        : kpis.filter(kpi => selectedChannels.includes(kpi.channel));
+
+    if (kpiOrder && kpiOrder.length > 0) {
+      list = [...list].sort((a, b) => {
+        const ai = kpiOrder.indexOf(a.kpi_key);
+        const bi = kpiOrder.indexOf(b.kpi_key);
+        return (ai === -1 ? Infinity : ai) - (bi === -1 ? Infinity : bi);
+      });
+    }
+
+    return list;
+  }, [kpis, selectedChannels, kpiOrder]);
 
   // Calculate summary data for biggest movers
   const summaryData = useMemo(() => {
@@ -123,9 +135,9 @@ export default function KpiCategoryClient({
         hasData: chartData.length > 0
       };
     })
-    .filter(item => item.hasData && item.percentageChange !== null)
-    .sort((a, b) => Math.abs(b.percentageChange!) - Math.abs(a.percentageChange!))
-    .slice(0, 3); // Top 3 biggest movers
+      .filter(item => item.hasData && item.percentageChange !== null)
+      .sort((a, b) => Math.abs(b.percentageChange!) - Math.abs(a.percentageChange!))
+      .slice(0, 3); // Top 3 biggest movers
   }, [filteredKpis, snapshots]);
 
   // Prepare CSV data for all filtered KPIs
@@ -182,30 +194,30 @@ export default function KpiCategoryClient({
                             <Users className="h-4 w-4" />
                             <span>Channels</span>
                           </h4>
-                        <div className="space-y-2">
-                          {availableChannels.map((channel) => (
-                            <div key={channel} className="flex items-center space-x-2">
-                              <input
-                                type="checkbox"
-                                id={`channel-${channel}`}
-                                checked={selectedChannels.includes(channel)}
-                                onChange={(e) => {
-                                  if (e.target.checked) {
-                                    setSelectedChannels([...selectedChannels, channel]);
-                                  } else {
-                                    setSelectedChannels(selectedChannels.filter(c => c !== channel));
-                                  }
-                                }}
-                                className="rounded border-gray-300"
-                              />
-                              <label htmlFor={`channel-${channel}`} className="text-sm">
-                                {channel}
-                              </label>
-                            </div>
-                          ))}
+                          <div className="space-y-2">
+                            {availableChannels.map((channel) => (
+                              <div key={channel} className="flex items-center space-x-2">
+                                <input
+                                  type="checkbox"
+                                  id={`channel-${channel}`}
+                                  checked={selectedChannels.includes(channel)}
+                                  onChange={(e) => {
+                                    if (e.target.checked) {
+                                      setSelectedChannels([...selectedChannels, channel]);
+                                    } else {
+                                      setSelectedChannels(selectedChannels.filter(c => c !== channel));
+                                    }
+                                  }}
+                                  className="rounded border-gray-300"
+                                />
+                                <label htmlFor={`channel-${channel}`} className="text-sm">
+                                  {channel}
+                                </label>
+                              </div>
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                    </>
+                      </>
                     )}
 
                     {/* Clear All Filters */}
@@ -245,55 +257,54 @@ export default function KpiCategoryClient({
                     <p className="text-sm text-muted-foreground mb-3">
                       Biggest changes this period
                     </p>
-                              {summaryData.length > 0 ? (
-                    <div className="space-y-3">
-                      {summaryData.map((item) => (
-                        <div key={item.kpi.kpi_id} className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors">
-                          <div className="flex-1 min-w-0">
-                            <div className="text-sm font-medium truncate">
-                              {item.kpi.kpi_name}
-                            </div>
-                            {item.kpi.channel && (
-                              <div className="text-xs text-muted-foreground truncate">
-                                {item.kpi.channel}
+                    {summaryData.length > 0 ? (
+                      <div className="space-y-3">
+                        {summaryData.map((item) => (
+                          <div key={item.kpi.kpi_id} className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors">
+                            <div className="flex-1 min-w-0">
+                              <div className="text-sm font-medium truncate">
+                                {item.kpi.kpi_name}
                               </div>
-                            )}
+                              {item.kpi.channel && (
+                                <div className="text-xs text-muted-foreground truncate">
+                                  {item.kpi.channel}
+                                </div>
+                              )}
+                            </div>
+                            <div className={`flex items-center space-x-1 text-sm font-medium ml-2 ${item.percentageChange! > 0
+                                ? 'text-green-600 dark:text-green-400'
+                                : 'text-red-600 dark:text-red-400'
+                              }`}>
+                              {item.percentageChange! > 0 ? (
+                                <TrendingUp className="h-3 w-3" />
+                              ) : (
+                                <TrendingDown className="h-3 w-3" />
+                              )}
+                              <span>
+                                {item.percentageChange! > 0 ? '+' : ''}{item.percentageChange!.toFixed(1)}%
+                              </span>
+                            </div>
                           </div>
-                          <div className={`flex items-center space-x-1 text-sm font-medium ml-2 ${
-                            item.percentageChange! > 0 
-                              ? 'text-green-600 dark:text-green-400' 
-                              : 'text-red-600 dark:text-red-400'
-                          }`}>
-                            {item.percentageChange! > 0 ? (
-                              <TrendingUp className="h-3 w-3" />
-                            ) : (
-                              <TrendingDown className="h-3 w-3" />
-                            )}
-                            <span>
-                              {item.percentageChange! > 0 ? '+' : ''}{item.percentageChange!.toFixed(1)}%
-                            </span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-8 text-muted-foreground">
-                      <BarChart3 className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                      <p className="text-sm">No data available</p>
-                    </div>
-                  )}
-                </div>
-              </AccordionContent>
-            </AccordionItem>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 text-muted-foreground">
+                        <BarChart3 className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                        <p className="text-sm">No data available</p>
+                      </div>
+                    )}
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
             </Accordion>
           </div>
         </div>
 
-        {/* Charts Grid */}  
+        {/* Charts Grid */}
         <div className="lg:col-span-3">
           <KpiWeeklyTable
-          initialKpis={filteredKpis}
-          kpiOrder={kpiOrder} />
+            initialKpis={filteredKpis}
+            kpiOrder={kpiOrder} />
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
@@ -342,7 +353,7 @@ export default function KpiCategoryClient({
               </div>
             </CardHeader>
           </Card>
-          
+
           {filteredKpis.length > 0 ? (
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 auto-rows-fr mt-6">
               {filteredKpis.map((kpi) => {

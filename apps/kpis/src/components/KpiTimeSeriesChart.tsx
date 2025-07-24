@@ -120,7 +120,8 @@ export default function KpiTimeSeriesChart({ kpi, snapshots, loading = false }: 
         <div className="flex items-start justify-between">
           <div className="flex-1">
             <CardTitle className="text-base">
-              {`${kpi.kpi_name}${kpi.channel ? ` (${kpi.channel})` : ``}`}
+              {/* {`${kpi.kpi_name}${kpi.channel ? ` (${kpi.channel})` : ``}`} */}
+              {`${kpi.kpi_name}`}
             </CardTitle>
             {kpi.description && (
               <CardDescription className="text-xs line-clamp-2">{kpi.description}</CardDescription>
