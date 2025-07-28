@@ -94,7 +94,40 @@ export default async function CategoryPage({ params }: PageProps) {
       );
     }
     kpis = kpisData || [];
+    console.log("Fetched KPIs:", kpis);
   }
+
+  //TODO: Define the order of KPIs in this category in DB and fetch it
+  const kpiSorting = [
+    "collabs_meetings",
+    "collabs_leads",
+    "collabs_qualified_leads",
+    "collabs_total_calls",
+    "collabs_meetings",
+    "collabs_viewings",
+    "collabs_qualified_viewings",
+    "collabs_negotiations",
+    "collabs_arras_signed_by_seller",
+
+    "calls_collabs",
+    "collab_meetings",
+    "leads",
+    "qualified_leads",
+    "calls_total",
+    "viewings",
+    "qualified_viewings",
+    "negotiations",
+    "arras_signed",
+
+    "idealista_channel_leads",
+    "idealista_channel_qualified_leads",
+    "idealista_channel_calls",
+    "idealista_channel_qualified_calls",
+    "idealista_channel_viewings",
+    "idealista_channel_qualified_viewings",
+    "idealista_channel_negotiations",
+    "idealista_channel_arras_signed",
+  ];
 
   return (
     <div className="p-6 space-y-6">
@@ -120,6 +153,7 @@ export default async function CategoryPage({ params }: PageProps) {
         _initialDepartment={department}
         _initialCategory={category}
         initialKpis={kpis}
+        kpiOrder={kpiSorting}
       />
     </div>
   );
