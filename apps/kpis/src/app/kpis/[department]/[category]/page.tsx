@@ -107,7 +107,26 @@ export default async function CategoryPage({ params }: PageProps) {
     "collabs_viewings",
     "collabs_qualified_viewings",
     "collabs_negotiations",
-    "collabs_arras_signed_by_seller"
+    "collabs_arras_signed_by_seller",
+
+    "calls_collabs",
+    "collab_meetings",
+    "leads",
+    "qualified_leads",
+    "calls_total",
+    "viewings",
+    "qualified_viewings",
+    "negotiations",
+    "arras_signed",
+
+    "idealista_channel_leads",
+    "idealista_channel_qualified_leads",
+    "idealista_channel_calls",
+    "idealista_channel_qualified_calls",
+    "idealista_channel_viewings",
+    "idealista_channel_qualified_viewings",
+    "idealista_channel_negotiations",
+    "idealista_channel_arras_signed",
   ];
 
   return (
