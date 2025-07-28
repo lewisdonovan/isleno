@@ -47,7 +47,7 @@ export default function KpiWeeklyTable({ initialKpis, kpiOrder, startDateISO, en
 
   // ---------------------------------------------------------------- filtered
   const filtered = useMemo(() => {
-    if (view === "closer") return initialKpis.filter(k => k.closer_id && k.closer_name);
+    if (view === "closer") return initialKpis.filter(k => k.closer_monday_id && k.closer_name);
     if (view === "location") return initialKpis.filter(k => k.location);
     return initialKpis;
   }, [view, initialKpis]);
@@ -119,7 +119,7 @@ export default function KpiWeeklyTable({ initialKpis, kpiOrder, startDateISO, en
 
   // --------------------------------------------------------------- rows data
   const rows = useMemo(() => {
-    const snapsByKpi = new Map<number, Snapshot[]>();
+    const snapsByKpi = new Map<string, Snapshot[]>();
     snapshots.forEach(s => {
       const arr = snapsByKpi.get(s.kpi_id) ?? [];
       arr.push(s);
@@ -147,7 +147,7 @@ export default function KpiWeeklyTable({ initialKpis, kpiOrder, startDateISO, en
       }));
     } */
 
-    const groupMap = new Map<string, number[]>();
+    const groupMap = new Map<string, string[]>();
     if (view === "closer") filtered.forEach(k => groupMap.set(k.closer_name!, [...(groupMap.get(k.closer_name!) ?? []), k.kpi_id]));
     if (view === "location") filtered.forEach(k => groupMap.set(k.location!, [...(groupMap.get(k.location!) ?? []), k.kpi_id]));
 

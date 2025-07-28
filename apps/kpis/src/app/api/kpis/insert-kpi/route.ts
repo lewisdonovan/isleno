@@ -4,7 +4,7 @@ import { supabaseServer } from "@/lib/supabaseServer";
 interface SnapshotBody {
   kpi_key: string;
   snapshot_date: string;
-  snapshot_data?: Record<string, unknown> | null;
+  snapshot_data?: any | null;
   numeric_value?: number | null;
   date_value?: string | null;
   text_value?: string | null;
@@ -14,12 +14,12 @@ interface SnapshotBody {
 }
 
 type SnapshotInsert = {
-  kpi_id: number;
+  kpi_id: string;
   snapshot_date: string;
   location: string;
   closer_monday_id: string;
   closer_name: string;
-  snapshot_data?: Record<string, unknown>;
+  snapshot_data?: any;
   numeric_value?: number;
   date_value?: string;
   text_value?: string;

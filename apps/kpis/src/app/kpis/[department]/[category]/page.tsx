@@ -98,7 +98,7 @@ export default async function CategoryPage({ params }: PageProps) {
   }
 
   //TODO: Define the order of KPIs in this category in DB and fetch it
-  let kpiSorting = [
+  const kpiSorting = [
     "collabs_meetings",
     "collabs_leads",
     "collabs_qualified_leads",

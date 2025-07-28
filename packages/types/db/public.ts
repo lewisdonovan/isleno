@@ -173,6 +173,8 @@ export type Database = {
       }
       kpis: {
         Row: {
+          closer_name: string | null;
+          closer_monday_id: string | null;
           channel: string
           created_at: string
           created_by: string | null
