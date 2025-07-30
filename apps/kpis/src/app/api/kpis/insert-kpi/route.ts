@@ -8,22 +8,23 @@ interface SnapshotBody {
   numeric_value?: number | null;
   date_value?: string | null;
   text_value?: string | null;
-  location: string;
-  closer_monday_id: string;
-  closer_name: string;
+  location?: string | null;
+  closer_monday_id?: string | null;
+  closer_name?: string | null;
 }
 
 type SnapshotInsert = {
   kpi_id: string;
   snapshot_date: string;
-  location: string;
-  closer_monday_id: string;
-  closer_name: string;
+  location?: string | null;
+  closer_monday_id?: string | null;
+  closer_name?: string | null;
   snapshot_data?: any;
   numeric_value?: number;
   date_value?: string;
   text_value?: string;
 };
+
 
 export async function POST(request: NextRequest) {
   try {
@@ -42,22 +43,15 @@ export async function POST(request: NextRequest) {
     } = body;
 
     const hasContent =
-      snapshot_data != null ||
-      numeric_value != null ||
-      date_value != null ||
-      text_value != null;
+        snapshot_data != null ||
+        numeric_value != null ||
+        date_value != null ||
+        text_value != null;
 
-    if (
-      !kpi_key ||
-      !snapshot_date ||
-      !location ||
-      !closer_monday_id ||
-      !closer_name ||
-      !hasContent
-    ) {
+    if (!kpi_key || !snapshot_date || !hasContent) {
       return NextResponse.json(
-        { success: false, message: "Faltan parámetros obligatorios" },
-        { status: 400 }
+          { success: false, message: "Faltan parámetros obligatorios" },
+          { status: 400 }
       );
     }
 
@@ -77,10 +71,11 @@ export async function POST(request: NextRequest) {
     const snapshotRow: SnapshotInsert = {
       kpi_id: kpiData.kpi_id,
       snapshot_date,
-      location,
-      closer_monday_id,
-      closer_name,
     };
+
+    if (location != null) snapshotRow.location = location;
+    if (closer_monday_id != null) snapshotRow.closer_monday_id = closer_monday_id;
+    if (closer_name != null) snapshotRow.closer_name = closer_name;
 
     if (snapshot_data != null) snapshotRow.snapshot_data = snapshot_data;
     if (numeric_value != null) snapshotRow.numeric_value = numeric_value;
