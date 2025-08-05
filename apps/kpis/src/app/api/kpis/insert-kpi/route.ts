@@ -4,14 +4,11 @@ import { supabaseServer } from "@/lib/supabaseServer";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization"
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
 };
 
-export async function OPTIONS(request: NextRequest) {
-  return new NextResponse(null, {
-    status: 204,
-    headers: corsHeaders
-  });
+export async function OPTIONS() {
+  return new NextResponse(null, { status: 204, headers: corsHeaders });
 }
 
 interface SnapshotBody {
@@ -23,103 +20,78 @@ interface SnapshotBody {
   text_value?: string | null;
   location?: string | null;
   closer_monday_id?: string | null;
-  closer_name?: string | null;
+  frequency?: "daily" | "weekly" | "monthly" | "quarterly" | "yearly" | null;
 }
 
 type SnapshotInsert = {
   kpi_id: string;
   snapshot_date: string;
-  location?: string | null;
-  closer_monday_id?: string | null;
-  closer_name?: string | null;
+  frequency: string;
   snapshot_data?: any;
   numeric_value?: number;
   date_value?: string;
   text_value?: string;
 };
 
+type SnapshotAttributeInsert = {
+  snapshot_id: string;
+  kpi_id: string;
+  snapshot_attribute: string;
+  snapshot_attribute_value: string;
+};
 
 export async function POST(request: NextRequest) {
   try {
     const body = (await request.json()) as SnapshotBody;
+    const { kpi_key, snapshot_date, snapshot_data, numeric_value, date_value, text_value, location, closer_monday_id, frequency: bodyFrequency } = body;
 
-    const {
-      kpi_key,
-      snapshot_date,
-      snapshot_data,
-      numeric_value,
-      date_value,
-      text_value,
-      location,
-      closer_monday_id,
-      closer_name,
-    } = body;
-
-    const hasContent =
-        snapshot_data != null ||
-        numeric_value != null ||
-        date_value != null ||
-        text_value != null;
-
-    if (!kpi_key || !snapshot_date || !hasContent) {
-      return NextResponse.json(
-          { success: false, message: "Faltan parámetros obligatorios" },
-          { status: 400, headers: corsHeaders }
-      );
+    if (!kpi_key || !snapshot_date) {
+      return NextResponse.json({ success: false, message: "Faltan parámetros obligatorios" }, { status: 400, headers: corsHeaders });
     }
 
-    const { data: kpiData, error: kpiError } = await supabaseServer
-      .from("kpis")
-      .select("kpi_id")
-      .eq("kpi_key", kpi_key)
-      .single();
+    if (location != null && closer_monday_id != null) {
+      return NextResponse.json({ success: false, message: "Solo se permite un atributo: location o closer_monday_id" }, { status: 400, headers: corsHeaders });
+    }
+
+    const { data: kpiData, error: kpiError } = await supabaseServer.from("kpis").select("kpi_id").eq("kpi_key", kpi_key).single();
 
     if (kpiError || !kpiData) {
-      return NextResponse.json(
-        { success: false, message: "kpi_key no encontrado" },
-        { status: 404, headers: corsHeaders }
-      );
+      return NextResponse.json({ success: false, message: "kpi_key no encontrado" }, { status: 404, headers: corsHeaders });
     }
 
-    const snapshotRow: SnapshotInsert = {
-      kpi_id: kpiData.kpi_id,
-      snapshot_date,
-    };
-
-    if (location != null) snapshotRow.location = location;
-    if (closer_monday_id != null) snapshotRow.closer_monday_id = closer_monday_id;
-    if (closer_name != null) snapshotRow.closer_name = closer_name;
+    const snapshotRow: SnapshotInsert = { kpi_id: kpiData.kpi_id, snapshot_date, frequency: bodyFrequency ?? "daily" };
 
     if (snapshot_data != null) snapshotRow.snapshot_data = snapshot_data;
     if (numeric_value != null) snapshotRow.numeric_value = numeric_value;
     if (date_value != null) snapshotRow.date_value = date_value;
     if (text_value != null) snapshotRow.text_value = text_value;
 
-    const { data: insertData, error } = await supabaseServer
-      .from("snapshots")
-      .insert(snapshotRow)
-      .select("snapshot_id")
-      .single();
+    const { data: insertSnap, error: insertSnapError } = await supabaseServer.from("snapshots").insert(snapshotRow).select("snapshot_id").single();
 
-    if (error) {
-      return NextResponse.json(
-        { success: false, message: error.message },
-        { status: 500, headers: corsHeaders }
-      );
+    if (insertSnapError) {
+      return NextResponse.json({ success: false, message: insertSnapError.message }, { status: 500, headers: corsHeaders });
     }
 
-    return NextResponse.json(
-      {
-        success: true,
-        message: "Snapshot successfully created",
-        snapshot_id: insertData.snapshot_id,
-      },
-      { status: 201, headers: corsHeaders }
-    );
-  } catch {
-    return NextResponse.json(
-      { success: false, message: "Internal server error" },
-      { status: 500, headers: corsHeaders }
-    );
+    const attributes: SnapshotAttributeInsert[] = [];
+
+    if (location != null) {
+      attributes.push({ snapshot_id: insertSnap.snapshot_id, kpi_id: kpiData.kpi_id, snapshot_attribute: "location", snapshot_attribute_value: location });
+    }
+
+    if (closer_monday_id != null) {
+      attributes.push({ snapshot_id: insertSnap.snapshot_id, kpi_id: kpiData.kpi_id, snapshot_attribute: "closer_monday_id", snapshot_attribute_value: closer_monday_id });
+    }
+
+    if (attributes.length > 0) {
+      const { error: attrError } = await supabaseServer.from("snapshot_attributes").insert(attributes);
+      if (attrError) {
+        return NextResponse.json({ success: false, message: attrError.message }, { status: 500, headers: corsHeaders });
+      }
+    }
+
+    return NextResponse.json({ success: true, message: "Snapshot y atributos creados exitosamente", snapshot_id: insertSnap.snapshot_id }, { status: 201, headers: corsHeaders });
+  } catch (err) {
+    console.error("insert-kpi error", err);
+    return NextResponse.json({ success: false, message: "Internal server error" }, { status: 500, headers: corsHeaders });
   }
 }
