@@ -1,6 +1,6 @@
 "use client";
 
-import { SupportedLocale } from '@/types/calendar';
+import { SupportedLocale } from '@isleno/types/calendar';
 import { useTranslations } from 'next-intl';
 
 interface TaskListHeaderProps {

@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { projectsDataService } from '@/lib/services/projectsDataService';
-import { ProjectData } from '@/types/projects';
+import { ProjectData } from '@isleno/types/projects';
 
 interface UseProjectsDataReturn {
   projects: ProjectData[];

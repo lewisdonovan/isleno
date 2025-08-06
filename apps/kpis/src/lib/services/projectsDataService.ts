@@ -1,7 +1,10 @@
 import { DateTime } from 'luxon';
-import { MondayProjectsData, BoardItem, BoardColumnValue } from '@/types/monday';
-import { ProjectData, CashflowEvent, PROJECT_STAGES } from '@/types/projects';
+import { MondayProjectsData, BoardItem, BoardColumnValue } from '@isleno/types/monday';
+import { ProjectData, CashflowEvent, PROJECT_STAGES } from '@isleno/types/projects';
 import { FINANCIAL_ESTIMATES } from '@/lib/constants/projectConstants';
+import { fetchWithTokenExpirationHandling } from '@/lib/utils/mondayTokenUtils';
+import { PROJECT_PHASES, PHASE_BY_GROUP_ID, ProjectPhaseTimeline, calculatePhaseTimeline } from '@/lib/constants/projectPhases';
+import { propertyDatabaseService } from './propertyDatabaseService';
 
 // Types are now imported from @/types/projects
 
@@ -20,7 +23,7 @@ export class ProjectsDataService {
   }
 
   // Fetch projects data from API with caching
-  async fetchProjectsData(options: { force?: boolean } = {}): Promise<MondayProjectsData> {
+  async fetchProjectsData(options: { force?: boolean; useFiltered?: boolean } = {}): Promise<MondayProjectsData> {
     const now = Date.now();
     
     // Return cached data if still valid and not forcing refresh
@@ -29,14 +32,13 @@ export class ProjectsDataService {
     }
 
     try {
-      const response = await fetch('/api/monday/development-projects', {
-        credentials: 'include'
-      });
+      const endpoint = options.useFiltered 
+        ? '/api/integrations/monday/development-projects-filtered'
+        : '/api/integrations/monday/development-projects';
+        
+      const response = await fetchWithTokenExpirationHandling(endpoint);
       
       if (!response.ok) {
-        if (response.status === 401) {
-          throw new Error('Authentication required. Please log in to Monday.com.');
-        }
         throw new Error(`Failed to fetch projects: ${response.statusText}`);
       }
       
@@ -175,8 +177,33 @@ export class ProjectsDataService {
     const salePrice = parseFloat(this.parseColumnValue(item.column_values, 'numbers23__1')) || 0;
     const soldPrice = parseFloat(this.parseColumnValue(item.column_values, 'dup__of_sale_price__1')) || 0;
     
+    // Extract renovation cost from linked property
+    let renovationCost = 0;
+    if (item.linked_items && item.linked_items.length > 0) {
+      const linkedProperty = item.linked_items[0]; // Assuming first linked item is the property
+      const renovationCostValue = this.parseColumnValue(linkedProperty.column_values, 'formula668');
+      renovationCost = parseFloat(renovationCostValue) || 0;
+    }
+    
     const statusIndex = this.parseColumnValue(item.column_values, 'status')?.index;
     const stage = statusIndex !== undefined ? PROJECT_STAGES[statusIndex as keyof typeof PROJECT_STAGES] : 'Unknown';
+    
+    // Extract phase dates
+    const phaseDates: Record<string, DateTime | null> = {};
+    PROJECT_PHASES.forEach(phase => {
+      const dateValue = this.parseColumnValue(item.column_values, phase.dateFieldId);
+      phaseDates[phase.dateFieldId] = dateValue?.date 
+        ? DateTime.fromISO(dateValue.date) 
+        : null;
+    });
+    
+    // Determine current phase based on group
+    const currentGroupId = item.group?.id;
+    const currentPhase = currentGroupId ? PHASE_BY_GROUP_ID[currentGroupId] : PROJECT_PHASES[0];
+    
+    // Calculate phase timeline
+    const projectStartDate = arrasSignedDate || DateTime.now().minus({ months: 1 });
+    const phaseTimeline = calculatePhaseTimeline(projectStartDate, currentPhase, phaseDates);
     
     // Create base project data
     const projectData: Partial<ProjectData> = {
@@ -193,7 +220,10 @@ export class ProjectsDataService {
       arrasAmount,
       outstandingAmount,
       salePrice,
-      soldPrice
+      soldPrice,
+      renovationCost,
+      phaseTimeline,
+      currentPhase
     };
     
     // Generate cashflow events
@@ -206,7 +236,7 @@ export class ProjectsDataService {
   }
 
   // Parse all projects from Monday.com data
-  async parseProjectsData(options: { force?: boolean } = {}): Promise<ProjectData[]> {
+  async parseProjectsData(options: { force?: boolean; useFiltered?: boolean } = {}): Promise<ProjectData[]> {
     try {
       const data = await this.fetchProjectsData(options);
       

@@ -19,6 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { useTranslations } from 'next-intl';
+import { KpiConfigService } from '@/lib/services/kpiConfigService';
 
 interface KpiConfigDrawerProps {
   kpiOrder: string[];
@@ -52,6 +53,8 @@ export default function KpiConfigDrawer({
   const [importText, setImportText] = useState("");
   const sensors = useSensors(useSensor(PointerSensor));
   const t = useTranslations('kpis');
+  const tComponents = useTranslations('components.kpiConfig');
+  
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -77,12 +80,10 @@ export default function KpiConfigDrawer({
           sensors={sensors}
           collisionDetection={closestCenter}
           onDragEnd={({ active, over }) => {
-            if (over) {
+            if (over && active.id !== over.id) {
               const oldIndex = kpiOrder.indexOf(active.id as string);
               const newIndex = kpiOrder.indexOf(over.id as string);
-              if (oldIndex !== newIndex) {
-                setKpiOrder(arrayMove(kpiOrder, oldIndex, newIndex));
-              }
+              setKpiOrder(arrayMove(kpiOrder, oldIndex, newIndex));
             }
           }}
         >
@@ -95,7 +96,7 @@ export default function KpiConfigDrawer({
             ))}
           </SortableContext>
         </DndContext>
-        <h3 className="text-lg font-semibold my-4">Ocultar KPIs – General</h3>
+        <h3 className="text-lg font-semibold my-4">{tComponents('hideKpisGeneral')}</h3>
         {kpiOrder.map((key) => (
           <div key={key} className="flex items-center gap-2 mb-2">
             <label className="flex-1">{key}</label>
@@ -110,7 +111,7 @@ export default function KpiConfigDrawer({
             />
           </div>
         ))}
-        <h3 className="text-lg font-semibold my-4">Ocultar KPIs – Colaboradores</h3>
+        <h3 className="text-lg font-semibold my-4">{tComponents('hideKpisCollaborators')}</h3>
         {kpiOrder.map((key) => (
           <div key={key} className="flex items-center gap-2 mb-2">
             <label className="flex-1">{key}</label>
@@ -125,7 +126,7 @@ export default function KpiConfigDrawer({
             />
           </div>
         ))}
-        <h3 className="text-lg font-semibold my-4">Hide Closers</h3>
+        <h3 className="text-lg font-semibold my-4">{tComponents('hideClosers')}</h3>
         {closers.map((c) => (
           <div key={c.id} className="flex items-center gap-2 mb-1">
             <label className="flex-1">{c.name}</label>
@@ -145,18 +146,20 @@ export default function KpiConfigDrawer({
       <div className="space-y-2">
         <button
           className="px-3 py-1 bg-blue-500 text-white rounded"
-          onClick={() => {
-            const cfg = {
-              kpiOrder,
-              objectives,
-              hiddenKpisGeneral: Array.from(hiddenKpisGeneral),
-              hiddenKpisCollab: Array.from(hiddenKpisCollab),
-              hiddenClosers: Array.from(hiddenClosers),
-            };
-            const json = JSON.stringify(cfg, null, 2);
-            navigator.clipboard.writeText(json);
-            alert(t('configCopied'));
-          }}
+                     onClick={async () => {
+             try {
+               await KpiConfigService.copyConfigToClipboard({
+                 kpiOrder,
+                 objectives,
+                 hiddenKpisGeneral,
+                 hiddenKpisCollab,
+                 hiddenClosers,
+               });
+               alert(t('configCopied'));
+             } catch {
+               alert('Failed to copy configuration');
+             }
+           }}
         >
           {t('exportConfig')}
         </button>
@@ -176,15 +179,17 @@ export default function KpiConfigDrawer({
             className="mt-1 px-3 py-1 bg-green-600 text-white rounded"
             onClick={() => {
               try {
-                const cfg = JSON.parse(importText);
-                setKpiOrder(cfg.kpiOrder);
-                setObjectives(cfg.objectives);
-                setHiddenKpisGeneral(new Set(cfg.hiddenKpisGeneral));
-                setHiddenKpisCollab(new Set(cfg.hiddenKpisCollab));
-                setHiddenClosers(new Set(cfg.hiddenClosers));
+                const updates = KpiConfigService.importConfig(importText);
+                
+                if (updates.kpiOrder) setKpiOrder(updates.kpiOrder);
+                if (updates.objectives) setObjectives(updates.objectives);
+                if (updates.hiddenKpisGeneral) setHiddenKpisGeneral(updates.hiddenKpisGeneral);
+                if (updates.hiddenKpisCollab) setHiddenKpisCollab(updates.hiddenKpisCollab);
+                if (updates.hiddenClosers) setHiddenClosers(updates.hiddenClosers);
+                
                 alert(t('configImported'));
-              } catch {
-                alert(t('invalidJson'));
+              } catch (error) {
+                alert(error instanceof Error ? error.message : t('invalidJson'));
               }
             }}
           >
@@ -197,22 +202,18 @@ export default function KpiConfigDrawer({
   );
 }
 
-function SortableItem(props: { id: string }) {
-  const { attributes, listeners, setNodeRef, transform, transition } =
-    useSortable({ id: props.id });
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  };
+function SortableItem({ id }: { id: string }) {
+  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id });
+  const style = { transform: CSS.Transform.toString(transform), transition };
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className="border rounded p-2 mb-1 bg-muted cursor-move"
       {...attributes}
       {...listeners}
+      className="bg-gray-50 border p-2 mb-1 rounded cursor-move"
     >
-      {props.id}
+      {id}
     </div>
   );
 }

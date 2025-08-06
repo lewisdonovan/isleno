@@ -495,7 +495,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      assign_user_role: {
+        Args: { target_user_id: string; target_role: string }
+        Returns: undefined
+      }
+      user_has_role: {
+        Args: { check_user_id: string; check_role: string }
+        Returns: boolean
+      }
     }
     Enums: {
       kpi_data_type:

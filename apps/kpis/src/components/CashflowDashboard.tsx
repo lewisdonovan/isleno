@@ -2,10 +2,15 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { useCashflowDashboard } from "@/hooks/useCashflowDashboard";
-import { TrendingUp, TrendingDown, Building2, Clock, Target, MapPin } from "lucide-react";
+import { TrendingUp, TrendingDown, Building2, Clock, Target, MapPin, Info } from "lucide-react";
 import { DateTime } from 'luxon';
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, XAxis, YAxis, Cell } from "recharts";
+import { MetricCard } from "@/components/cashflow/MetricCard";
+import { PhaseCapacityCards } from "@/components/cashflow/PhaseCapacityCards";
+import { CASHFLOW_CHART_CONFIG, UPCOMING_EVENTS_CHART_CONFIG } from '@/configs/charts';
+import { useTranslations } from 'next-intl';
 
 function formatCurrencyShort(amount: number): string {
   if (amount >= 1000000) {
@@ -71,7 +76,7 @@ function UpcomingEventsChart({ events }: { events: any[] }) {
     });
 
   return (
-    <ChartContainer config={upcomingEventsChartConfig}>
+            <ChartContainer config={UPCOMING_EVENTS_CHART_CONFIG}>
       <BarChart accessibilityLayer data={nextSixMonths}>
         <CartesianGrid vertical={false} />
         <XAxis
@@ -115,7 +120,7 @@ function CashflowProjectionChart({ monthlyProjections }: { monthlyProjections: a
   }));
   
   return (
-    <ChartContainer config={chartConfig}>
+            <ChartContainer config={CASHFLOW_CHART_CONFIG}>
       <AreaChart
         accessibilityLayer
         data={chartData}
@@ -176,32 +181,143 @@ function CashflowProjectionChart({ monthlyProjections }: { monthlyProjections: a
 
 export default function CashflowDashboard() {
   const { kpiData, loading, error } = useCashflowDashboard();
+  const t = useTranslations('components.cashflow');
 
   if (loading) {
     return (
-      <div className="space-y-6">
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {[...Array(8)].map((_, i) => (
-            <Card key={i}>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  <div className="h-4 bg-muted rounded animate-pulse"></div>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-8 bg-muted rounded animate-pulse mb-2"></div>
-                <div className="h-3 bg-muted rounded animate-pulse"></div>
-              </CardContent>
-            </Card>
-          ))}
-              </div>
+      <Card>
+        <CardContent className="p-6">
+          <div className="text-center text-muted-foreground">
+            <p>{t('loading')}</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error || !kpiData) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <div className="text-center text-muted-foreground">
+            <p>{t('failedToLoad')}</p>
+            {error && <p className="text-sm text-red-500 mt-2">{error}</p>}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Financial KPIs */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <MetricCard
+          title={t('weeklyInvestmentNew')}
+          value={formatCurrencyShort(kpiData.weeklyFinancialMetrics.weeklyInvestment.totalSpend)}
+          description={t('weeklyInvestmentNewDesc')}
+          icon={TrendingUp}
+          textColor="text-blue-600"
+          dataSourceKey="weeklyInvestmentNew"
+        />
+        <MetricCard
+          title={t('avgMonthlySpend')}
+          value={formatCurrencyShort(kpiData.weeklyFinancialMetrics.weeklyInvestment.avgMonthlySpend)}
+          description={t('avgMonthlySpendDesc')}
+          icon={TrendingUp}
+          dataSourceKey="avgMonthlySpend"
+        />
+        <MetricCard
+          title={t('weeklyMargin')}
+          value={formatCurrencyShort(kpiData.weeklyFinancialMetrics.weeklyMargin.weeklyMargin)}
+          description={t('weeklyMarginDesc')}
+          icon={TrendingUp}
+          textColor="text-green-600"
+          dataSourceKey="weeklyMargin"
+        />
+        <MetricCard
+          title={t('generatedValue')}
+          value={formatCurrencyShort(kpiData.weeklyFinancialMetrics.generatedValue)}
+          description={t('generatedValueDesc')}
+          icon={TrendingUp}
+          textColor="text-purple-600"
+          dataSourceKey="generatedValue"
+        />
+      </div>
+
+
+
+      {/* Phase Capacity Utilization */}
+      <PhaseCapacityCards phaseCapacity={kpiData.phaseCapacity} />
+
+      {/* Cashflow Projection Chart */}
+      <Card>
+        <CardHeader className="flex flex-col items-stretch space-y-0 border-b p-0 sm:flex-row">
+          <div className="flex flex-1 flex-col justify-center gap-1 px-6 py-5 sm:py-6">
+            <HoverCard>
+              <HoverCardTrigger asChild>
+                <div className="flex items-center gap-2 cursor-help">
+                  <CardTitle>{t('cashflowProjectionTitle')}</CardTitle>
+                  <Info className="h-4 w-4 text-muted-foreground" />
+                </div>
+              </HoverCardTrigger>
+              <HoverCardContent className="w-80">
+                <div className="space-y-2">
+                  <h4 className="text-sm font-semibold">Data Source</h4>
+                  <p className="text-sm text-muted-foreground">
+                    {t('dataSource.cashflowProjection')}
+                  </p>
+                </div>
+              </HoverCardContent>
+            </HoverCard>
+            <CardDescription>
+              {t('cashflowProjectionDesc')}
+            </CardDescription>
+          </div>
+          <div className="flex">
+            <div className="relative z-30 flex flex-1 flex-col justify-center gap-1 border-t px-6 py-4 text-left even:border-l data-[active=true]:bg-muted/50 sm:border-l sm:border-t-0 sm:px-8 sm:py-6">
+              <span className="text-xs text-muted-foreground">
+                {t('netChange6Months')}
+              </span>
+              <span className={`text-lg font-bold leading-none sm:text-3xl ${
+                kpiData.monthlyProjections[5]?.cumulativeLiquidity > kpiData.currentLiquidity 
+                  ? 'text-green-600' 
+                  : 'text-red-600'
+              }`}>
+                {kpiData.monthlyProjections[5]?.cumulativeLiquidity > kpiData.currentLiquidity ? '+' : ''}
+                {formatCurrencyShort(
+                  (kpiData.monthlyProjections[5]?.cumulativeLiquidity || kpiData.currentLiquidity) - kpiData.currentLiquidity
+                )}
+              </span>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="px-2 sm:p-6">
+          <CashflowProjectionChart monthlyProjections={kpiData.monthlyProjections} />
+        </CardContent>
+      </Card>
 
       {/* Project Profitability Analysis */}
       <Card>
         <CardHeader>
-          <CardTitle>Project Profitability Analysis</CardTitle>
+          <HoverCard>
+            <HoverCardTrigger asChild>
+              <div className="flex items-center gap-2 cursor-help">
+                <CardTitle>{t('projectProfitabilityTitle')}</CardTitle>
+                <Info className="h-4 w-4 text-muted-foreground" />
+              </div>
+            </HoverCardTrigger>
+            <HoverCardContent className="w-80">
+              <div className="space-y-2">
+                <h4 className="text-sm font-semibold">Data Source</h4>
+                <p className="text-sm text-muted-foreground">
+                  {t('dataSource.projectProfitability')}
+                </p>
+              </div>
+            </HoverCardContent>
+          </HoverCard>
           <CardDescription>
-            Detailed profitability metrics for all projects
+            {t('projectProfitabilityDescription')}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -210,14 +326,14 @@ export default function CashflowDashboard() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b">
-                    <th className="text-left p-2">Project</th>
-                    <th className="text-left p-2">Zone</th>
-                    <th className="text-left p-2">Phase</th>
-                    <th className="text-right p-2">Total Cost</th>
-                    <th className="text-right p-2">Sale Price</th>
-                    <th className="text-right p-2">Margin</th>
-                    <th className="text-right p-2">Weekly Value</th>
-                    <th className="text-center p-2">Status</th>
+                    <th className="text-left p-2">{t('project')}</th>
+                    <th className="text-left p-2">{t('zone')}</th>
+                    <th className="text-left p-2">{t('phase')}</th>
+                    <th className="text-right p-2">{t('totalCost')}</th>
+                    <th className="text-right p-2">{t('salePrice')}</th>
+                    <th className="text-right p-2">{t('margin')}</th>
+                    <th className="text-right p-2">{t('weeklyValue')}</th>
+                    <th className="text-center p-2">{t('status')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -273,12 +389,12 @@ export default function CashflowDashboard() {
                           )}
                           {project.isRental && (
                             <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300">
-                              Rental
+                              {t('rental')}
                             </span>
                           )}
                           {project.isCompleted && (
                             <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300">
-                              Done
+                              {t('done')}
                             </span>
                           )}
                         </div>
@@ -291,355 +407,6 @@ export default function CashflowDashboard() {
           )}
         </CardContent>
       </Card>
-    </div>
-  );
-}
-
-  if (error || !kpiData) {
-    return (
-      <Card>
-        <CardContent className="p-6">
-          <div className="text-center text-muted-foreground">
-            <p>Failed to load cashflow data</p>
-            {error && <p className="text-sm text-red-500 mt-2">{error}</p>}
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  return (
-    <div className="space-y-6">
-      {/* Financial KPIs */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Current Liquidity</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {formatCurrencyShort(kpiData.currentLiquidity)}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Available cash for investments
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">30-Day Projection</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {formatCurrencyShort(kpiData.projectedLiquidityIn30Days)}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {kpiData.projectedLiquidityIn30Days > kpiData.currentLiquidity ? (
-                <span className="text-green-600">+{formatCurrencyShort(kpiData.projectedLiquidityIn30Days - kpiData.currentLiquidity)}</span>
-              ) : (
-                <span className="text-red-600">{formatCurrencyShort(kpiData.projectedLiquidityIn30Days - kpiData.currentLiquidity)}</span>
-              )}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">90-Day Projection</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {formatCurrencyShort(kpiData.projectedLiquidityIn90Days)}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {kpiData.projectedLiquidityIn90Days > kpiData.currentLiquidity ? (
-                <span className="text-green-600">+{formatCurrencyShort(kpiData.projectedLiquidityIn90Days - kpiData.currentLiquidity)}</span>
-              ) : (
-                <span className="text-red-600">{formatCurrencyShort(kpiData.projectedLiquidityIn90Days - kpiData.currentLiquidity)}</span>
-              )}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Net Cashflow</CardTitle>
-            {kpiData.netCashflow >= 0 ? (
-              <TrendingUp className="h-4 w-4 text-green-600" />
-            ) : (
-              <TrendingDown className="h-4 w-4 text-red-600" />
-            )}
-          </CardHeader>
-          <CardContent>
-            <div className={`text-2xl font-bold ${kpiData.netCashflow >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-              {formatCurrencyShort(kpiData.netCashflow)}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Revenue: {formatCurrencyShort(kpiData.totalProjectedRevenue)} | 
-              Costs: {formatCurrencyShort(kpiData.totalProjectedCosts)}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Head of Finance KPIs */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avg Project Profitability</CardTitle>
-            <Target className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className={`text-2xl font-bold ${
-              kpiData.averageProjectProfitability >= 1.2 ? 'text-green-600' : 'text-orange-600'
-            }`}>
-              {Math.round(kpiData.averageProjectProfitability * 100)}%
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Target: ≥120% margin
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Projects Above 120%</CardTitle>
-            {kpiData.projectsMeetingMinimumMargin / kpiData.totalProjectsMeetingMinimumMargin >= 0.8 ? (
-              <TrendingUp className="h-4 w-4 text-green-600" />
-            ) : (
-              <TrendingDown className="h-4 w-4 text-red-600" />
-            )}
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {kpiData.projectsMeetingMinimumMargin}/{kpiData.totalProjectsMeetingMinimumMargin}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {Math.round((kpiData.projectsMeetingMinimumMargin / kpiData.totalProjectsMeetingMinimumMargin) * 100)}% meeting minimum margin
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Rental Profitability</CardTitle>
-            <Building2 className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-600">
-              {(kpiData.averageRentalProfitability * 100).toFixed(1)}%
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Yearly rental / property value
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Weekly Value Creation</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">
-              {formatCurrencyShort(kpiData.totalWeeklyValueCreation)}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Nominal euros per week
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Weekly Value Margin</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">
-              {(kpiData.averageWeeklyValueCreationPercent * 100).toFixed(1)}%
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Avg margin of project cost
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Operational KPIs */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Projects</CardTitle>
-            <Building2 className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{kpiData.activeProjects}</div>
-            <p className="text-xs text-muted-foreground">
-              {kpiData.completedProjects} completed
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avg Progress</CardTitle>
-            <Target className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{Math.round(kpiData.averageProjectProgress)}%</div>
-            <p className="text-xs text-muted-foreground">
-              Across all active projects
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Completing This Month</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{kpiData.projectsCompletingThisMonth}</div>
-            <p className="text-xs text-muted-foreground">
-              {kpiData.projectsCompletingNextMonth} next month
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Zone Distribution</CardTitle>
-            <MapPin className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {kpiData.pmiProjects} / {kpiData.mahProjects}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              PMI / MAH projects
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Phase Capacity Utilization */}
-      <div className="grid gap-4 md:grid-cols-3">
-        {kpiData.phaseCapacity.map((phase) => (
-          <Card key={phase.phase}>
-            <CardHeader>
-              <CardTitle className="text-sm font-medium">{phase.phase} Phase</CardTitle>
-              <CardDescription>
-                Capacity utilization
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-2xl font-bold">{phase.occupied}/{phase.total}</span>
-                <span className={`text-sm font-medium ${getPhaseColor(phase.utilization)}`}>
-                  {Math.round(phase.utilization * 100)}%
-                </span>
-              </div>
-              <div className="w-full bg-muted rounded-full h-2">
-                <div 
-                  className={`h-2 rounded-full transition-all ${
-                    phase.utilization >= 1.0 ? 'bg-red-500' :
-                    phase.utilization >= 0.8 ? 'bg-orange-500' :
-                    phase.utilization >= 0.6 ? 'bg-yellow-500' :
-                    'bg-green-500'
-                  }`}
-                  style={{ width: `${Math.min(phase.utilization * 100, 100)}%` }}
-                ></div>
-              </div>
-              <p className="text-xs text-muted-foreground mt-2">
-                {phase.total - phase.occupied} slots available
-              </p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {/* Cashflow Projection Chart */}
-      <Card>
-        <CardHeader className="flex flex-col items-stretch space-y-0 border-b p-0 sm:flex-row">
-          <div className="flex flex-1 flex-col justify-center gap-1 px-6 py-5 sm:py-6">
-            <CardTitle>6-Month Cashflow Projection</CardTitle>
-            <CardDescription>
-              Projected inflows, outflows, and net liquidity
-            </CardDescription>
-          </div>
-          <div className="flex">
-            <div className="relative z-30 flex flex-1 flex-col justify-center gap-1 border-t px-6 py-4 text-left even:border-l data-[active=true]:bg-muted/50 sm:border-l sm:border-t-0 sm:px-8 sm:py-6">
-              <span className="text-xs text-muted-foreground">
-                Net Change (6 months)
-              </span>
-              <span className={`text-lg font-bold leading-none sm:text-3xl ${
-                kpiData.monthlyProjections[5]?.cumulativeLiquidity > kpiData.currentLiquidity 
-                  ? 'text-green-600' 
-                  : 'text-red-600'
-              }`}>
-                {kpiData.monthlyProjections[5]?.cumulativeLiquidity > kpiData.currentLiquidity ? '+' : ''}
-                {formatCurrencyShort(
-                  (kpiData.monthlyProjections[5]?.cumulativeLiquidity || kpiData.currentLiquidity) - kpiData.currentLiquidity
-                )}
-              </span>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="px-2 sm:p-6">
-          <CashflowProjectionChart monthlyProjections={kpiData.monthlyProjections} />
-        </CardContent>
-      </Card>
-
-      {/* Upcoming Cashflow Events */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Monthly Cashflow Overview</CardTitle>
-            <CardDescription>
-              Net cashflow by month for the next 6 months
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <UpcomingEventsChart events={kpiData.cashflowEvents} />
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Upcoming Cashflow Events</CardTitle>
-            <CardDescription>
-              Next 10 scheduled payments and revenues
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {kpiData.cashflowEvents
-                .filter(event => event.date >= DateTime.now())
-                .sort((a, b) => a.date.toMillis() - b.date.toMillis())
-                .slice(0, 10)
-                .map((event, index) => (
-                  <div key={index} className="flex items-center justify-between py-2 border-b border-muted last:border-0">
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">{event.description}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {event.date.toFormat('MMM dd, yyyy')} • {event.type.replace('_', ' ')}
-                      </p>
-                    </div>
-                    <div className={`text-sm font-medium ${event.amount >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {event.amount >= 0 ? '+' : ''}{formatCurrencyShort(event.amount)}
-                    </div>
-                  </div>
-                ))
-              }
-            </div>
-          </CardContent>
-        </Card>
-      </div>
     </div>
   );
 } 

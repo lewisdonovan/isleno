@@ -1,6 +1,7 @@
 "use client";
 
-import { Task } from "gantt-task-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
 
 interface TaskListTableProps {
   rowHeight: number;
@@ -8,71 +9,77 @@ interface TaskListTableProps {
   fontFamily: string;
   fontSize: string;
   locale: string;
-  tasks: Task[];
+  tasks: any[];
   selectedTaskId: string;
   setSelectedTask: (taskId: string) => void;
-  isDark: boolean;
-  onExpanderClick: (task: Task) => void;
+  isDark?: boolean;
+  onExpanderClick?: (taskId: string) => void;
 }
 
-export default function TaskListTable({ 
-  rowHeight, 
-  fontFamily, 
-  fontSize, 
-  tasks, 
-  selectedTaskId, 
+export default function TaskListTable({
+  rowHeight,
+  rowWidth,
+  fontFamily,
+  fontSize,
+  locale,
+  tasks,
+  selectedTaskId,
   setSelectedTask,
-  isDark,
+  isDark = false,
   onExpanderClick
 }: TaskListTableProps) {
   return (
-    <div 
-      className="table-container"
-      style={{ width: "200px" }}
+    <div
+      className="gantt-tasklist-table"
+      style={{
+        fontFamily,
+        fontSize,
+        width: rowWidth,
+        height: rowHeight * tasks.length
+      }}
     >
-      {/* Task rows */}
-      {tasks.map((task) => (
-        <div
-          key={task.id}
-          className={`table-row ${selectedTaskId === task.id ? 'selected' : ''}`}
-          style={{
-            height: `${rowHeight}px`,
-            fontFamily,
-            fontSize,
-            borderBottom: '1px solid #e2e8f0',
-            background: selectedTaskId === task.id 
-              ? (isDark ? '#334155' : '#e2e8f0')
-              : (isDark ? '#1e293b' : '#ffffff'),
-            display: 'flex',
-            alignItems: 'center',
-            paddingLeft: task.type === 'project' ? '8px' : '24px',
-            cursor: 'pointer',
-            color: isDark ? '#f1f5f9' : '#1e293b'
-          }}
-          onClick={() => setSelectedTask(task.id)}
-        >
-          {/* Expander for projects */}
-          {task.type === 'project' && (
-            <span 
-              style={{ marginRight: '6px', fontSize: '12px' }}
-              onClick={(e) => {
-                e.stopPropagation();
-                onExpanderClick(task);
-              }}
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHeader className="w-8"></TableHeader>
+            <TableHeader>Task Name</TableHeader>
+            <TableHeader>Start Date</TableHeader>
+            <TableHeader>End Date</TableHeader>
+            <TableHeader>Duration</TableHeader>
+            <TableHeader>Progress</TableHeader>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {tasks.map((task) => (
+            <TableRow
+              key={task.TaskID}
+              className={selectedTaskId === task.TaskID ? 'bg-muted' : ''}
+              onClick={() => setSelectedTask(task.TaskID)}
             >
-              {task.hideChildren ? '▶' : '▼'}
-            </span>
-          )}
-          <span style={{ 
-            fontWeight: task.type === 'project' ? '600' : '400',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap'
-          }}>
-            {task.name}
-          </span>
-        </div>
-      ))}
+              <TableCell className="w-8">
+                {task.ParentID && onExpanderClick && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onExpanderClick(task.TaskID);
+                    }}
+                    className="h-4 w-4 p-0"
+                  >
+                    {task.hideChildren ? '+' : '-'}
+                  </Button>
+                )}
+              </TableCell>
+              <TableCell>{task.TaskName}</TableCell>
+              <TableCell>{task.StartDate?.toLocaleDateString(locale)}</TableCell>
+              <TableCell>{task.EndDate?.toLocaleDateString(locale)}</TableCell>
+              <TableCell>{task.Duration} days</TableCell>
+              <TableCell>{task.Progress}%</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
     </div>
   );
 } 

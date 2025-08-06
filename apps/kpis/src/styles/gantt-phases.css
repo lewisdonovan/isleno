@@ -1,0 +1,70 @@
+/* Gantt Chart Phase Colors */
+
+/* Legal Phase */
+.phase-legal .e-taskbar {
+  background-color: rgb(87, 155, 252) !important;
+  color: #ffffff !important;
+}
+
+.phase-legal .e-progress {
+  background-color: rgb(87, 155, 252) !important;
+}
+
+/* Construction Preparation Phase */
+.phase-construction_preparation .e-taskbar {
+  background-color: rgb(255, 203, 0) !important;
+  color: #000000 !important;
+}
+
+.phase-construction_preparation .e-progress {
+  background-color: rgb(255, 203, 0) !important;
+}
+
+/* Renovation Phase */
+.phase-renovation .e-taskbar {
+  background-color: rgb(162, 93, 220) !important;
+  color: #ffffff !important;
+}
+
+.phase-renovation .e-progress {
+  background-color: rgb(162, 93, 220) !important;
+}
+
+/* Staging Phase */
+.phase-staging .e-taskbar {
+  background-color: rgb(226, 68, 92) !important;
+  color: #ffffff !important;
+}
+
+.phase-staging .e-progress {
+  background-color: rgb(226, 68, 92) !important;
+}
+
+/* Completed / Our Stock Phase */
+.phase-completed_our_stock .e-taskbar {
+  background-color: rgb(3, 127, 76) !important;
+  color: #ffffff !important;
+}
+
+.phase-completed_our_stock .e-progress {
+  background-color: rgb(3, 127, 76) !important;
+}
+
+/* Completed / Reserved Arras Phase */
+.phase-completed_reserved_arras .e-taskbar {
+  background-color: rgb(0, 200, 117) !important;
+  color: #000000 !important;
+}
+
+.phase-completed_reserved_arras .e-progress {
+  background-color: rgb(0, 200, 117) !important;
+}
+
+/* Override Syncfusion default styles */
+.e-gantt .e-taskbar {
+  border-radius: 3px !important;
+}
+
+.e-gantt .e-progress {
+  border-radius: 3px !important;
+} 

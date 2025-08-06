@@ -2,7 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
-import { BoardDetails } from '@/types/monday'
+import { BoardDetails } from '@isleno/types/monday'
 import { fetchBoardDetails } from '@/lib/monday/services'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
@@ -35,7 +35,7 @@ export default async function BoardDetailPage({ params }: BoardDetailPageProps) 
   } catch (err) {
     console.error('Error fetching board details:', err);
     return (
-      <div className="container mx-auto p-6 max-w-6xl">
+      <div className="p-6 space-y-6">
         <div className="space-y-6">
           <div className="flex items-center space-x-4">
             <Link href="/boards">
@@ -71,7 +71,7 @@ export default async function BoardDetailPage({ params }: BoardDetailPageProps) 
   }
 
   return (
-    <div className="container mx-auto p-6 max-w-6xl">
+    <div className="p-6 space-y-6">
       <div className="space-y-6">
         <div className="flex items-center space-x-4">
           <Link href="/boards">

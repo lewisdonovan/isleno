@@ -1,61 +1,40 @@
-import { ViewMode } from "gantt-task-react";
+import { DateRange } from '@isleno/types/gantt';
 
-/**
- * Gantt chart dimensions and styling constants
- */
 export const GANTT_CONFIG = {
-  // Layout dimensions
-  TASK_LIST_WIDTH: "200px",
-  ROW_HEIGHT: 32,
-  HEADER_HEIGHT: 32,
-  MIN_GANTT_HEIGHT: 350,
-  
-  // Styling
-  BAR_CORNER_RADIUS: 2,
-  HANDLE_WIDTH: 4,
-  FONT_SIZE: "12",
-  BAR_FILL: 45,
-  
-  // Layout calculations
-  SCROLLBAR_WIDTH: 20,
+  TASK_LIST_WIDTH: '300px',
+  ROW_HEIGHT: 40,
+  HEADER_HEIGHT: 60,
+  BAR_CORNER_RADIUS: 3,
+  HANDLE_WIDTH: 20,
+  FONT_SIZE: '12px',
+  BAR_FILL: 60,
+  MIN_GANTT_HEIGHT: 400,
   MARGIN_WIDTH: 20,
-  MIN_COLUMN_WIDTH: 60,
+  MIN_COLUMN_WIDTH: 80,
   MAX_COLUMN_WIDTH: 300,
   TARGET_VISIBLE_PERIODS: {
     MIN: 8,
-    MAX: 12
+    MAX: 20
   }
 } as const;
 
-/**
- * Default column widths for different view modes
- */
-export const DEFAULT_COLUMN_WIDTHS = {
-  [ViewMode.Month]: 120,
-  [ViewMode.Week]: 150,
-  [ViewMode.Day]: 200,
-} as const;
-
-/**
- * View mode configurations
- */
 export const VIEW_MODE_CONFIG = {
-  [ViewMode.Month]: {
+  Month: {
     defaultWidth: 120,
     daysPerPeriod: 30,
-    navigationIncrement: 3, // months
+    navigationIncrement: 3,
     maxDayViewLimit: null
   },
-  [ViewMode.Week]: {
+  Week: {
     defaultWidth: 150,
     daysPerPeriod: 7,
-    navigationIncrement: 1, // months
+    navigationIncrement: 1,
     maxDayViewLimit: null
   },
-  [ViewMode.Day]: {
-    defaultWidth: 200,
+  Day: {
+    defaultWidth: 100,
     daysPerPeriod: 1,
-    navigationIncrement: 0.25, // months
-    maxDayViewLimit: 60 // limit for performance
+    navigationIncrement: 1,
+    maxDayViewLimit: 365
   }
 } as const; 

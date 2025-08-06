@@ -3,7 +3,7 @@
 import { Calendar, dateFnsLocalizer, View, Views } from 'react-big-calendar';
 import { DateTime } from 'luxon';
 import { useMonthlyEvents } from '@/hooks/useCalendarData';
-import { CalendarEvent, SupportedLocale } from '@/types/calendar';
+import { CalendarEvent, SupportedLocale } from '@isleno/types/calendar';
 import { useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,43 +15,17 @@ import 'react-big-calendar/lib/css/react-big-calendar.css';
 import '@/styles/calendar.css';
 import { useTranslations } from 'next-intl';
 
-// Date-fns localizer for react-big-calendar
-const locales = {
-  'en-US': enUS,
-  'es-ES': es,
-};
+import { CALENDAR_LOCALES } from '@/configs/calendar';
 
 const localizer = dateFnsLocalizer({
   format,
   parse,
   startOfWeek,
   getDay,
-  locales,
+  locales: CALENDAR_LOCALES,
 });
 
-// Event type styles
-const EVENT_STYLES = {
-  past_cost: {
-    backgroundColor: '#ef4444',
-    borderColor: '#dc2626',
-    color: '#ffffff',
-  },
-  upcoming_cost: {
-    backgroundColor: '#f97316',
-    borderColor: '#ea580c',
-    color: '#ffffff',
-  },
-  past_income: {
-    backgroundColor: '#22c55e',
-    borderColor: '#16a34a',
-    color: '#ffffff',
-  },
-  upcoming_income: {
-    backgroundColor: '#3b82f6',
-    borderColor: '#2563eb',
-    color: '#ffffff',
-  },
-};
+import { CALENDAR_EVENT_STYLES } from '@/configs/calendar';
 
 interface FinancialCalendarProps {
   locale?: SupportedLocale;
@@ -79,26 +53,24 @@ export default function FinancialCalendar({
 
   // Custom event component
   const EventComponent = useCallback(({ event }: { event: CalendarEvent }) => {
-    const eventStyle = EVENT_STYLES[event.type];
+    const eventStyle = CALENDAR_EVENT_STYLES[event.type as keyof typeof CALENDAR_EVENT_STYLES];
     
     return (
       <div 
-        className="h-full flex flex-col justify-between p-1 rounded text-xs"
+        className="p-1 text-xs rounded"
         style={eventStyle}
-        title={`${event.title} - ${formatCurrency(event.amount, event.currency)}`}
       >
-        <div className="font-medium truncate">{event.title}</div>
-        <div className="text-xs opacity-90">
+        <div className="font-medium">{event.title}</div>
+        <div className="opacity-75">
           {formatCurrency(event.amount, event.currency)}
         </div>
       </div>
     );
   }, [formatCurrency]);
 
-  // Custom event style getter
   const eventStyleGetter = useCallback((event: CalendarEvent) => {
     return {
-      style: EVENT_STYLES[event.type],
+      style: CALENDAR_EVENT_STYLES[event.type as keyof typeof CALENDAR_EVENT_STYLES] || CALENDAR_EVENT_STYLES.upcoming_cost
     };
   }, []);
 
@@ -229,10 +201,10 @@ export default function FinancialCalendar({
           
           {/* Event type legend */}
           <div className="flex flex-wrap gap-2">
-            <Badge style={EVENT_STYLES.past_cost}>💸 {t('pastCosts')}</Badge>
-            <Badge style={EVENT_STYLES.upcoming_cost}>📉 {t('upcomingCosts')}</Badge>
-            <Badge style={EVENT_STYLES.past_income}>💰 {t('pastIncome')}</Badge>
-            <Badge style={EVENT_STYLES.upcoming_income}>📈 {t('upcomingIncome')}</Badge>
+            <Badge style={CALENDAR_EVENT_STYLES.past_cost}>💸 {t('pastCosts')}</Badge>
+            <Badge style={CALENDAR_EVENT_STYLES.upcoming_cost}>📉 {t('upcomingCosts')}</Badge>
+            <Badge style={CALENDAR_EVENT_STYLES.past_income}>💰 {t('pastIncome')}</Badge>
+            <Badge style={CALENDAR_EVENT_STYLES.upcoming_income}>📈 {t('upcomingIncome')}</Badge>
           </div>
         </div>
       </CardHeader>

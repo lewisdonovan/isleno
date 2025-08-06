@@ -1,6 +1,7 @@
 import { mondayRequest } from '@/lib/auth';
-import { UserSession, MondayUser } from '@/types/auth';
-import { Board, BoardDetails, BoardItem } from '@/types/monday';
+import { UserSession, MondayUser } from '@isleno/types/auth';
+import { Board, BoardDetails, BoardItem } from '@isleno/types/monday';
+import { MONDAY_BOARD_IDS, getMondayBoardId } from '@/lib/constants/mondayBoards';
 import {
   GET_BOARDS,
   GET_BOARD_DETAILS,
@@ -14,12 +15,11 @@ import {
   GET_LEADS_COLLABORATORS_PAGE,
   GET_POINT_ACTIVITIES_PAGE,
   GET_DEVELOPMENT_PROJECTS,
+  GET_DEVELOPMENT_PROJECTS_FILTERED_AND_LINKED,
+  GET_PROPERTY_DATABASE_RENOVATION,
 } from './queries';
 
 
-const KPI_BOARD   = 9076494835;
-const ACT_BOARD   = 9076281262;  // Activities
-const LEADS_BOARD = 5740801783;
 const PAGE_SIZE   = 500;
 
 function debug(tag: string, info: unknown) {
@@ -28,6 +28,10 @@ function debug(tag: string, info: unknown) {
   }
 }
 
+// Helper function to extract token from session
+function getTokenFromSession(session: UserSession): string {
+  return session.accessToken.replace('Bearer ', '');
+}
 
 /**
  * Fetch a paginated list of boards
@@ -37,10 +41,12 @@ export async function fetchBoards(
   page: number,
   limit: number
 ): Promise<Board[]> {
+  const token = getTokenFromSession(session);
   const data = await mondayRequest<{ boards: Board[] }>(
-    session,
+    token,
     GET_BOARDS,
-    { page, limit }
+    { page, limit },
+    session.user.id
   );
   return data.boards;
 }
@@ -52,10 +58,12 @@ export async function fetchBoardDetails(
   session: UserSession,
   id: string
 ): Promise<BoardDetails> {
+  const token = getTokenFromSession(session);
   const data = await mondayRequest<{ boards: BoardDetails[] }>(
-    session,
+    token,
     GET_BOARD_DETAILS,
-    { ids: [id] }
+    { ids: [id] },
+    session.user.id
   );
   return data.boards[0];
 }
@@ -66,9 +74,12 @@ export async function fetchBoardDetails(
 export async function fetchCurrentUser(
   session: UserSession
 ): Promise<MondayUser> {
+  const token = getTokenFromSession(session);
   const data = await mondayRequest<{ me: MondayUser }>(
-    session,
-    GET_CURRENT_USER
+    token,
+    GET_CURRENT_USER,
+    undefined,
+    session.user.id
   );
   return data.me;
 }
@@ -79,6 +90,7 @@ export async function fetchCurrentUser(
 export async function fetchUsers(
   session: UserSession
 ): Promise<MondayUser[]> {
+  const token = getTokenFromSession(session);
   const all: MondayUser[] = [];
   let page = 1;
   const PAGE_SIZE = 100;
@@ -86,9 +98,10 @@ export async function fetchUsers(
   while (true) {
     const vars = { limit: PAGE_SIZE, page };
     const data = await mondayRequest<{ users: MondayUser[] }>(
-      session,
+      token,
       GET_USERS_PAGE,
-      vars
+      vars,
+      session.user.id
     );
     if (!data.users?.length) break;
     all.push(...data.users);
@@ -105,14 +118,14 @@ export async function fetchUsers(
 export async function fetchPaActivities(
   session: UserSession
 ): Promise<BoardItem[]> {
+  const token = getTokenFromSession(session);
   const allItems: BoardItem[] = [];
   let cursor: string | null = null;
   const PAGE_SIZE = 100;
-  const BOARD_ID = 9076281262;
 
   while (true) {
     const variables: Record<string, any> = {
-      boardId: [BOARD_ID],
+      boardId: [MONDAY_BOARD_IDS.ACTIVITIES],
       limit: PAGE_SIZE,
     };
     if (cursor) variables.cursor = cursor;
@@ -120,9 +133,10 @@ export async function fetchPaActivities(
     const data = await mondayRequest<
       { boards: Array<{ items_page: { cursor: string | null; has_more: boolean; items: BoardItem[] } }> }
     >(
-      session,
+      token,
       GET_PA_ACTIVITIES_PAGE,
-      variables
+      variables,
+      session.user.id
     );
 
     const page = data.boards?.[0]?.items_page;
@@ -139,9 +153,10 @@ export async function fetchPaActivities(
  * Grupos del board de KPIs
  */
 export async function getKpiGroups(session: UserSession) {
+  const token = getTokenFromSession(session);
   const data = await mondayRequest<{
     boards: Array<{ groups: { id: string; title: string }[] }>;
-  }>(session, GET_KPI_GROUPS, { boardId: [KPI_BOARD] });
+  }>(token, GET_KPI_GROUPS, { boardId: [MONDAY_BOARD_IDS.KPI] }, session.user.id);
 
   const groups = data.boards?.[0]?.groups || [];
   debug('getKpiGroups', { count: groups.length });
@@ -155,15 +170,17 @@ export async function getKpisByGroup(
   session: UserSession,
   groupId: string,
 ) {
+  const token = getTokenFromSession(session);
   const all: any[] = [];
 
   // 1ª página
   const first = await mondayRequest<{
     boards: Array<{ groups: Array<{ items_page: { cursor: string | null; items: any[] } }> }>;
   }>(
-    session,
+    token,
     GET_KPIS_BY_GROUP_PAGE,
-    { boardId: [KPI_BOARD], groupIds: [groupId], limit: PAGE_SIZE }  // 👈 aquí LISTA
+    { boardId: [MONDAY_BOARD_IDS.KPI], groupIds: [groupId], limit: PAGE_SIZE },  // 👈 aquí LISTA
+    session.user.id
   );
 
   const page = first.boards?.[0]?.groups?.[0]?.items_page;
@@ -173,9 +190,10 @@ export async function getKpisByGroup(
   let cursor = page?.cursor ?? null;
   while (cursor) {
     const next = await mondayRequest<{ next_items_page: { cursor: string | null; items: any[] } }>(
-      session,
+      token,
       NEXT_ITEMS_PAGE,
-      { cursor, limit: PAGE_SIZE }
+      { cursor, limit: PAGE_SIZE },
+      session.user.id
     );
     all.push(...next.next_items_page.items);
     cursor = next.next_items_page.cursor;
@@ -189,16 +207,17 @@ export async function getKpisByGroup(
  * Activities board (ID 9076281262)
  */
 export async function getActivities(session: UserSession) {
+  const token = getTokenFromSession(session);
   const all: any[] = [];
   let cursor: string | null = null;
 
   while (true) {
-    const vars: Record<string, any> = { boardId: [ACT_BOARD], limit: PAGE_SIZE };
+    const vars: Record<string, any> = { boardId: [MONDAY_BOARD_IDS.ACTIVITIES], limit: PAGE_SIZE };
     if (cursor) vars.cursor = cursor;
 
     const data = await mondayRequest<{
       boards: Array<{ items_page: { cursor: string | null; items: any[] } }>;
-    }>(session, GET_ACTIVITIES, vars);
+    }>(token, GET_ACTIVITIES, vars, session.user.id);
 
     const page = data.boards?.[0]?.items_page;
     if (!page) break;
@@ -220,6 +239,7 @@ export async function getPointActivities(
   startDate: string,
   endDate: string,
 ) {
+  const token = getTokenFromSession(session);
   const all: any[] = [];
   const PAGE_SIZE = 500;
 
@@ -227,8 +247,10 @@ export async function getPointActivities(
   const first = await mondayRequest<{
     boards: Array<{ items_page: { cursor: string | null; items: any[] } }>
   }>(
-    session,
+    token,
     GET_POINT_ACTIVITIES_PAGE(startDate, endDate, PAGE_SIZE),
+    { boardId: MONDAY_BOARD_IDS.POINT_ACTIVITIES },
+    session.user.id
   );
 
   const page = first.boards?.[0]?.items_page;
@@ -240,9 +262,10 @@ export async function getPointActivities(
     const next = await mondayRequest<{
       next_items_page: { cursor: string | null; items: any[] }
     }>(
-      session,
+      token,
       NEXT_ITEMS_PAGE,
       { cursor, limit: PAGE_SIZE },
+      session.user.id
     );
     all.push(...next.next_items_page.items);
     cursor = next.next_items_page.cursor;
@@ -253,20 +276,22 @@ export async function getPointActivities(
 }
 
 /**
- * Leads provenientes de colaboradores (“11. Contacto closer”)
+ * Leads provenientes de colaboradores ("11. Contacto closer")
  */
 export async function getLeadsFromCollaborators(
   session: UserSession,
   { limit = PAGE_SIZE, onlyFirst = false } = {},
 ) {
+  const token = getTokenFromSession(session);
   const all: any[] = [];
 
   const first = await mondayRequest<{
     boards: Array<{ items_page: { cursor: string | null; items: any[] } }>
   }>(
-    session,
+    token,
     GET_LEADS_COLLABORATORS_PAGE,
-    { boardId: [LEADS_BOARD], limit }
+    { boardId: [MONDAY_BOARD_IDS.LEADS], limit },
+    session.user.id
   );
 
   all.push(...first.boards?.[0]?.items_page.items ?? []);
@@ -281,9 +306,10 @@ export async function getLeadsFromCollaborators(
     const next = await mondayRequest<{
       next_items_page: { cursor: string | null; items: any[] }
     }>(
-      session,
+      token,
       NEXT_ITEMS_PAGE,
-      { cursor, limit }
+      { cursor, limit },
+      session.user.id
     );
 
     all.push(...next.next_items_page.items);
@@ -300,8 +326,9 @@ export async function getLeadsFromCollaborators(
 export async function fetchDevelopmentProjects(
   session: UserSession
 ): Promise<{ boards: Array<{ items_page: { cursor: string | null; items: BoardItem[] } }> }> {
-  const developmentBoardId = process.env.BOARD_ID_HIGH_LEVEL_DEVELOPMENT;
-  const propertyBoardId = process.env.BOARD_ID_PROPERTY_DATABASE;
+  const token = getTokenFromSession(session);
+  const developmentBoardId = MONDAY_BOARD_IDS.DEVELOPMENT_PROJECTS;
+  const propertyBoardId = MONDAY_BOARD_IDS.PROPERTY_DATABASE;
   const linkColumnId = "board_relation_mksftpxc";
 
   if (!developmentBoardId || !propertyBoardId) {
@@ -311,18 +338,87 @@ export async function fetchDevelopmentProjects(
   const data = await mondayRequest<{
     boards: Array<{ items_page: { cursor: string | null; items: BoardItem[] } }>;
   }>(
-    session,
+    token,
     GET_DEVELOPMENT_PROJECTS,
     {
       boardId: developmentBoardId,
       propertyBoardId: propertyBoardId,
       linkColumnId: linkColumnId,
-    }
+    },
+    session.user.id
   );
 
   debug('fetchDevelopmentProjects', { 
     boards: data.boards?.length,
     items: data.boards?.[0]?.items_page?.items?.length 
+  });
+  
+  return data;
+}
+
+/**
+ * Fetch development projects with linked property data (filtered by specific groups)
+ */
+export async function fetchDevelopmentProjectsFiltered(
+  session: UserSession
+): Promise<{ boards: Array<{ items_page: { cursor: string | null; items: BoardItem[] } }> }> {
+  const token = getTokenFromSession(session);
+  const developmentBoardId = MONDAY_BOARD_IDS.DEVELOPMENT_PROJECTS;
+  const propertyBoardId = MONDAY_BOARD_IDS.PROPERTY_DATABASE;
+  const linkColumnId = "board_relation_mksftpxc";
+
+  if (!developmentBoardId || !propertyBoardId) {
+    throw new Error('Environment variables BOARD_ID_HIGH_LEVEL_DEVELOPMENT and BOARD_ID_PROPERTY_DATABASE must be set');
+  }
+
+  const data = await mondayRequest<{
+    boards: Array<{ items_page: { cursor: string | null; items: BoardItem[] } }>;
+  }>(
+    token,
+    GET_DEVELOPMENT_PROJECTS_FILTERED_AND_LINKED,
+    {
+      boardId: developmentBoardId,
+      propertyBoardId: propertyBoardId,
+      linkColumnId: linkColumnId,
+    },
+    session.user.id
+  );
+
+  debug('fetchDevelopmentProjectsFiltered', { 
+    boards: data.boards?.length,
+    items: data.boards?.[0]?.items_page?.items?.length 
+  });
+  
+  return data;
+}
+
+/**
+ * Fetch property database renovation data for financial calculations
+ */
+export async function fetchPropertyDatabaseRenovation(
+  session: UserSession
+): Promise<{ boards: Array<{ groups: Array<{ items_page: { items: BoardItem[] } }> }> }> {
+  const token = getTokenFromSession(session);
+  const boardId = getMondayBoardId('PROPERTY_DATABASE');
+  console.log({boardId})
+  
+  console.log('Using board ID for property database:', boardId);
+  console.log('Environment variable BOARD_ID_PROPERTY_DATABASE:', process.env.BOARD_ID_PROPERTY_DATABASE);
+  
+  const data = await mondayRequest<{
+    boards: Array<{ groups: Array<{ items_page: { items: BoardItem[] } }> }>;
+  }>(
+    token,
+    GET_PROPERTY_DATABASE_RENOVATION,
+    { boardId },
+    session.user.id
+  );
+
+  debug('fetchPropertyDatabaseRenovation', { 
+    boardId,
+    boards: data.boards?.length,
+    groups: data.boards?.[0]?.groups?.length,
+    items: data.boards?.[0]?.groups?.[0]?.items_page?.items?.length 
   });
   
   return data;

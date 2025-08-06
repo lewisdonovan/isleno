@@ -7,7 +7,7 @@ const fetcher = (url: string) =>
     .then((res) => res.json())
     .then((json) => json.data);
 
-import type { DashboardData } from "@/types/kpis";
+import type { DashboardData } from "@isleno/types/kpis";
 
 export function useKpiDashboard(start: string, end: string) {
   // Raw data type returned by the API
