@@ -1,5 +1,5 @@
 import { DateTime } from 'luxon';
-import { SupportedLocale } from '@/types/calendar';
+import { SupportedLocale } from '@isleno/types/calendar';
 
 /**
  * Format currency based on locale
@@ -28,3 +28,5 @@ export const formatTaskDuration = (start: Date, end: Date, locale: SupportedLoca
   const localeString = locale === 'es' ? 'es-ES' : 'en-US';
   return `${DateTime.fromJSDate(start).setLocale(localeString).toFormat('MMM dd')} - ${DateTime.fromJSDate(end).setLocale(localeString).toFormat('MMM dd')}`;
 }; 
+
+ 

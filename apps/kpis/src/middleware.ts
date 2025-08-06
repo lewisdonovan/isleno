@@ -1,85 +1,51 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { UserSession } from '@/types/auth';
+import { createMiddlewareClient } from '@isleno/supabase'
+import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
 
-// Routes that require authentication
-const protectedRoutes = ['/calendar', '/gantt', '/boards', '/charts', '/forms/point-activities'];
-// Routes that are public
-const publicRoutes = ['/', '/auth/login', '/auth/error'];
-
-export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-
-  // Check if route requires authentication
-  const isProtectedRoute = protectedRoutes.some(route => 
-    pathname.startsWith(route)
-  );
+export async function middleware(req: NextRequest) {
+  const res = NextResponse.next()
   
-  const isPublicRoute = publicRoutes.some(route => 
-    pathname === route || pathname.startsWith('/api/auth')
-  );
-
-  // Skip middleware for API routes (except auth)
-  if (pathname.startsWith('/api/') && !pathname.startsWith('/api/auth')) {
-    return NextResponse.next();
-  }
-
-  // Allow public routes
-  if (isPublicRoute) {
-    return NextResponse.next();
-  }
-
-  // Check for session cookie
-  const sessionCookie = request.cookies.get('monday_session');
+  // Add pathname to headers so the layout can access it
+  res.headers.set('x-pathname', req.nextUrl.pathname)
   
-  if (!sessionCookie && isProtectedRoute) {
-    // Redirect to login with the original path as a query parameter
-    const loginUrl = new URL('/auth/login', request.url);
-    loginUrl.searchParams.set('redirect', pathname + request.nextUrl.search);
-    return NextResponse.redirect(loginUrl);
+  const supabase = createMiddlewareClient({ req, res })
+  
+  // Get user session
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  const { pathname } = req.nextUrl
+
+  // Allow auth routes regardless of session
+  if (pathname.startsWith('/auth/')) {
+    return res
   }
 
-  // If we have a session cookie, validate it
-  if (sessionCookie) {
-    try {
-      const session: UserSession = JSON.parse(sessionCookie.value);
-      
-      // Check if session is expired
-      if (Date.now() > session.expiresAt) {
-        // Clear expired session and redirect to login with original path
-        const loginUrl = new URL('/auth/login', request.url);
-        loginUrl.searchParams.set('redirect', pathname + request.nextUrl.search);
-        const response = NextResponse.redirect(loginUrl);
-        response.cookies.delete('monday_session');
-        return response;
-      }
-
-      // Session is valid, continue
-      return NextResponse.next();
-    } catch (error) {
-      console.error('Invalid session format:', error);
-      // Invalid session, redirect to login with original path
-      const loginUrl = new URL('/auth/login', request.url);
-      loginUrl.searchParams.set('redirect', pathname + request.nextUrl.search);
-      const response = NextResponse.redirect(loginUrl);
-      response.cookies.delete('monday_session');
-      return response;
-    }
+  // Protect all other routes
+  if (!user) {
+    const redirectUrl = req.nextUrl.clone()
+    redirectUrl.pathname = '/auth/login'
+    return NextResponse.redirect(redirectUrl)
   }
 
-  // If we reach here, it's a protected route without a session
-  const loginUrl = new URL('/auth/login', request.url);
-  loginUrl.searchParams.set('redirect', pathname + request.nextUrl.search);
-  return NextResponse.redirect(loginUrl);
+  // If logged in and trying to access login, redirect to home
+  if (user && pathname === '/auth/login') {
+    return NextResponse.redirect(new URL('/', req.url))
+  }
+
+  return res
 }
 
 export const config = {
   matcher: [
     /*
      * Match all request paths except for the ones starting with:
+     * - api (API routes)
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      */
-    '/((?!_next/static|_next/image|favicon.ico).*)',
+    '/((?!api|_next/static|_next/image|favicon.ico).*)',
   ],
-}; 
+} 

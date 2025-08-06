@@ -303,13 +303,119 @@ export const GET_DEVELOPMENT_PROJECTS = `
   }
 `;
 
+export const GET_DEVELOPMENT_PROJECTS_FILTERED_AND_LINKED = `
+  query GetDevelopmentProjectsFilteredAndLinked(
+    $boardId: ID!,
+    $propertyBoardId: ID!,
+    $linkColumnId: String!
+  ) {
+    boards(ids: [$boardId]) {
+      items_page(query_params: {
+        operator: or,
+        rules: [
+          { column_id: "group", compare_value: "topics", operator: any_of },
+          { column_id: "group", compare_value: "new_group", operator: any_of },
+          { column_id: "group", compare_value: "group_title", operator: any_of },
+          { column_id: "group", compare_value: "new_group83889", operator: any_of },
+          { column_id: "group", compare_value: "new_group17614", operator: any_of },
+          { column_id: "group", compare_value: "new_group__1", operator: any_of }
+        ]
+      }) {
+        cursor
+        items {
+          id
+          name
+          group {
+            id
+          }
+          column_values(ids: [
+            "date4",
+            "date_mkt5pp4v",
+            "date_mkt5naw5", 
+            "date_mkt5z4qf",
+            "date_mkt5y4pf",
+            "date_mkt5m6tt",
+            "date_mkt5ky38",
+            "text",
+            "n_meros_mkmnjx0h",
+            "numeric_mkrjfzt5",
+            "numbers23__1",
+            "dup__of_sale_price__1",
+            "status"
+          ]) {
+            id
+            value
+            type
+            column {
+              id
+              title
+            }
+            text
+          }
+          linked_items(
+            linked_board_id: $propertyBoardId,
+            link_to_item_column_id: $linkColumnId
+          ) {
+            id
+            name
+            column_values {
+              id
+              value
+              type
+              column {
+                id
+                title
+              }
+              text
+            }
+          }
+        }
+      }
+    }
+  }
+`;
+
+export const GET_PROPERTY_DATABASE_RENOVATION = `
+  query GetPropertyDatabaseRenovation($boardId: ID!) {
+    boards(ids: [$boardId]) {
+      groups(ids: ["new_group60998__1"]) {
+        id
+        title
+        items_page {
+          items {
+            name
+            column_values(ids: [
+              "numbers4", 
+              "formula668", 
+              "numbers95", 
+              "numbers90",
+              "connect_boards64"
+            ]) {
+              id
+              text
+              type
+              ... on FormulaValue {
+                display_value
+              }
+            }
+            group {
+              id
+              title
+            }
+          }
+        }
+      }
+    }
+  }
+`;
+
 export const GET_POINT_ACTIVITIES_PAGE = (
   start: string,
   end: string,
   limit: number,
 ) => `
-  query GetPointActivitiesPage {
-    boards(ids: [9076318311]) {
+  query GetPointActivitiesPage($boardId: ID!) {
+    boards(ids: [$boardId]) {
       items_page(
         limit: ${limit},
         query_params: {

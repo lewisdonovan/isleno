@@ -1,6 +1,8 @@
 'use server'
 import { cookies } from 'next/headers'
 import { mondayRequest } from '@/lib/auth'
+import { MONDAY_BOARD_IDS } from '@/lib/constants/mondayBoards'
+
 // Define a specific type for the expected form data to avoid using `any`
 type SaveItemFormData = {
   owner: string
@@ -37,13 +39,14 @@ export async function saveItem(formData: SaveItemFormData) {
   }
 
   const data = await mondayRequest<{ create_item: { id: string } }>(
-      session,
+      session.accessToken,
       CREATE_ITEM,
       {
-        boardId: 9076318311,
+        boardId: MONDAY_BOARD_IDS.POINT_ACTIVITIES,
         itemName: formData.title,
         columnValues: JSON.stringify(columnValues),
-      }
+      },
+      session.user?.id
   )
 
   return data.create_item

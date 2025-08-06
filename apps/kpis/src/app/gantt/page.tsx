@@ -5,13 +5,15 @@ import { DateTime } from 'luxon';
 import ProjectGantt from '@/components/ProjectGantt';
 import QueryProvider from '@/components/providers/QueryProvider';
 import { useGanttMetrics } from '@/hooks/useGanttData';
-import { DateRange } from '@/types/gantt';
-import { SupportedLocale } from '@/types/calendar';
+import { DateRange } from '@isleno/types/gantt';
+import { SupportedLocale } from '@isleno/types/calendar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CalendarIcon } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useTranslations } from 'next-intl';
+import { registerLicense } from '@syncfusion/ej2-base';
+registerLicense('Ngo9BigBOggjHTQxAR8/V1JEaF5cXmRCdkx0Rnxbf1x1ZFdMYV9bQHVPIiBoS35Rc0VkW3tfdXRQR2VYUEd2VEFd');
 
 // Helper function to calculate liquidity on a specific date
 function calculateLiquidityOnDate(projects: any[], targetDate: DateTime): number {
@@ -369,9 +371,9 @@ function GanttPageContent() {
   }
 
   return (
-    <div className="min-h-screen w-full bg-background">
+    <div className="flex flex-col w-full h-full min-h-screen bg-background p-6">
       {/* Top metrics cards */}
-      <div className="p-6 pb-0">
+      <div className="pb-0">
         <GanttMetricsCards 
           locale={locale} 
           dateRange={dateRange} 
@@ -380,7 +382,7 @@ function GanttPageContent() {
       </div>
 
       {/* Main Gantt Timeline - Full width without extra padding */}
-      <div className="px-6 pb-6">
+      <div className="pb-6">
         <ProjectGantt 
           locale={locale} 
           onLocaleChange={setLocale}

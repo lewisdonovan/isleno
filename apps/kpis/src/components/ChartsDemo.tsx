@@ -1,37 +1,41 @@
 import React from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card'
 import { Info, MessageCircleWarning } from 'lucide-react'
+import { useTranslations } from 'next-intl'
+import { DEMO_CARD_STYLES } from '@/configs/themes';
 
 export const ChartsDemo = () => {
+  const t = useTranslations('components.chartsDemo');
+  
   return (
     <div>
-      <Card className="border-teal-200 bg-teal-50/50 dark:border-teal-800/50 dark:bg-teal-950/20">
+      <Card className={DEMO_CARD_STYLES.info.card}>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-teal-800 dark:text-teal-200">
+          <CardTitle className={`flex items-center gap-2 ${DEMO_CARD_STYLES.info.title}`}>
             <Info className="h-5 w-5" />
-            Demo: shadcn/ui charts implementation
+            {t('title')}
           </CardTitle>
-          <CardDescription className="text-teal-700 dark:text-teal-300">
-            <p>This page demonstrates how to use shadcn/ui charts to display data. For more information, check the docs on the link below.</p>
+          <CardDescription className={DEMO_CARD_STYLES.info.content}>
+            <p>{t('description')}</p>
           </CardDescription>
         </CardHeader>
-        <CardContent className="text-teal-700 dark:text-teal-300">
+        <CardContent className={DEMO_CARD_STYLES.info.content}>
           <div className="space-y-2 text-sm">
             <p>• <strong>
-              <a href='https://ui.shadcn.com/charts/' target='_blank' className="hover:text-teal-600 dark:hover:text-teal-100 transition-colors">shadcn/ui charts</a>
+              <a href='https://ui.shadcn.com/charts/' target='_blank' className={DEMO_CARD_STYLES.info.link}>shadcn/ui charts</a>
             </strong></p>
           </div>
         </CardContent>
       </Card>
 
-      <Card className="border-amber-200 bg-amber-50/50 dark:border-amber-800/50 dark:bg-amber-950/20 mt-6">
+      <Card className={`${DEMO_CARD_STYLES.warning.card} mt-6`}>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-amber-800 dark:text-amber-200">
+          <CardTitle className={`flex items-center gap-2 ${DEMO_CARD_STYLES.warning.title}`}>
             <MessageCircleWarning className="h-5 w-5" />
-            Warning
+            {t('warningTitle')}
           </CardTitle>
-          <CardDescription className="text-amber-700 dark:text-amber-300">
-            <p>This is a placeholder for the actual charts. The data is not real and the charts are not connected to the actual data.</p>
+          <CardDescription className={DEMO_CARD_STYLES.warning.content}>
+            <p>{t('warningDescription')}</p>
           </CardDescription>
         </CardHeader>
       </Card>

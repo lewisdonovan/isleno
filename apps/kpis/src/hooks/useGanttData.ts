@@ -6,9 +6,9 @@ import {
   fetchGanttMetrics
 } from '@/lib/services/ganttService';
 import { getDefaultDateRange } from '@/lib/gantt/services';
-import { DateRange } from '@/types/gantt';
+import { DateRange } from '@isleno/types/gantt';
 import { useProjectsData } from './useProjectsData';
-import type { GanttProject, GanttMetrics, BusinessGanttTask } from '@/types/projects';
+import type { GanttProject, GanttMetrics, BusinessGanttTask } from '@isleno/types/gantt';
 
 // Date range interface is imported from types
 
@@ -25,7 +25,7 @@ export function useGanttProjects(dateRange?: DateRange, enabled: boolean = true)
   });
 }
 
-// Hook for fetching tasks in react-gantt-task format with collapse state management
+// Hook for fetching tasks in react-gantt-task format
 export function useGanttTasks(dateRange?: DateRange, projectCollapseStates: Record<string, boolean> = {}, enabled: boolean = true) {
   const effectiveDateRange = dateRange || getDefaultDateRange();
   

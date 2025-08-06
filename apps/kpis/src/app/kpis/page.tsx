@@ -9,7 +9,8 @@ export default async function KpisPage() {
   const locale = await getLocaleFromCookies();
   
   // Fetch all departments from the database
-  const { data: departments, error } = await supabaseServer
+  const supabase = await supabaseServer();
+  const { data: departments, error } = await supabase
     .from("departments")
     .select("department_id, department_name, description, key")
     .order("department_name");

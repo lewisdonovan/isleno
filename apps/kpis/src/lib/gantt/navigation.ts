@@ -1,56 +1,65 @@
-import { ViewMode } from "gantt-task-react";
 import { DateTime } from 'luxon';
-import { DateRange } from '@/types/gantt';
-import { VIEW_MODE_CONFIG } from './config';
+import { DateRange } from '@isleno/types/gantt';
 
-/**
- * Navigate date range in the specified direction
- */
-export const navigateDateRange = (
-  currentRange: DateRange, 
+export function navigateDateRange(
+  dateRange: DateRange, 
   direction: 'prev' | 'next', 
-  viewMode: ViewMode
-): DateRange => {
-  const viewConfig = VIEW_MODE_CONFIG[viewMode as keyof typeof VIEW_MODE_CONFIG];
-  const months = viewConfig?.navigationIncrement || 1;
-  
-  const delta = direction === 'next' ? months : -months;
-  
-  return {
-    start: currentRange.start.plus({ months: delta }),
-    end: currentRange.end.plus({ months: delta })
-  };
-};
+  viewMode: string
+): DateRange {
+  const amount = viewMode === 'Month' ? 1 : 
+                viewMode === 'Week' ? 1 : 
+                3; // QuarterDay
+  const unit = viewMode === 'Month' ? 'month' : 
+               viewMode === 'Week' ? 'week' : 
+               'month';
 
-/**
- * Reset date range to current period (6 months before to 12 months after current date)
- */
-export const resetToCurrentPeriod = (): DateRange => {
+  if (direction === 'prev') {
+    return {
+      start: dateRange.start.minus({ [unit]: amount }),
+      end: dateRange.end.minus({ [unit]: amount })
+    };
+  } else {
+    return {
+      start: dateRange.start.plus({ [unit]: amount }),
+      end: dateRange.end.plus({ [unit]: amount })
+    };
+  }
+}
+
+export function resetToCurrentPeriod(viewMode: string): DateRange {
   const now = DateTime.now();
-  return {
-    start: now.minus({ months: 6 }).startOf('month'),
-    end: now.plus({ months: 12 }).endOf('month')
-  };
-};
+  
+  switch (viewMode) {
+    case 'Month':
+      return {
+        start: now.minus({ months: 6 }).startOf('month'),
+        end: now.plus({ months: 12 }).endOf('month')
+      };
+    case 'Week':
+      return {
+        start: now.minus({ weeks: 8 }).startOf('week'),
+        end: now.plus({ weeks: 16 }).endOf('week')
+      };
+    default: // QuarterDay
+      return {
+        start: now.minus({ months: 3 }).startOf('month'),
+        end: now.plus({ months: 6 }).endOf('month')
+      };
+  }
+}
 
-/**
- * Create date range for this year
- */
-export const createYearRange = (): DateRange => {
+export function createYearRange(): DateRange {
   const now = DateTime.now();
   return {
     start: now.startOf('year'),
     end: now.endOf('year')
   };
-};
+}
 
-/**
- * Create date range for specified number of months around current date
- */
-export const createMonthRange = (monthsBefore: number, monthsAfter: number): DateRange => {
+export function createMonthRange(beforeMonths: number, afterMonths: number): DateRange {
   const now = DateTime.now();
   return {
-    start: now.minus({ months: monthsBefore }).startOf('month'),
-    end: now.plus({ months: monthsAfter }).endOf('month')
+    start: now.minus({ months: beforeMonths }).startOf('month'),
+    end: now.plus({ months: afterMonths }).endOf('month')
   };
-}; 
+} 

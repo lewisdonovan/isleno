@@ -1,31 +1,58 @@
 "use client";
 
 import { useState, useCallback, useMemo, useEffect } from 'react';
-import { Gantt, Task, ViewMode } from "gantt-task-react";
-import "gantt-task-react/dist/index.css";
+import { 
+  GanttComponent, 
+  ColumnsDirective, 
+  ColumnDirective, 
+  EditSettingsModel, 
+  ToolbarItem, 
+  SelectionSettingsModel,
+  Inject,
+  Sort,
+  Filter,
+  Reorder,
+  Resize,
+  Toolbar,
+  Edit,
+  Selection,
+  ContextMenu,
+  ColumnMenu,
+  DayMarkers
+} from '@syncfusion/ej2-react-gantt';
 import { DateTime } from 'luxon';
 import { useTheme } from 'next-themes';
 import { useGanttData } from '@/hooks/useGanttData';
-import { DateRange } from '@/types/gantt';
-import { useGanttLayout } from '@/hooks/useGanttLayout';
-import { useGanttEventHandlers } from '@/hooks/useGanttEventHandlers';
-import type { BusinessGanttTask } from '@/types/projects';
+import { DateRange } from '@isleno/types/gantt';
 import { PHASE_COLORS } from '@/lib/constants/projectConstants';
-import { SupportedLocale } from '@/types/calendar';
-import { getGanttColors } from '@/lib/gantt/colors';
-import { formatCurrency, formatDateRange } from '@/lib/gantt/formatters';
-import { navigateDateRange, resetToCurrentPeriod, createYearRange, createMonthRange } from '@/lib/gantt/navigation';
-import { GANTT_CONFIG } from '@/lib/gantt/config';
-import TaskTooltip from '@/components/gantt/TaskTooltip';
-import TaskListTable from '@/components/gantt/TaskListTable';
-import TaskListHeader from '@/components/gantt/TaskListHeader';
+import { PROJECT_PHASES } from '@/lib/constants/projectPhases';
+import { SupportedLocale } from '@isleno/types/calendar';
+import { formatCurrency } from '@/lib/gantt/formatters';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ChevronLeft, ChevronRight, Calendar, Expand, Shrink, CalendarIcon } from 'lucide-react';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { GanttControls } from '@/components/gantt/GanttControls';
+
+// Import Syncfusion CSS
+import '@syncfusion/ej2-base/styles/material.css';
+import '@syncfusion/ej2-buttons/styles/material.css';
+import '@syncfusion/ej2-calendars/styles/material.css';
+import '@syncfusion/ej2-dropdowns/styles/material.css';
+import '@syncfusion/ej2-gantt/styles/material.css';
+import '@syncfusion/ej2-grids/styles/material.css';
+import '@syncfusion/ej2-inputs/styles/material.css';
+import '@syncfusion/ej2-layouts/styles/material.css';
+import '@syncfusion/ej2-lists/styles/material.css';
+import '@syncfusion/ej2-navigations/styles/material.css';
+import '@syncfusion/ej2-notifications/styles/material.css';
+import '@syncfusion/ej2-popups/styles/material.css';
+import '@syncfusion/ej2-richtexteditor/styles/material.css';
+import '@syncfusion/ej2-treegrid/styles/material.css';
+
+// Import custom phase styling
+import '@/styles/gantt-phases.css';
 
 interface ProjectGanttProps {
   locale?: SupportedLocale;
@@ -37,7 +64,6 @@ interface ProjectGanttProps {
 
 export default function ProjectGantt({ 
   locale = 'en', 
-  onLocaleChange,
   dateRange: externalDateRange,
   onDateRangeChange: externalOnDateRangeChange,
   onProjectsDataChange
@@ -45,7 +71,6 @@ export default function ProjectGantt({
   const { resolvedTheme } = useTheme();
   const t = useTranslations('gantt');
   
-  const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.Month);
   const [mounted, setMounted] = useState(false);
   
   // Internal date range state (used when no external dateRange is provided)
@@ -59,7 +84,7 @@ export default function ProjectGantt({
 
   // Use external dateRange if provided, otherwise use internal state
   const dateRange = externalDateRange || internalDateRange;
-  const setDateRange = (newDateRange: DateRange | ((prev: DateRange) => DateRange)) => {
+  const setDateRange = useCallback((newDateRange: DateRange | ((prev: DateRange) => DateRange)) => {
     if (externalOnDateRangeChange) {
       // If using external control, compute the new value and call the external handler
       const computedDateRange = typeof newDateRange === 'function' 
@@ -70,7 +95,7 @@ export default function ProjectGantt({
       // If using internal state, pass through to the internal setter
       setInternalDateRange(newDateRange);
     }
-  };
+  }, [externalOnDateRangeChange, dateRange]);
 
   const { 
     tasks, 
@@ -82,23 +107,12 @@ export default function ProjectGantt({
     toggleAllProjects 
   } = useGanttData(dateRange);
 
-  // Custom hooks for extracted logic
-  const { containerRef, calculateColumnWidth } = useGanttLayout(viewMode, dateRange);
-  const {
-    handleTaskChange,
-    handleTaskDelete,
-    handleProgressChange,
-    handleDblClick,
-    handleSelect,
-    handleExpanderClick
-  } = useGanttEventHandlers({ tasks: tasks as BusinessGanttTask[], toggleProjectCollapse });
+
 
   // Handle hydration
   useEffect(() => {
     setMounted(true);
   }, []);
-
-
 
   // Notify parent of projects data changes
   useEffect(() => {
@@ -109,93 +123,153 @@ export default function ProjectGantt({
 
   const isDark = mounted && resolvedTheme === 'dark';
 
-  // Check if all projects are expanded (to determine button icon)
-  const allProjectsExpanded = useMemo(() => {
-    return projects.every(project => !projectCollapseStates[project.id]);
-  }, [projects, projectCollapseStates]);
-
-  // Navigation and formatting functions using utilities
-  const goToPreviousRange = useCallback(() => {
-    setDateRange(prev => navigateDateRange(prev, 'prev', viewMode));
-  }, [viewMode, setDateRange]);
-
-  const goToNextRange = useCallback(() => {
-    setDateRange(prev => navigateDateRange(prev, 'next', viewMode));
-  }, [viewMode, setDateRange]);
-
-  const goToToday = useCallback(() => {
-    setDateRange(resetToCurrentPeriod());
-  }, [setDateRange]);
-
-  // Convert BusinessGanttTask to Task format expected by the library
-  const ganttTasks = useMemo<Task[]>(() => {
-    return tasks.map(task => ({
-      start: task.start,
-      end: task.end,
-      name: task.name,
-      id: task.id,
-      type: task.type,
-      progress: task.progress,
-      isDisabled: task.isDisabled,
-      styles: task.styles,
-      project: task.project,
-      dependencies: task.dependencies,
-      hideChildren: task.hideChildren,
-      displayOrder: task.displayOrder,
-    }));
+    // Convert BusinessGanttTask to Syncfusion Gantt format
+  const ganttTasks = useMemo(() => {
+    console.log('Converting tasks to Gantt format:', tasks.length, 'tasks');
+    return tasks.map(task => {
+      console.log('Task progress:', task.name, task.progress);
+      const ganttTask = {
+        TaskID: task.id || `task-${Math.random()}`, // Ensure TaskID is never undefined
+        TaskName: task.name || 'Unnamed Task',
+        StartDate: task.start,
+        EndDate: task.end,
+        Progress: task.progress || 0,
+        ParentID: task.project || null,
+        Duration: DateTime.fromJSDate(task.end).diff(DateTime.fromJSDate(task.start), 'days').days,
+        Predecessor: task.dependencies?.join(',') || '',
+        ResourceInfo: task.type || 'task',
+        ExpandedState: task.expandedState || 'Expanded',
+      };
+      
+      return ganttTask;
+    });
   }, [tasks]);
 
-  const colors = getGanttColors(isDark);
+  // Syncfusion Gantt configuration
+  const taskFields = {
+    id: 'TaskID',
+    name: 'TaskName',
+    startDate: 'StartDate',
+    endDate: 'EndDate',
+    duration: 'Duration',
+    progress: 'Progress',
+    parentID: 'ParentID',
+    predecessor: 'Predecessor',
+    resourceInfo: 'ResourceInfo',
+    expandState: 'ExpandedState'
+  };
 
-  // Currency formatter bound to current locale
-  const localFormatCurrency = useCallback((amount: number, currency = 'EUR') => 
-    formatCurrency(amount, currency, locale), [locale]);
+  const editSettings: EditSettingsModel = {
+    allowAdding: false,
+    allowEditing: false,
+    allowDeleting: false,
+    allowTaskbarEditing: false,
+    showDeleteConfirmDialog: false
+  };
 
-  // Custom tooltip content using extracted component
-  const TaskTooltipContent = useCallback((props: { task: Task; fontSize: string; fontFamily: string; }) => (
-    <TaskTooltip 
-      {...props}
-      businessTasks={tasks}
-      locale={locale}
-      formatCurrency={localFormatCurrency}
-    />
-  ), [tasks, locale, localFormatCurrency]);
+  const toolbar: ToolbarItem[] = [];
 
-  // Custom TaskListTable component using extracted component
-  const CustomTaskListTable = useCallback((props: {
-    rowHeight: number;
-    rowWidth: string;
-    fontFamily: string;
-    fontSize: string;
-    locale: string;
-    tasks: Task[];
-    selectedTaskId: string;
-    setSelectedTask: (taskId: string) => void;
-  }) => (
-    <TaskListTable
-      {...props}
-      isDark={isDark}
-      onExpanderClick={handleExpanderClick}
-    />
-  ), [isDark, handleExpanderClick]);
+  const selectionSettings: SelectionSettingsModel = {
+    type: 'Single',
+    mode: 'Row'
+  };
 
-  // Custom TaskListHeader component using extracted component
-  const CustomTaskListHeader = useCallback((props: {
-    headerHeight: number;
-    rowWidth: string;
-    fontFamily: string;
-    fontSize: string;
-  }) => (
-    <TaskListHeader
-      {...props}
-      isDark={isDark}
-      locale={locale}
-    />
-  ), [isDark, locale]);
+  // Event handlers
+  const actionBegin = (args: any) => {
+    if (args.requestType === 'save') {
+      // Handle task save
+      console.log('Task saved:', args.data);
+    }
+  };
 
-  // Handle view mode changes
-  const handleViewModeChange = (mode: ViewMode) => {
-    setViewMode(mode);
+  const actionComplete = (args: any) => {
+    if (args.requestType === 'save') {
+      // Handle save completion
+      console.log('Save completed');
+    }
+  };
+
+  const rowSelecting = (args: any) => {
+    // Handle row selection
+    console.log('Row selected:', args.data);
+  };
+
+  // Add current date marker using CSS
+  useEffect(() => {
+    const addCurrentDateMarker = () => {
+      const today = new Date();
+      const ganttElement = document.querySelector('.e-gantt');
+      
+      if (ganttElement) {
+        // Remove any existing current date marker
+        const existingMarker = ganttElement.querySelector('.current-date-marker');
+        if (existingMarker) {
+          existingMarker.remove();
+        }
+        
+        // Create a new current date marker
+        const marker = document.createElement('div');
+        marker.className = 'current-date-marker';
+        marker.style.cssText = `
+          position: absolute;
+          top: 0;
+          bottom: 0;
+          left: ${getCurrentDatePosition(today)}px;
+          width: 2px;
+          background-color: #ff4444;
+          z-index: 1000;
+          pointer-events: none;
+        `;
+        
+        ganttElement.appendChild(marker);
+      }
+    };
+    
+    // Calculate the position of current date in the timeline
+    const getCurrentDatePosition = (date: Date) => {
+      // This is a simplified calculation - you might need to adjust based on your timeline
+      const timelineElement = document.querySelector('.e-gantt-chart');
+      if (timelineElement) {
+        const rect = timelineElement.getBoundingClientRect();
+        const totalWidth = rect.width;
+        const startDate = new Date('2025-01-01'); // Adjust based on your timeline start
+        const endDate = new Date('2026-12-31'); // Adjust based on your timeline end
+        const totalDays = (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24);
+        const currentDays = (date.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24);
+        return (currentDays / totalDays) * totalWidth;
+      }
+      return 0;
+    };
+    
+    // Add the marker after a short delay to ensure the Gantt is rendered
+    setTimeout(addCurrentDateMarker, 1000);
+    
+    // Re-add marker on window resize
+    window.addEventListener('resize', addCurrentDateMarker);
+    
+    return () => {
+      window.removeEventListener('resize', addCurrentDateMarker);
+    };
+  }, []);
+
+  const expanding = (args: any) => {
+    // Handle expand/collapse events
+    console.log('Expand event args:', args);
+    if (args.data) {
+      const taskId = args.data.TaskID;
+      console.log('Expand/collapse event:', taskId, 'expanded:', args.expanded);
+      
+      // Update our internal state to track the change
+      toggleProjectCollapse(taskId);
+    }
+  };
+
+
+
+  // Handle view mode changes (simplified for Syncfusion)
+  const handleViewModeChange = (mode: string) => {
+    // Syncfusion handles view modes differently
+    console.log('View mode changed to:', mode);
   };
 
   // Toggle all project collapse states (expand/collapse all)
@@ -229,14 +303,14 @@ export default function ProjectGantt({
     return (
       <div className="w-full">
         <Card>
-          <CardContent className="p-6">
-            <div className="text-center">
-              <p className="text-red-600">
-                {t('errorLoading')}
-              </p>
-              <p className="text-sm text-muted-foreground mt-2">
-                {typeof error === 'string' ? error : error.message}
-              </p>
+          <CardHeader>
+            <CardTitle>
+              {t('projectTimeline')}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-center p-8 text-destructive">
+              {t('errorLoadingData')}: {typeof error === 'string' ? error : error.message}
             </div>
           </CardContent>
         </Card>
@@ -245,7 +319,7 @@ export default function ProjectGantt({
   }
 
   return (
-    <div className="w-full" ref={containerRef}>
+    <div className="w-full">
       <Card className="w-full">
         <CardHeader className="pb-3">
           <div className="flex justify-between items-start">
@@ -259,143 +333,27 @@ export default function ProjectGantt({
             </div>
             
             {/* Controls */}
-            <div className="flex items-center gap-1">
-              {/* Date Range Picker */}
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-7 px-2 text-xs font-normal justify-start min-w-[140px]"
-                  >
-                    <CalendarIcon className="mr-1 h-3 w-3" />
-                    {formatDateRange(dateRange.start, dateRange.end, locale)}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-3" align="start">
-                  <div className="space-y-3">
-                    <div className="text-sm font-medium">
-                      {t('dateRange')}
-                    </div>
-                    
-                    {/* Quick presets */}
-                    <div className="space-y-2">
-                      <div className="text-xs text-muted-foreground">
-                        {t('quickPresets')}
-                      </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setDateRange(createYearRange())}
-                          className="h-7 text-xs"
-                        >
-                          {t('thisYear')}
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setDateRange(createMonthRange(6, 6))}
-                          className="h-7 text-xs"
-                        >
-                          {t('twelveMonths')}
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setDateRange(createMonthRange(12, 12))}
-                          className="h-7 text-xs"
-                        >
-                          {t('twentyFourMonths')}
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={goToToday}
-                          className="h-7 text-xs"
-                        >
-                          {t('today')}
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </PopoverContent>
-              </Popover>
-
-              {/* Project Expand/Collapse Toggle */}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={toggleAllProjectsHandler}
-                title={allProjectsExpanded 
-                  ? t('collapseAllProjects')
-                  : t('expandAllProjects')
-                }
-              >
-                {allProjectsExpanded ? (
-                  <Shrink className="h-3 w-3" />
-                ) : (
-                  <Expand className="h-3 w-3" />
-                )}
-              </Button>
-
-              <div className="w-px h-4 bg-border mx-1" />
-              
-              {/* View Mode Buttons */}
-              <div className="flex gap-1">
-                {[
-                  { mode: ViewMode.Month, label: t('month') },
-                  { mode: ViewMode.Week, label: t('week') },
-                  { mode: ViewMode.Day, label: t('day') },
-                ].map(({ mode, label }) => (
-                  <Button
-                    key={mode}
-                    variant={viewMode === mode ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => handleViewModeChange(mode)}
-                    className="text-xs h-7"
-                  >
-                    {label}
-                  </Button>
-                ))}
-              </div>
-              
-              <div className="w-px h-4 bg-border mx-1" />
-              
-              {/* Navigation */}
-              <Button variant="outline" size="sm" onClick={goToPreviousRange} className="h-7 w-7 p-0">
-                <ChevronLeft className="h-3 w-3" />
-              </Button>
-              <Button variant="outline" size="sm" onClick={goToNextRange} className="h-7 w-7 p-0">
-                <ChevronRight className="h-3 w-3" />
-              </Button>
-
-              {onLocaleChange && (
-                <>
-                  <div className="w-px h-4 bg-border mx-1" />
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => onLocaleChange(locale === 'en' ? 'es' : 'en')}
-                    className="text-xs h-7"
-                  >
-                    {locale === 'en' ? '🇪🇸 ES' : '🇬🇧 EN'}
-                  </Button>
-                </>
-              )}
-            </div>
+            <GanttControls
+              viewMode="Month"
+              setViewMode={handleViewModeChange}
+              dateRange={dateRange}
+              setDateRange={setDateRange}
+              locale={locale}
+              toggleAllProjects={toggleAllProjectsHandler}
+              hasCollapsedProjects={Object.values(projectCollapseStates).some(collapsed => collapsed)}
+            />
           </div>
           
           {/* Phase legend */}
           <div className="flex flex-wrap gap-1 mt-2">
-            {Object.entries(PHASE_COLORS).map(([phaseType, colors]) => (
+            {PROJECT_PHASES.map((phase) => (
               <Badge 
-                key={phaseType}
+                key={phase.id}
                 variant="secondary"
                 className="text-xs px-2 py-0 h-5"
-                style={{ backgroundColor: colors.bg, color: colors.text }}
+                style={{ backgroundColor: phase.backgroundColor, color: phase.textColor }}
               >
-                {t(phaseType as 'purchase' | 'construction' | 'sale' | 'rental')}
+                {phase.name}
               </Badge>
             ))}
           </div>
@@ -405,42 +363,202 @@ export default function ProjectGantt({
           <div className={`gantt-container w-full overflow-hidden ${isDark ? 'gantt-dark' : 'gantt-light'}`}>
             {ganttTasks.length > 0 ? (
               <div className="w-full">
-                <Gantt
-                  tasks={ganttTasks}
-                  viewMode={viewMode}
-                  viewDate={dateRange.start.toJSDate()}
+                <GanttComponent
+                  dataSource={ganttTasks}
+                  taskFields={taskFields}
+                  height="450px"
+                  allowSelection={false}
+                  allowResizing={false}
+                  allowReordering={false}
+                  allowSorting={false}
+                  allowFiltering={false}
+                  allowRowDragAndDrop={false}
+                  editSettings={editSettings}
+                  toolbar={toolbar}
+                  selectionSettings={selectionSettings}
+                  actionBegin={actionBegin}
+                  actionComplete={actionComplete}
+                  rowSelecting={rowSelecting}
+
+                  // expanding={expanding}
                   locale={locale === 'es' ? 'es-ES' : 'en-US'}
-                  listCellWidth={GANTT_CONFIG.TASK_LIST_WIDTH}
-                  columnWidth={calculateColumnWidth()}
-                  rowHeight={GANTT_CONFIG.ROW_HEIGHT}
-                  barCornerRadius={GANTT_CONFIG.BAR_CORNER_RADIUS}
-                  handleWidth={GANTT_CONFIG.HANDLE_WIDTH}
-                  fontSize={GANTT_CONFIG.FONT_SIZE}
-                  barFill={GANTT_CONFIG.BAR_FILL}
-                  barProgressColor={colors.barProgressColor}
-                  barProgressSelectedColor={colors.barProgressSelectedColor}
-                  barBackgroundColor={colors.barBackgroundColor}
-                  barBackgroundSelectedColor={colors.barBackgroundSelectedColor}
-                  projectProgressColor={colors.projectProgressColor}
-                  projectProgressSelectedColor={colors.projectProgressSelectedColor}
-                  projectBackgroundColor={colors.projectBackgroundColor}
-                  projectBackgroundSelectedColor={colors.projectBackgroundSelectedColor}
-                  milestoneBackgroundColor={colors.milestoneBackgroundColor}
-                  milestoneBackgroundSelectedColor={colors.milestoneBackgroundSelectedColor}
-                  rtl={false}
-                  headerHeight={GANTT_CONFIG.HEADER_HEIGHT}
-                  ganttHeight={Math.max(GANTT_CONFIG.MIN_GANTT_HEIGHT, ganttTasks.length * GANTT_CONFIG.ROW_HEIGHT + 80)}
-                  preStepsCount={1}
-                  TooltipContent={TaskTooltipContent}
-                  TaskListHeader={CustomTaskListHeader}
-                  TaskListTable={CustomTaskListTable}
-                  onDateChange={handleTaskChange}
-                  onDelete={handleTaskDelete}
-                  onProgressChange={handleProgressChange}
-                  onDoubleClick={handleDblClick}
-                  onSelect={handleSelect}
-                  onExpanderClick={handleExpanderClick} 
-                />
+                  enableContextMenu={false}
+                  showColumnMenu={false}
+                  allowKeyboard={false}
+                  enableVirtualization={false}
+                  enableImmutableMode={false}
+                  splitterSettings={{ columnIndex: 2 }}
+                  timelineSettings={{
+                    topTier: {
+                      unit: 'Month',
+                      format: 'MMM yyyy'
+                    },
+                    bottomTier: {
+                      unit: 'Week',
+                      format: "'W' W",
+                      count: 1
+                    }
+                  }}
+                  labelSettings={{
+                    leftLabel: 'TaskName',
+                    rightLabel: 'Progress'
+                  }}
+                  tooltipSettings={{
+                    showTooltip: true,
+                    taskbar: (args: any) => {
+                      const taskId = args?.data?.TaskID || args?.TaskID;
+                      const businessData = args?.data?.businessData || args?.businessData;
+                      const weeklyFinancials = businessData?.weeklyFinancials;
+                      
+                      // Find current week's financial data
+                      const currentDate = DateTime.now();
+                      const currentWeekStart = currentDate.startOf('week');
+                      const currentWeekFinancial = weeklyFinancials?.find((week: any) => 
+                        DateTime.fromJSDate(week.weekStart).equals(currentWeekStart)
+                      );
+                      
+                      if (currentWeekFinancial && currentWeekFinancial.lineItems.length > 0) {
+                        const lineItemsHtml = currentWeekFinancial.lineItems.map((item: any) => 
+                          `<div style="margin: 2px 0;">
+                            <span style="color: ${item.type === 'inflow' ? '#10b981' : '#ef4444'}; font-weight: bold;">
+                              ${item.type === 'inflow' ? '+' : '-'}${formatCurrency(item.amount)}
+                            </span>
+                            <span style="margin-left: 8px; font-size: 12px;">${item.description}</span>
+                          </div>`
+                        ).join('');
+                        
+                        return `
+                          <div style="padding: 8px; max-width: 300px;">
+                            <div style="font-weight: bold; margin-bottom: 4px;">Week of ${currentWeekStart.toFormat('MMM dd, yyyy')}</div>
+                            <div style="margin-bottom: 4px;">
+                              <strong>Net Flow:</strong> 
+                              <span style="color: ${currentWeekFinancial.netFlow >= 0 ? '#10b981' : '#ef4444'}; font-weight: bold;">
+                                ${currentWeekFinancial.netFlow >= 0 ? '+' : ''}${formatCurrency(currentWeekFinancial.netFlow)}
+                              </span>
+                            </div>
+                            <div style="border-top: 1px solid #e5e7eb; padding-top: 4px; margin-top: 4px;">
+                              <div style="font-weight: bold; margin-bottom: 2px;">Line Items:</div>
+                              ${lineItemsHtml}
+                            </div>
+                          </div>
+                        `;
+                      }
+                      
+                      // Default tooltip
+                      return `
+                        <div style="padding: 8px;">
+                          <div style="font-weight: bold;">${args?.data?.TaskName || args?.TaskName}</div>
+                          <div>Progress: ${args?.data?.Progress || args?.Progress || 0}%</div>
+                        </div>
+                      `;
+                    }
+                  }}
+
+                  highlightWeekends={true}
+                  eventMarkers={[{
+                    day: new Date(),
+                    label: 'Today',
+                    cssClass: 'current-date-marker'
+                  }]}
+                  taskbarTemplate={(props: any) => {
+                    // Extract phase info from the task ID
+                    const taskId = props?.data?.TaskID || props?.TaskID;
+                    let phaseId = null;
+                    
+                    // Extract phase ID from task ID (e.g., "project-123-phase-legal" -> "legal")
+                    if (taskId && taskId.includes('-phase-')) {
+                      phaseId = taskId.split('-phase-')[1];
+                    }
+                    
+                    // Find the phase definition
+                    const phase = PROJECT_PHASES.find(p => p.id === phaseId);
+                    
+                    // Try different ways to access progress
+                    const progress = props?.data?.Progress || props?.Progress || 0;
+                    
+                    // Get business data for financial information
+                    const businessData = props?.data?.businessData || props?.businessData;
+                    const weeklyFinancials = businessData?.weeklyFinancials;
+                    
+                    // Calculate current week's financial data
+                    const currentDate = DateTime.now();
+                    const currentWeekStart = currentDate.startOf('week');
+                    const currentWeekFinancial = weeklyFinancials?.find((week: any) => 
+                      DateTime.fromJSDate(week.weekStart).equals(currentWeekStart)
+                    );
+                    
+                    if (phase) {
+                      // For phase tasks, show progress and financial data if available
+                      const hasFinancialData = currentWeekFinancial && currentWeekFinancial.netFlow !== 0;
+                      
+                      return (
+                        <div 
+                          style={{
+                            backgroundColor: phase.backgroundColor,
+                            color: phase.textColor,
+                            height: '100%',
+                            width: '100%',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            borderRadius: '3px',
+                            fontSize: '10px',
+                            fontWeight: 'bold',
+                            padding: '2px'
+                          }}
+                          title={hasFinancialData ? 
+                            `Progress: ${progress}%\nNet Flow: ${formatCurrency(currentWeekFinancial.netFlow)}` : 
+                            `Progress: ${progress}%`
+                          }
+                        >
+                          <div>{progress}%</div>
+                          {hasFinancialData && (
+                            <div style={{ fontSize: '8px', marginTop: '1px' }}>
+                              {currentWeekFinancial.netFlow > 0 ? '+' : ''}{formatCurrency(currentWeekFinancial.netFlow)}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    }
+                    
+                    // For project parent tasks, show aggregated financial data
+                    const projectNetFlow = weeklyFinancials?.reduce((sum: number, week: any) => sum + week.netFlow, 0) || 0;
+                    
+                    return (
+                      <div style={{ 
+                        height: '100%', 
+                        width: '100%', 
+                        display: 'flex', 
+                        flexDirection: 'column',
+                        alignItems: 'center', 
+                        justifyContent: 'center',
+                        backgroundColor: '#6b7280',
+                        color: '#ffffff',
+                        borderRadius: '3px',
+                        fontSize: '10px',
+                        fontWeight: 'bold',
+                        padding: '2px'
+                      }}
+                      title={`Progress: ${progress}%\nTotal Net Flow: ${formatCurrency(projectNetFlow)}`}
+                      >
+                        <div>{progress}%</div>
+                        {projectNetFlow !== 0 && (
+                          <div style={{ fontSize: '8px', marginTop: '1px' }}>
+                            {projectNetFlow > 0 ? '+' : ''}{formatCurrency(projectNetFlow)}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  }}
+                  gridLines="Both"
+                  rowHeight={40}
+                >
+                  <Inject services={[Sort, Filter, Reorder, Resize, Toolbar, Edit, Selection, ContextMenu, ColumnMenu, DayMarkers]} />
+                  <ColumnsDirective>
+                    <ColumnDirective field="TaskName" headerText={t('items')} width="200"></ColumnDirective>
+                  </ColumnsDirective>
+                </GanttComponent>
               </div>
             ) : (
               <div className="flex items-center justify-center h-64 text-muted-foreground">

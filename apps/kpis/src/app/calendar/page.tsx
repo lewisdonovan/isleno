@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import FinancialCalendar from '@/components/FinancialCalendar';
 import QueryProvider from '@/components/providers/QueryProvider';
-import { SupportedLocale } from '@/types/calendar';
+import { SupportedLocale } from '@isleno/types/calendar';
 import { useTranslations } from 'next-intl';
 
 function CalendarPageContent() {
@@ -11,8 +11,8 @@ function CalendarPageContent() {
   const t = useTranslations('calendar');
 
   return (
-    <div className="container mx-auto py-6 px-4">
-      <div className="max-w-7xl mx-auto">
+    <div className="p-6 space-y-4">
+      <div className="space-y-4">
         <div className="mb-6">
           <h1 className="text-3xl font-bold tracking-tight">
             {t('title')}

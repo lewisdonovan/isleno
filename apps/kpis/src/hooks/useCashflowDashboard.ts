@@ -5,13 +5,15 @@ import {
   type TimelineCashflowEvent
 } from '@/lib/gantt/services';
 import { projectsDataService } from '@/lib/services/projectsDataService';
-import { ProjectData } from '@/types/projects';
+import { propertyDatabaseService, WeeklyFinancialMetrics } from '@/lib/services/propertyDatabaseService';
+import { ProjectData } from '@isleno/types/projects';
+import { Zone } from '@isleno/types/calendar';
 
 export interface ProjectProfitability {
   projectId: string;
   propertyId: string;
   name: string;
-  zone: 'PMI' | 'MAH';
+  zone: Zone;
   phase: string;
   progress: number;
   
@@ -51,6 +53,9 @@ export interface KpiData {
   averageRentalProfitability: number;
   totalWeeklyValueCreation: number;
   averageWeeklyValueCreationPercent: number; // New: Average weekly value creation as % of project cost
+  
+  // New Property Database Metrics
+  weeklyFinancialMetrics: WeeklyFinancialMetrics;
   
   // Operational KPIs
   activeProjects: number;
@@ -192,6 +197,27 @@ export function useCashflowDashboard() {
         const projects = await projectsDataService.parseProjectsData();
         console.log('Parsed projects for cashflow dashboard:', projects.length);
         
+        // Fetch property database renovation data for new metrics
+        let weeklyFinancialMetrics;
+        try {
+          weeklyFinancialMetrics = await propertyDatabaseService.getWeeklyFinancialMetrics();
+          console.log('Fetched weekly financial metrics:', weeklyFinancialMetrics);
+        } catch (error) {
+          console.error('Failed to fetch property database metrics:', error);
+          // Create default metrics if property database fails
+          weeklyFinancialMetrics = {
+            weeklyInvestment: {
+              totalSpend: 0,
+              avgMonthlySpend: 0
+            },
+            weeklyMargin: {
+              margin: 0,
+              weeklyMargin: 0
+            },
+            generatedValue: 0
+          };
+        }
+        
         if (projects.length === 0) {
           console.warn('No projects available for KPI calculations');
           setKpiData(null);
@@ -283,6 +309,9 @@ export function useCashflowDashboard() {
            averageRentalProfitability,
            totalWeeklyValueCreation,
            averageWeeklyValueCreationPercent,
+           
+           // New Property Database Metrics
+           weeklyFinancialMetrics,
            
            // Operational KPIs
            activeProjects: projects.filter((p: ProjectData) => p.phase !== 'Completed / Sold' && p.phase !== 'Rent').length,

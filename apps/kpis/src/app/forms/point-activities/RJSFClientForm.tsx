@@ -36,13 +36,13 @@ export default function RJSFClientForm() {
   useEffect(() => {
     async function loadOptions() {
       try {
-        const usersRes = await fetch("/api/monday/users");
+        const usersRes = await fetch("/api/integrations/monday/users");
         const usersJson = await usersRes.json();
         const users = usersJson.data?.users || [];
         const ownerIds = users.map((u: any) => String(u.id));
         const ownerNames = users.map((u: any) => u.name);
 
-        const actsRes = await fetch("/api/monday/pa-activities");
+        const actsRes = await fetch("/api/integrations/monday/pa-activities");
         const actsJson = await actsRes.json();
         const activities = actsJson.data?.items || [];
 

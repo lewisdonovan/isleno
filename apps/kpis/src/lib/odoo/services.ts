@@ -4,18 +4,25 @@ const INVOICE_MODEL = 'account.move';
 const SUPPLIER_MODEL = 'res.partner';
 const ATTACHMENT_MODEL = 'ir.attachment';
 
-export async function getPendingInvoices() {
+export async function getPendingInvoices(invoiceApprovalAlias?: string) {
     const domain = [
         ["move_type", "=", "in_invoice"],
         ["x_studio_project_manager_review_status", "=", "pending"]
     ];
+
+    // Add user-specific filtering if invoice_approval_alias is provided
+    if (invoiceApprovalAlias) {
+        domain.push(["x_studio_project_manager_1", "=", invoiceApprovalAlias]);
+    }
+
     const fields = [
         "id",
         "partner_id",
         "invoice_date",
         "invoice_date_due",
         "amount_untaxed", 
-        "currency_id"
+        "currency_id",
+        "x_studio_project_manager_1" // Include the project manager field for verification
     ];
 
     const invoices = await odooApi.searchRead(INVOICE_MODEL, domain, { fields });

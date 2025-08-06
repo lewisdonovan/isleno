@@ -4,6 +4,17 @@
   "description": "Shared TypeScript types for the monorepo",
   "main": "index.d.ts",
   "types": "index.d.ts",
+  "exports": {
+    ".": "./index.d.ts",
+    "./auth": "./src/auth.ts",
+    "./monday": "./src/monday.ts",
+    "./calendar": "./src/calendar.ts",
+    "./projects": "./src/projects.ts", 
+    "./gantt": "./src/gantt.ts",
+    "./kpis": "./src/kpis.ts",
+    "./db/public": "./db/public.ts",
+    "./integrations": "./src/integrations.ts"
+  },
   "scripts": {
     "build": "echo \"Types package - no build needed\"",
     "lint": "echo \"Types package - no lint needed\"",
@@ -14,5 +25,8 @@
   "license": "ISC",
   "devDependencies": {
     "typescript": "^5"
+  },
+  "dependencies": {
+    "luxon": "^3.4.4"
   }
 }

@@ -1,5 +1,5 @@
 import { DateTime } from 'luxon';
-import { ProjectData, PROJECT_STAGES, PHASE_MAPPING } from '@/types/projects';
+import { ProjectData, PROJECT_STAGES, PHASE_MAPPING } from '@isleno/types/projects';
 import { PHASE_CAPACITIES } from '@/lib/constants/projectConstants';
 import { projectsDataService } from './projectsDataService';
 

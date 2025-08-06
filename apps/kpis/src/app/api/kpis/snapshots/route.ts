@@ -17,7 +17,8 @@ export async function GET(request: NextRequest) {
 
     const kpiIdsArray = kpiIds.split(',');
 
-    const { data: snapshotsData, error: snapshotsError } = await supabaseServer
+    const supabase = await supabaseServer();
+    const { data: snapshotsData, error: snapshotsError } = await supabase
       .from("snapshots")
       .select("*")
       .in("kpi_id", kpiIdsArray)

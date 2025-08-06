@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { DateTime } from 'luxon';
 import { fetchCalendarEvents } from '@/lib/calendar/mockData';
-import { CalendarEvent } from '@/types/calendar';
+import { CalendarEvent } from '@isleno/types/calendar';
 
 export function useCalendarEvents(startDate: DateTime, endDate: DateTime) {
   return useQuery<CalendarEvent[], Error>({

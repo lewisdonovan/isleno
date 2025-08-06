@@ -1,11 +1,12 @@
+import { notFound } from "next/navigation";
 import { supabaseServer } from "@/lib/supabaseServer";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { DepartmentProtectedRoute } from "@/components/RouteProtection";
+import { getLocaleFromCookies, t } from "@/lib/locale";
 import KpiCategoryClient from "@/components/KpiCategoryClient";
 import type { Database } from "@isleno/types/db/public";
-import { getLocaleFromCookies } from "@/lib/locale";
 
 interface PageProps {
   params: Promise<{
@@ -17,26 +18,10 @@ interface PageProps {
 export default async function CategoryPage({ params }: PageProps) {
   const { department: departmentKey, category: categoryKey } = await params;
   const locale = await getLocaleFromCookies();
-  const t = (key: string) => {
-    const messages = {
-      en: {
-        backToCategories: "Back to Categories",
-        kpiCategory: "KPI Category",
-        errorLoadingKPIs: "Error loading KPIs:",
-        errorLoadingKPIDetails: "Error loading KPI details:"
-      },
-      es: {
-        backToCategories: "Volver a Categorías",
-        kpiCategory: "Categoría de KPI",
-        errorLoadingKPIs: "Error al cargar KPIs:",
-        errorLoadingKPIDetails: "Error al cargar detalles de KPI:"
-      }
-    };
-    return messages[locale as keyof typeof messages]?.[key as keyof typeof messages.en] || key;
-  };
 
   // First, get the department to validate it exists
-  const { data: department, error: departmentError } = await supabaseServer
+  const supabase = await supabaseServer();
+  const { data: department, error: departmentError } = await supabase
     .from("departments")
     .select("*")
     .eq("key", departmentKey)
@@ -47,7 +32,7 @@ export default async function CategoryPage({ params }: PageProps) {
   }
 
   // Get the category by kpi_category_key
-  const { data: category, error: categoryError } = await supabaseServer
+  const { data: category, error: categoryError } = await supabase
     .from("kpi_categories")
     .select("*")
     .eq("kpi_category_key", categoryKey)
@@ -59,7 +44,7 @@ export default async function CategoryPage({ params }: PageProps) {
   }
 
   // Get all KPIs in this category using the join table
-  const { data: kpiRelations, error: kpiRelationsError } = await supabaseServer
+  const { data: kpiRelations, error: kpiRelationsError } = await supabase
     .from("kpi_kpi_categories")
     .select("*")
     .eq("category_id", category.category_id);
@@ -68,17 +53,17 @@ export default async function CategoryPage({ params }: PageProps) {
     console.error("Error fetching KPI relations:", kpiRelationsError);
     return (
       <div className="p-6">
-        <div className="text-red-500">{t('errorLoadingKPIs')} {kpiRelationsError.message}</div>
+        <div className="text-red-500">{t(locale, 'kpis', 'errorLoadingKPIs')} {kpiRelationsError.message}</div>
       </div>
     );
   }
 
   // Get the actual KPI data for all KPIs in this category
-  const kpiIds = kpiRelations?.map(relation => relation.kpi_id) || [];
+  const kpiIds = kpiRelations?.map((relation: any) => relation.kpi_id) || [];
   
   let kpis: Database['public']['Tables']['kpis']['Row'][] = [];
   if (kpiIds.length > 0) {
-    const { data: kpisData, error: kpisError } = await supabaseServer
+    const { data: kpisData, error: kpisError } = await supabase
       .from("kpis")
       .select("*")
       .in("kpi_id", kpiIds)
@@ -89,7 +74,7 @@ export default async function CategoryPage({ params }: PageProps) {
       console.error("Error fetching KPIs:", kpisError);
       return (
         <div className="p-6">
-          <div className="text-red-500">{t('errorLoadingKPIDetails')} {kpisError.message}</div>
+          <div className="text-red-500">{t(locale, 'kpis', 'errorLoadingKPIDetails')} {kpisError.message}</div>
         </div>
       );
     }
@@ -130,31 +115,29 @@ export default async function CategoryPage({ params }: PageProps) {
   ];
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center space-x-4">
-        <Link href={`/kpis/${departmentKey}`}>
-          <Button variant="ghost" size="sm">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            {t('backToCategories')}
-          </Button>
-        </Link>
-        <div className="space-y-1">
-          <h1 className="text-3xl font-bold tracking-tight">{category.category_name}</h1>
-          <p className="text-muted-foreground">
-            {department.department_name} • {t('kpiCategory')}
-          </p>
-          {category.description && (
-            <p className="text-sm text-muted-foreground">{category.description}</p>
-          )}
+    <DepartmentProtectedRoute departmentId={department.department_id}>
+      <div className="p-6 space-y-6">
+        <div className="flex items-center space-x-4">
+          <Link href={`/kpis/${departmentKey}`}>
+            <Button variant="ghost" size="sm">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              {t(locale, 'kpis', 'backToCategories')}
+            </Button>
+          </Link>
+          <div className="space-y-1">
+            <h1 className="text-3xl font-bold tracking-tight">{category.category_name}</h1>
+            <p className="text-muted-foreground">
+              {department.department_name} • {t(locale, 'kpis', 'kpiCategory')}
+            </p>
+          </div>
         </div>
-      </div>
 
-      <KpiCategoryClient
-        _initialDepartment={department}
-        _initialCategory={category}
-        initialKpis={kpis}
-        kpiOrder={kpiSorting}
-      />
-    </div>
+        <KpiCategoryClient
+          _initialDepartment={department}
+          _initialCategory={category}
+          initialKpis={kpis}
+        />
+      </div>
+    </DepartmentProtectedRoute>
   );
 } 

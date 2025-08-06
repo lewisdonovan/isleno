@@ -8,7 +8,7 @@ import Image from 'next/image'
 import { useCurrentUser } from '@/hooks/useCurrentUser'
 import { useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { useLocale } from '@/components/locale-provider'
+import { useLocale } from '@/hooks/useLocale'
 import { useTheme } from 'next-themes'
 import {
   DropdownMenu,
@@ -17,6 +17,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { NAVIGATION_ITEMS, NAVIGATION_ICON_MAP } from '@/configs';
 
 export function Navigation() {
   const pathname = usePathname()
@@ -24,191 +25,190 @@ export function Navigation() {
   const { locale, setLocale } = useLocale()
   const { theme, setTheme } = useTheme()
 
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [isLoading, setIsLoading] = useState(true)
-  const { user, isLoading: userLoading } = useCurrentUser()
-
-  useEffect(() => {
-    // Check if user is authenticated via API
-    const checkAuth = async () => {
-      try {
-        const response = await fetch('/api/auth/status')
-        const data = await response.json()
-        setIsAuthenticated(data.authenticated)
-      } catch (error) {
-        console.error('Authentication check failed:', error)
-        setIsAuthenticated(false)
-      } finally {
-        setIsLoading(false)
-      }
-    }
-    checkAuth()
-  }, [])
+  const { user, isLoading, signOut } = useCurrentUser()
 
   const handleLogout = async () => {
     try {
-      await fetch('/api/auth/monday/logout', {
-        method: 'POST',
-      });
-      setIsAuthenticated(false)
+      await signOut();
       window.location.href = '/auth/login';
     } catch (error) {
       console.error('Logout failed:', error);
     }
   };
 
-  // Get the best available avatar URL
+  // Get the user avatar URL from Google OAuth
   const getAvatarUrl = () => {
-    if (!user) return null;
-    return user.photo_thumb_small || user.photo_thumb || user.photo_original;
+    if (!user?.user_metadata?.avatar_url) return null;
+    return user.user_metadata.avatar_url;
   };
 
-  if (isLoading || userLoading) {
+  const getUserName = () => {
+    return user?.user_metadata?.full_name || user?.email || 'User';
+  };
+
+  if (isLoading) {
     return (
-      <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container mx-auto px-6 py-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-6">
-              <Link href="/" className="text-xl font-bold">
-                {t('brand')}
+      <nav className="bg-white border-b border-gray-200 dark:bg-gray-900 dark:border-gray-700">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="flex h-16 justify-between">
+            <div className="flex items-center space-x-8">
+              <div className="flex-shrink-0">
+                <Link href="/" className="flex items-center space-x-2">
+                  <Image src="/logo_icon.jpg" alt="Isleno" width={32} height={32} className="rounded" />
+                  <span className="text-xl font-bold text-gray-900 dark:text-white">Isleno</span>
+                </Link>
+              </div>
+            </div>
+            <div className="flex items-center space-x-4">
+              <div className="w-8 h-8 bg-gray-200 rounded-full animate-pulse"></div>
+            </div>
+          </div>
+        </div>
+      </nav>
+    );
+  }
+
+  if (!user) {
+    return (
+      <nav className="bg-white border-b border-gray-200 dark:bg-gray-900 dark:border-gray-700">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="flex h-16 justify-between">
+            <div className="flex items-center space-x-8">
+              <div className="flex-shrink-0">
+                <Link href="/" className="flex items-center space-x-2">
+                  <Image src="/logo_icon.jpg" alt="Isleno" width={32} height={32} className="rounded" />
+                  <span className="text-xl font-bold text-gray-900 dark:text-white">Isleno</span>
+                </Link>
+              </div>
+            </div>
+            <div className="flex items-center space-x-4">
+              <Link href="/auth/login">
+                <Button variant="outline">{t('signIn')}</Button>
               </Link>
             </div>
           </div>
         </div>
       </nav>
-    )
+    );
   }
 
+  const navItems = NAVIGATION_ITEMS.map(item => ({
+    ...item,
+    icon: NAVIGATION_ICON_MAP[item.icon],
+    label: t(item.label)
+  }));
+
   return (
-    <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container mx-auto px-6 py-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-6">
-            <Link href="/" className="text-xl font-bold">
-              {t('brand')}
-            </Link>
-            {isAuthenticated && (
-              <div className="flex items-center space-x-2">
-                <Link href="/calendar">
-                  <Button
-                    variant={pathname.startsWith('/calendar') ? 'default' : 'ghost'}
-                    size="sm"
-                    className="flex items-center space-x-2"
+    <nav className="bg-white border-b border-gray-200 dark:bg-gray-900 dark:border-gray-700">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="flex h-16 justify-between items-center">
+          {/* Navigation items (left) */}
+          <div className="flex items-center space-x-8 flex-1">
+            <div className="hidden md:ml-6 md:flex md:space-x-8">
+              {navItems.map((item) => {
+                const isActive = item.exact ? pathname === item.href : pathname.startsWith(item.href)
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`inline-flex items-center px-1 pt-1 text-sm font-medium border-b-2 ${
+                      isActive
+                        ? 'border-teal-500 text-gray-900 dark:text-white'
+                        : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                    }`}
                   >
-                    <Calendar className="h-4 w-4" />
-                    <span>{t('calendar')}</span>
-                  </Button>
-                </Link>
-                <Link href="/gantt">
-                  <Button
-                    variant={pathname.startsWith('/gantt') ? 'default' : 'ghost'}
-                    size="sm"
-                    className="flex items-center space-x-2"
-                  >
-                    <BarChart2 className="h-4 w-4" />
-                    <span>{t('timeline')}</span>
-                  </Button>
-                </Link>
-                <Link href="/cashflow">
-                  <Button
-                    variant={pathname.startsWith('/cashflow') ? 'default' : 'ghost'}
-                    size="sm"
-                    className="flex items-center space-x-2"
-                  >
-                    <BarChart3 className="h-4 w-4" />
-                    <span>{t('cashflow')}</span>
-                  </Button>
-                </Link>
-                <Link href="/boards">
-                  <Button
-                    variant={pathname.startsWith('/boards') ? 'default' : 'ghost'}
-                    size="sm"
-                    className="flex items-center space-x-2"
-                  >
-                    <Table className="h-4 w-4" />
-                    <span>{t('boards')}</span>
-                  </Button>
-                </Link>
-                <Link href="/charts">
-                  <Button
-                    variant={pathname === '/charts' ? 'default' : 'ghost'}
-                    size="sm"
-                    className="flex items-center space-x-2"
-                  >
-                    <BarChart3 className="h-4 w-4" />
-                    <span>{t('charts')}</span>
-                  </Button>
-                </Link>
-                <Link href="/kpis">
-                  <Button
-                    variant={pathname.startsWith('/kpis') ? 'default' : 'ghost'}
-                    size="sm"
-                    className="flex items-center space-x-2"
-                  >
-                    <span>{t('kpis')}</span>
-                  </Button>
-                </Link>
-              </div>
-            )}
+                    <item.icon className="mr-2 h-4 w-4" />
+                    {item.label}
+                  </Link>
+                )
+              })}
+            </div>
           </div>
-          <div className="flex items-center">
-            {isAuthenticated ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="flex items-center space-x-2">
-                    {user && getAvatarUrl() ? (
-                      <Image
-                        src={getAvatarUrl()!}
-                        alt={user.name}
-                        width={32}
-                        height={32}
-                        className="rounded-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center">
-                        <User className="h-4 w-4 text-muted-foreground" />
-                      </div>
-                    )}
-                    <ChevronDown className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  {/* Language Switcher */}
-                  <DropdownMenuItem onClick={() => setLocale(locale === 'en' ? 'es' : 'en')}>
-                    <Globe className="mr-2 h-4 w-4" />
-                    <span>{t('language')}</span>
-                    <span className="ml-auto">{locale === 'en' ? '🇬🇧 EN' : '🇪🇸 ES'}</span>
-                  </DropdownMenuItem>
-                  
-                  {/* Theme Switcher */}
-                  <DropdownMenuItem onClick={() => setTheme(theme === 'light' ? 'dark' : theme === 'dark' ? 'system' : 'light')}>
-                    {theme === 'dark' ? (
-                      <Moon className="mr-2 h-4 w-4" />
-                    ) : theme === 'light' ? (
-                      <Sun className="mr-2 h-4 w-4" />
-                    ) : (
-                      <Monitor className="mr-2 h-4 w-4" />
-                    )}
-                    <span>{t('theme')}</span>
-                    <span className="ml-auto">{theme === 'light' ? t('light') : theme === 'dark' ? t('dark') : t('system')}</span>
-                  </DropdownMenuItem>
-                  
-                  <DropdownMenuSeparator />
-                  
-                  {/* Logout */}
-                  <DropdownMenuItem onClick={handleLogout} variant="destructive">
-                    <LogOut className="mr-2 h-4 w-4" />
-                    <span>{t('logout')}</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            ) : (
-              <Link href="/auth/login">
+          {/* User, language, theme menus (center-right) */}
+          <div className="flex items-center space-x-4">
+            {/* Language Switcher */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm">
-                  {t('login')}
+                  <Globe className="h-4 w-4 mr-2" />
+                  {locale?.toUpperCase()}
+                  <ChevronDown className="h-4 w-4 ml-2" />
                 </Button>
-              </Link>
-            )}
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem onClick={() => setLocale('en')}>
+                  English
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setLocale('es')}>
+                  Español
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            {/* Theme Switcher */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm">
+                  {theme === 'light' && <Sun className="h-4 w-4" />}
+                  {theme === 'dark' && <Moon className="h-4 w-4" />}
+                  {theme === 'system' && <Monitor className="h-4 w-4" />}
+                  <ChevronDown className="h-4 w-4 ml-2" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem onClick={() => setTheme('light')}>
+                  <Sun className="h-4 w-4 mr-2" />
+                  {t('light')}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setTheme('dark')}>
+                  <Moon className="h-4 w-4 mr-2" />
+                  {t('dark')}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setTheme('system')}>
+                  <Monitor className="h-4 w-4 mr-2" />
+                  {t('system')}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            {/* User Menu */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                  {getAvatarUrl() ? (
+                    <Image
+                      className="h-8 w-8 rounded-full"
+                      src={getAvatarUrl()!}
+                      alt={getUserName()}
+                      width={32}
+                      height={32}
+                    />
+                  ) : (
+                    <User className="h-5 w-5" />
+                  )}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <div className="flex items-center justify-start gap-2 p-2">
+                  <div className="flex flex-col space-y-1 leading-none">
+                    <p className="font-medium">{getUserName()}</p>
+                    <p className="w-[200px] truncate text-sm text-muted-foreground">
+                      {user.email}
+                    </p>
+                  </div>
+                </div>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  {t('signOut')}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+          {/* Logo and title (right) */}
+          <div className="flex items-center space-x-2 ml-4">
+            <Link href="/" className="flex items-center space-x-2">
+              <Image src="/logo_icon.jpg" alt="Isleno" width={32} height={32} className="rounded" />
+              <span className="text-xl font-bold text-gray-900 dark:text-white">Isleno</span>
+            </Link>
           </div>
         </div>
       </div>

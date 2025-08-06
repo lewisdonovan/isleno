@@ -9,6 +9,7 @@ import { useTranslations } from 'next-intl';
 export default function KpiDashboardClient({ start, end }: { start: string; end: string }) {
   const { data, error, isLoading } = useKpiDashboard(start, end);
   const t = useTranslations('kpis');
+  const tComponents = useTranslations('components.kpiDashboard');
   
   // State for KPI configuration
   const [kpiOrder, setKpiOrder] = useState<string[]>([]);
@@ -42,7 +43,7 @@ export default function KpiDashboardClient({ start, end }: { start: string; end:
   return (
     <div className="space-y-4">
       <KpiTable
-        title="General KPIs"
+        title={tComponents('generalKpis')}
         closers={data.closers}
         kpiOrder={kpiOrder}
         kpiObjectives={kpiObjectives}

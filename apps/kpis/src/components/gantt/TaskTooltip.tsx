@@ -1,73 +1,55 @@
 "use client";
 
-import { Task } from "gantt-task-react";
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { DateTime } from 'luxon';
-import type { BusinessGanttTask } from '@/types/projects';
-import { SupportedLocale } from '@/types/calendar';
-import { useTranslations } from 'next-intl';
+import type { BusinessGanttTask } from '@isleno/types/gantt';
+import { SupportedLocale } from '@isleno/types/calendar';
 
 interface TaskTooltipProps {
-  task: Task;
+  task: any;
   fontSize: string;
   fontFamily: string;
-  businessTasks: BusinessGanttTask[];
-  locale: SupportedLocale;
-  formatCurrency: (amount: number, currency?: string) => string;
+  businessTasks?: BusinessGanttTask[];
+  locale?: SupportedLocale;
+  formatCurrency?: (amount: number, currency?: string) => string;
 }
 
-export default function TaskTooltip({ 
-  task, 
-  fontSize, 
-  fontFamily, 
-  businessTasks, 
-  locale: _locale,
-  formatCurrency 
+export default function TaskTooltip({
+  task,
+  fontSize,
+  fontFamily,
+  businessTasks,
+  locale = 'en',
+  formatCurrency
 }: TaskTooltipProps) {
-  const t = useTranslations('gantt');
-  const businessTask = businessTasks.find((t: BusinessGanttTask) => t.id === task.id);
-  
-  if (!businessTask) return null;
-
-  const { businessData } = businessTask;
+  const businessTask = businessTasks?.find(t => t.id === task.TaskID);
   
   return (
-    <div 
-      className="bg-popover border border-border rounded-lg shadow-lg p-3 max-w-sm z-50"
-      style={{ fontSize, fontFamily }}
+    <div
+      style={{
+        backgroundColor: 'white',
+        border: '1px solid #ccc',
+        borderRadius: '4px',
+        padding: '8px',
+        fontSize,
+        fontFamily,
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+      }}
     >
-      <div className="font-semibold text-popover-foreground mb-2">
-        {task.name}
+      <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>
+        {task.TaskName}
       </div>
-      
-      <div className="space-y-1 text-sm text-muted-foreground">
-        <div>
-          <span className="font-medium">{t('zone')}:</span> {businessData.zone}
-        </div>
-        <div>
-          <span className="font-medium">{t('type')}:</span> {businessData.propertyType}
-        </div>
-        <div>
-          <span className="font-medium">{t('budget')}:</span> {formatCurrency(businessData.budget)}
-        </div>
-        <div>
-          <span className="font-medium">{t('spent')}:</span> {formatCurrency(businessData.spent)}
-        </div>
-        <div>
-          <span className="font-medium">{t('progress')}:</span> {task.progress}%
-        </div>
-        <div>
-          <span className="font-medium">{t('duration')}:</span>{' '}
-          {DateTime.fromJSDate(task.start).setLocale(_locale === 'es' ? 'es-ES' : 'en-US').toFormat('MMM dd')} - {DateTime.fromJSDate(task.end).setLocale(_locale === 'es' ? 'es-ES' : 'en-US').toFormat('MMM dd')}
-        </div>
-        {businessData.cashFlows.length > 0 && (
-          <div className="mt-2 pt-2 border-t border-border">
-            <div className="font-medium">{t('cashFlows')}:</div>
-            {businessData.cashFlows.slice(0, 3).map((cf, index) => (
-              <div key={index} className="text-xs">
-                {cf.amount > 0 ? '💰' : '💸'} {formatCurrency(Math.abs(cf.amount))}
-              </div>
-            ))}
-          </div>
+      <div style={{ fontSize: '12px', color: '#666' }}>
+        <div>Start: {task.StartDate?.toLocaleDateString(locale === 'es' ? 'es-ES' : 'en-US')}</div>
+        <div>End: {task.EndDate?.toLocaleDateString(locale === 'es' ? 'es-ES' : 'en-US')}</div>
+        <div>Duration: {task.Duration} days</div>
+        <div>Progress: {task.Progress}%</div>
+        {businessTask?.businessData?.budget && formatCurrency && (
+          <div>Budget: {formatCurrency(businessTask.businessData.budget)}</div>
+        )}
+        {businessTask?.businessData?.spent && formatCurrency && (
+          <div>Spent: {formatCurrency(businessTask.businessData.spent)}</div>
         )}
       </div>
     </div>

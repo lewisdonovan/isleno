@@ -16,6 +16,8 @@ import { arrayToCsv, downloadStringAsFile } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { Download } from "lucide-react";
+import { ChartService } from "@/lib/services/chartService";
+import { KPI_TIMESERIES_CHART_CONFIG } from '@/configs/charts';
 
 type Kpi = Database['public']['Tables']['kpis']['Row'];
 type Snapshot = Database['public']['Tables']['snapshots']['Row'];
@@ -28,16 +30,9 @@ interface KpiTimeSeriesChartProps {
 
 export default function KpiTimeSeriesChart({ kpi, snapshots, loading = false }: KpiTimeSeriesChartProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [filename, setFilename] = useState(kpi.kpi_name.replace(/[^a-zA-Z0-9_-]+/g, '_'));
+  const [filename, setFilename] = useState(ChartService.generateSafeFilename(kpi.kpi_name));
 
-  const chartData = snapshots
-    .filter(snapshot => snapshot.numeric_value !== null)
-    .map(snapshot => ({
-      date: format(new Date(snapshot.snapshot_date), 'MMM dd'),
-      value: snapshot.numeric_value,
-      fullDate: snapshot.snapshot_date,
-    }))
-    .sort((a, b) => new Date(a.fullDate).getTime() - new Date(b.fullDate).getTime());
+  const chartData = ChartService.processSnapshotsToChartData(snapshots);
 
   if (loading) {
     return (
@@ -73,42 +68,10 @@ export default function KpiTimeSeriesChart({ kpi, snapshots, loading = false }: 
     );
   }
 
-  const chartConfig = {
-    value: {
-      label: kpi.kpi_name,
-      theme: {
-        light: "oklch(0.646 0.222 180)",
-        dark: "oklch(0.7 0.15 180)",
-      },
-    },
-  };
-
-  // Calculate percentage change
-  const calculatePercentageChange = () => {
-    if (chartData.length < 2) return null;
-    
-    const firstValue = chartData[0].value;
-    const lastValue = chartData[chartData.length - 1].value;
-    
-    if (firstValue === null || lastValue === null || firstValue === 0) return null;
-    
-    const change = ((lastValue - firstValue) / firstValue) * 100;
-    return change;
-  };
-
-  const percentageChange = calculatePercentageChange();
-
-  // Prepare CSV data for this KPI
-  const csvRows = snapshots.map(s => ({
-    date: s.snapshot_date,
-    value: s.numeric_value,
-    kpi_id: s.kpi_id,
-    kpi_name: kpi.kpi_name,
-    channel: kpi.channel || '',
-    unit: kpi.unit_of_measure || '',
-  }));
+  const percentageChange = ChartService.calculatePercentageChange(chartData);
 
   const handleDownload = () => {
+    const csvRows = ChartService.prepareCsvData(snapshots, kpi);
     const csv = arrayToCsv(csvRows);
     downloadStringAsFile(csv, filename + '.csv');
     setDialogOpen(false);
@@ -154,7 +117,7 @@ export default function KpiTimeSeriesChart({ kpi, snapshots, loading = false }: 
                 <div className="flex items-center gap-2">
                   <Input
                     value={filename}
-                    onChange={e => setFilename(e.target.value.replace(/[^a-zA-Z0-9_-]+/g, '_'))}
+                    onChange={e => setFilename(ChartService.generateSafeFilename(e.target.value))}
                     className="w-full"
                     placeholder="Filename"
                   />
@@ -173,7 +136,7 @@ export default function KpiTimeSeriesChart({ kpi, snapshots, loading = false }: 
         </div>
       </CardHeader>
               <CardContent className="pt-0">
-          <ChartContainer config={chartConfig} className="h-full w-full min-h-[200px]">
+          <ChartContainer config={KPI_TIMESERIES_CHART_CONFIG}>
             <AreaChart data={chartData} width={undefined} height={undefined}>
             <defs>
               <linearGradient id={`gradient-${kpi.kpi_id}`} x1="0" y1="0" x2="0" y2="1">
@@ -195,7 +158,7 @@ export default function KpiTimeSeriesChart({ kpi, snapshots, loading = false }: 
               fontSize={10}
               tickLine={false}
               axisLine={false}
-              tickFormatter={(value) => `${value}${kpi.unit_of_measure ? ` ${kpi.unit_of_measure}` : ''}`}
+              tickFormatter={(value) => ChartService.formatYAxisTick(value, kpi.unit_of_measure)}
             />
             <ChartTooltip
               content={({ active, payload }) => {
@@ -208,10 +171,11 @@ export default function KpiTimeSeriesChart({ kpi, snapshots, loading = false }: 
                         const data = payload[0]?.payload;
                         return data ? format(new Date(data.fullDate), 'MMM dd, yyyy') : value;
                       }}
-                      formatter={(value) => [
-                        `${value}${kpi.unit_of_measure ? ` ${kpi.unit_of_measure}` : ''}`,
-                        kpi.kpi_name,
-                      ]}
+                      formatter={(value) => ChartService.formatTooltipValue(
+                        value as number, 
+                        kpi.kpi_name, 
+                        kpi.unit_of_measure
+                      )}
                     />
                   );
                 }

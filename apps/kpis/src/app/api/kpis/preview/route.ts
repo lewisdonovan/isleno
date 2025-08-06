@@ -5,8 +5,8 @@ import { validateSession } from '@/lib/auth';
 
 export async function POST(request: NextRequest) {
   // Session-based auth (Monday login)
-  const authResult = validateSession(request);
-  if (!authResult.success || !authResult.session) {
+  const authResult = await validateSession(request);
+  if (!authResult.success || !authResult.user) {
     return NextResponse.json({ error: authResult.error || 'Unauthorized' }, { status: authResult.status || 401 });
   }
 

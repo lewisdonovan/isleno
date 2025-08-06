@@ -1,63 +1,37 @@
 import { useCallback } from 'react';
-import { Task } from "gantt-task-react";
-import type { BusinessGanttTask } from '@/types/projects';
+import type { BusinessGanttTask } from '@isleno/types/gantt';
 
-export interface UseGanttEventHandlersResult {
-  handleTaskChange: (task: Task) => void;
-  handleTaskDelete: (task: Task) => void;
-  handleProgressChange: (task: Task) => void;
-  handleDblClick: (task: Task) => void;
-  handleSelect: (task: Task, isSelected: boolean) => void;
-  handleExpanderClick: (task: Task) => void;
-}
-
-export interface UseGanttEventHandlersProps {
+interface UseGanttEventHandlersProps {
   tasks: BusinessGanttTask[];
-  toggleProjectCollapse: (taskId: string) => void;
+  toggleProjectCollapse: (projectId: string) => void;
 }
 
-export const useGanttEventHandlers = ({ 
-  tasks, 
-  toggleProjectCollapse 
-}: UseGanttEventHandlersProps): UseGanttEventHandlersResult => {
-  
-  // Handle task changes (placeholder for future interactivity)
-  const handleTaskChange = useCallback((task: Task) => {
+export const useGanttEventHandlers = ({ tasks, toggleProjectCollapse }: UseGanttEventHandlersProps) => {
+  const handleTaskChange = useCallback((task: any) => {
     console.log('Task changed:', task);
-    // In a real app, you would update the task here
   }, []);
 
-  const handleTaskDelete = useCallback((task: Task) => {
+  const handleTaskDelete = useCallback((task: any) => {
     console.log('Task deleted:', task);
-    // In a real app, you would delete the task here
   }, []);
 
-  const handleProgressChange = useCallback((task: Task) => {
+  const handleProgressChange = useCallback((task: any) => {
     console.log('Progress changed:', task);
-    // In a real app, you would update the progress here
   }, []);
 
-  const handleDblClick = useCallback((task: Task) => {
-    console.log('Task double-clicked:', task);
-    // In a real app, you might open a detail modal here
+  const handleDblClick = useCallback((task: any) => {
+    console.log('Task double clicked:', task);
   }, []);
 
-  const handleSelect = useCallback((task: Task, isSelected: boolean) => {
-    console.log('Task selected:', task, isSelected);
+  const handleSelect = useCallback((task: any) => {
+    console.log('Task selected:', task);
   }, []);
 
-  // Handle individual project expand/collapse
-  const handleProjectToggle = useCallback((taskId: string) => {
-    // Only handle if it's a project type task
-    const task = tasks.find(t => t.id === taskId);
-    if (task && task.type === 'project') {
-      toggleProjectCollapse(taskId);
+  const handleExpanderClick = useCallback((task: any) => {
+    if (task.type === 'project') {
+      toggleProjectCollapse(task.id);
     }
-  }, [tasks, toggleProjectCollapse]);
-
-  const handleExpanderClick = useCallback((task: Task) => {
-    handleProjectToggle(task.id);
-  }, [handleProjectToggle]);
+  }, [toggleProjectCollapse]);
 
   return {
     handleTaskChange,

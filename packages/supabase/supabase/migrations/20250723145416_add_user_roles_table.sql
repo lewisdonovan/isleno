@@ -10,7 +10,7 @@
 CREATE TABLE public.user_roles (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  role text NOT NULL, -- Examples: 'default', 'internal', 'admin', 'external_basic'
+  role text NOT NULL, -- Examples: 'default', 'internal', 'admin', 'external_basic', 'team_leader'
   pm_alias text,
   created_at timestamp with time zone DEFAULT now() NOT NULL,
   updated_at timestamp with time zone DEFAULT now() NOT NULL,

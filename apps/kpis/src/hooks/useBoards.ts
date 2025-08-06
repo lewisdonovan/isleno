@@ -2,7 +2,7 @@ import useSWR from 'swr';
 
 export function useBoards(page: number, limit: number = 20) {
   const { data, error, isLoading, mutate } = useSWR(
-    `/api/monday/boards?page=${page}&limit=${limit}`,
+    `/api/integrations/monday/boards?page=${page}&limit=${limit}`,
     async (url: string) => {
       const res = await fetch(url);
       if (!res.ok) {

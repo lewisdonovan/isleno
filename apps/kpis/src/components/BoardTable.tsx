@@ -2,7 +2,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
-import { Board } from '@/types/monday';
+import { Board } from '@isleno/types/monday';
+import { useTranslations } from 'next-intl';
 
 interface BoardTableProps {
   boards: Board[];
@@ -16,10 +17,12 @@ interface BoardTableProps {
 }
 
 export function BoardTable({ boards, loading, error, currentPage, hasNextPage, hasPrevPage, onNextPage, onPrevPage }: BoardTableProps) {
+  const t = useTranslations('components.boardTable');
+  
   if (loading) {
     return (
       <div className="flex items-center justify-center p-8">
-        <span className="ml-2">Loading boards...</span>
+        <span className="ml-2">{t('loading')}</span>
       </div>
     );
   }
@@ -31,14 +34,14 @@ export function BoardTable({ boards, loading, error, currentPage, hasNextPage, h
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Name</TableHead>
-            <TableHead>ID</TableHead>
-            <TableHead>State</TableHead>
-            <TableHead>Type</TableHead>
+            <TableHead>{t('name')}</TableHead>
+            <TableHead>{t('id')}</TableHead>
+            <TableHead>{t('state')}</TableHead>
+            <TableHead>{t('type')}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {boards.map((board) => (
+          {(boards ?? []).map((board) => (
             <TableRow key={board.id}>
               <TableCell>
                 <Link 
@@ -57,11 +60,11 @@ export function BoardTable({ boards, loading, error, currentPage, hasNextPage, h
                     ? 'bg-teal-100 text-teal-800' 
                     : 'bg-muted text-muted-foreground'
                 }`}>
-                  {board.state || 'Unknown'}
+                  {board.state || t('unknown')}
                 </span>
               </TableCell>
               <TableCell className="text-sm">
-                {board.board_kind || 'Standard'}
+                {board.board_kind || t('standard')}
               </TableCell>
             </TableRow>
           ))}
@@ -70,7 +73,7 @@ export function BoardTable({ boards, loading, error, currentPage, hasNextPage, h
       {/* Pagination */}
       <div className="flex items-center justify-between">
         <div className="text-sm text-muted-foreground">
-          Page {currentPage}
+          {t('page')} {currentPage}
         </div>
         <div className="flex items-center space-x-2">
           <Button
@@ -80,7 +83,7 @@ export function BoardTable({ boards, loading, error, currentPage, hasNextPage, h
             disabled={!hasPrevPage}
           >
             <ChevronLeft className="h-4 w-4" />
-            Previous
+            {t('previous')}
           </Button>
           <Button
             variant="outline"
@@ -88,7 +91,7 @@ export function BoardTable({ boards, loading, error, currentPage, hasNextPage, h
             onClick={onNextPage}
             disabled={!hasNextPage}
           >
-            Next
+            {t('next')}
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>

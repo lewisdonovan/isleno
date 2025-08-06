@@ -1,4 +1,5 @@
 const path = require('path');
+const withNextIntl = require('next-intl/plugin')('./src/i18n.ts');
 
 require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
 
@@ -26,6 +27,12 @@ const nextConfig = {
       },
       {
         protocol: 'https',
+        hostname: '*.googleusercontent.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
         hostname: '*.isleno.es',
         port: '',
         pathname: '/**',
@@ -34,4 +41,4 @@ const nextConfig = {
   },
 };
 
-module.exports = nextConfig;
+module.exports = withNextIntl(nextConfig);

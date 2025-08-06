@@ -1,9 +1,57 @@
 import { DateTime } from 'luxon';
-import { Task } from 'gantt-task-react';
-import { DateRange } from '@/types/gantt';
-import { GanttProject, GanttMetrics } from '@/types/projects';
+import { DateRange, ProjectStatus, WeeklyFinancialData } from '@isleno/types/gantt';
+import { GanttProject, GanttMetrics } from '@isleno/types/gantt';
 import { PHASE_COLOR_MAP } from '@/lib/constants/projectConstants';
 import { projectsDataService } from './projectsDataService';
+import { PROJECT_PHASES, PHASE_BY_GROUP_ID } from '@/lib/constants/projectPhases';
+
+// Calculate weekly financial data for a project
+function calculateWeeklyFinancials(project: any, dateRange: DateRange): WeeklyFinancialData[] {
+  const weeklyData: WeeklyFinancialData[] = [];
+  
+  // Start from the beginning of the date range
+  let currentWeek = dateRange.start.startOf('week');
+  const endWeek = dateRange.end.endOf('week');
+  
+  while (currentWeek <= endWeek) {
+    const weekStart = currentWeek;
+    const weekEnd = currentWeek.endOf('week');
+    
+    const weekData: WeeklyFinancialData = {
+      weekStart,
+      weekEnd,
+      inflows: 0,
+      outflows: 0,
+      netFlow: 0,
+      lineItems: []
+    };
+    
+    // Check if this week falls within the renovation phase
+    const renovationPhase = project.phaseTimeline?.find((phase: any) => phase.phase.id === 'renovation');
+    if (renovationPhase && weekStart >= renovationPhase.startDate && weekEnd <= renovationPhase.endDate) {
+      // Calculate weekly renovation cost
+      const renovationCost = project.renovationCost || 0;
+      const renovationWeeks = 6; // Fixed 6-week renovation period
+      const weeklyRenovationCost = renovationCost / renovationWeeks;
+      
+      weekData.outflows += weeklyRenovationCost;
+      weekData.lineItems.push({
+        type: 'outflow',
+        amount: weeklyRenovationCost,
+        description: 'Renovation cost',
+        category: 'renovation_cost'
+      });
+    }
+    
+    // Calculate net flow
+    weekData.netFlow = weekData.inflows - weekData.outflows;
+    
+    weeklyData.push(weekData);
+    currentWeek = currentWeek.plus({ weeks: 1 });
+  }
+  
+  return weeklyData;
+}
 
 // Fetch projects for Gantt chart view
 export async function fetchGanttProjects(dateRange: DateRange): Promise<GanttProject[]> {
@@ -33,12 +81,9 @@ export async function fetchGanttProjects(dateRange: DateRange): Promise<GanttPro
 }
 
 // Fetch tasks for Gantt chart with business data
-export async function fetchGanttTasks(
-  dateRange: DateRange, 
-  projectCollapseStates: Record<string, boolean> = {}
-): Promise<any[]> { // Changed return type to any[] as BusinessGanttTask is removed
-  const projects = await projectsDataService.parseProjectsData();
-  const tasks: any[] = []; // Changed type to any[]
+export async function fetchGanttTasks(dateRange: DateRange, projectCollapseStates: Record<string, boolean> = {}): Promise<any[]> {
+  const projects = await projectsDataService.parseProjectsData({ useFiltered: true });
+  const tasks: any[] = [];
   
   // Filter projects within date range
   const filteredProjects = projects.filter(project => {
@@ -47,52 +92,176 @@ export async function fetchGanttTasks(
     return startDate <= dateRange.end && endDate >= dateRange.start;
   });
   
-  // Group by zone
-  const pmiProjects = filteredProjects.filter(p => p.zone === 'PMI');
-  const mahProjects = filteredProjects.filter(p => p.zone === 'MAH');
-  
   let displayOrder = 1;
   
-  // PMI group
-  if (pmiProjects.length > 0) {
-    const groupId = 'pmi-group';
-    const isCollapsed = projectCollapseStates[groupId] || false;
+  // Projects group - all projects from board 30 regardless of location
+  if (filteredProjects.length > 0) {
+    const projectsGroupId = 'projects-group';
+    const projectsIsCollapsed = projectCollapseStates[projectsGroupId] || false;
+    
+    // Calculate overall date range for the projects group
+    const now = DateTime.now();
+    const groupStartDate = now.minus({ months: 1 });
+    const groupEndDate = now.plus({ months: 6 });
     
     tasks.push({
-      id: groupId,
-      name: 'PMI (Palma)',
-      start: new Date(),
-      end: new Date(),
+      id: projectsGroupId,
+      name: 'Projects',
+      start: groupStartDate.toJSDate(),
+      end: groupEndDate.toJSDate(),
       progress: 0,
       type: 'project',
-      hideChildren: isCollapsed,
+      expandedState: 'Expanded', // Always start expanded to avoid issues
       displayOrder: displayOrder++,
       businessData: {
-        projectId: groupId,
-        projectName: 'PMI Zone',
-        zone: 'PMI',
+        projectId: projectsGroupId,
+        projectName: 'Projects',
+        zone: 'ALL',
         propertyType: 'multi_unit',
         phase: 'Purchase',
-        budget: pmiProjects.reduce((sum, p) => sum + (p.arrasAmount || 0) + (p.outstandingAmount || 0), 0),
+        budget: filteredProjects.reduce((sum, p) => sum + (p.arrasAmount || 0) + (p.outstandingAmount || 0), 0),
         spent: 0,
         cashFlows: []
       }
     });
     
-    if (!isCollapsed) {
-      pmiProjects.forEach(project => {
+    // Fixed costs group (placeholder for now)
+    const fixedCostsGroupId = 'fixed-costs-group';
+    const fixedCostsIsCollapsed = projectCollapseStates[fixedCostsGroupId] || false;
+    
+    tasks.push({
+      id: fixedCostsGroupId,
+      name: 'Fixed costs',
+      start: groupStartDate.toJSDate(),
+      end: groupEndDate.toJSDate(),
+      progress: 0,
+      type: 'project',
+      expandedState: fixedCostsIsCollapsed ? 'Collapsed' : 'Expanded',
+      displayOrder: displayOrder++,
+      businessData: {
+        projectId: fixedCostsGroupId,
+        projectName: 'Fixed costs',
+        zone: 'ALL',
+        propertyType: 'multi_unit',
+        phase: 'Fixed',
+        budget: 0,
+        spent: 0,
+        cashFlows: []
+      }
+    });
+    
+    // Process all projects
+    filteredProjects.forEach(project => {
+      const totalCost = (project.arrasAmount || 0) + (project.outstandingAmount || 0);
+      
+      // Create project parent task
+      const projectTaskId = `project-${project.id}`;
+      const projectIsCollapsed = projectCollapseStates[projectTaskId] || false;
+      
+      // Calculate project date range
+      const projectStartDate = project.arrasSignedDate || now.minus({ months: 1 });
+      const projectEndDate = project.projectFinishDate || now.plus({ months: 6 });
+      
+      // Calculate weekly financial data for this project
+      const weeklyFinancials = calculateWeeklyFinancials(project, dateRange);
+      
+      tasks.push({
+        id: projectTaskId,
+        name: project.name,
+        start: projectStartDate.toJSDate(),
+        end: projectEndDate.toJSDate(),
+        progress: project.progress || 0,
+        type: 'project',
+        project: projectsGroupId,
+        expandedState: 'Expanded', // Always start expanded to avoid issues
+        displayOrder: displayOrder++,
+        businessData: {
+          projectId: project.id,
+          projectName: project.name,
+          zone: project.zone,
+          propertyType: 'single_unit',
+          phase: null,
+          budget: totalCost,
+          spent: totalCost * (project.progress / 100),
+          cashFlows: project.cashflowEvents,
+          phaseId: null,
+          isCurrentPhase: false,
+          weeklyFinancials
+        }
+      });
+      
+                // Create phase child tasks for all projects
+          if (project.phaseTimeline && project.phaseTimeline.length > 0) {
+            project.phaseTimeline.forEach((phaseTimeline, index) => {
+              const phase = phaseTimeline.phase;
+              
+              // Determine predecessor - previous phase in the timeline
+              let predecessor = '';
+              if (index > 0 && project.phaseTimeline) {
+                const previousPhase = project.phaseTimeline[index - 1].phase;
+                predecessor = `project-${project.id}-phase-${previousPhase.id}`;
+              }
+          
+          // Calculate progress based on current date vs phase timeline
+          const now = DateTime.now();
+          let progress = 0;
+          
+          if (now < phaseTimeline.startDate) {
+            // Future phase - 0% progress
+            progress = 0;
+          } else if (now > phaseTimeline.endDate) {
+            // Past phase - 100% progress
+            progress = 100;
+          } else {
+            // Current phase - calculate proportional progress
+            const totalDuration = phaseTimeline.endDate.diff(phaseTimeline.startDate, 'days').days;
+            const elapsedDuration = now.diff(phaseTimeline.startDate, 'days').days;
+            progress = Math.min(100, Math.max(0, Math.round((elapsedDuration / totalDuration) * 100)));
+          }
+          
+                      tasks.push({
+              id: `project-${project.id}-phase-${phase.id}`,
+              name: phase.name,
+              start: phaseTimeline.startDate.toJSDate(),
+              end: phaseTimeline.endDate.toJSDate(),
+              progress: progress,
+              type: 'task',
+              project: projectTaskId,
+              predecessor: predecessor,
+              displayOrder: displayOrder++,
+              cssClass: `phase-${phase.id}`,
+              styles: {
+                backgroundColor: phase.backgroundColor,
+                backgroundSelectedColor: phase.backgroundColor,
+                color: phase.textColor
+              },
+              businessData: {
+                projectId: project.id,
+                projectName: project.name,
+                zone: project.zone,
+                propertyType: 'single_unit',
+                phase: phase.name,
+                budget: totalCost,
+                spent: totalCost * (project.progress / 100),
+                cashFlows: project.cashflowEvents,
+                phaseId: phase.id,
+                isCurrentPhase: phaseTimeline.isCurrentPhase
+              }
+            });
+        });
+      } else {
+        // Fallback: create a single task if no phase timeline is available
         const startDate = project.arrasSignedDate || DateTime.now().minus({ months: 1 });
         const endDate = project.projectFinishDate || startDate.plus({ months: 6 });
-        const totalCost = (project.arrasAmount || 0) + (project.outstandingAmount || 0);
         
         tasks.push({
-          id: `pmi-${project.id}`,
-          name: project.name,
+          id: `project-${project.id}-fallback`,
+          name: project.phase || 'Unknown Phase',
           start: startDate.toJSDate(),
           end: endDate.toJSDate(),
           progress: project.progress,
           type: 'task',
-          project: groupId,
+          project: projectTaskId,
           displayOrder: displayOrder++,
           styles: {
             backgroundColor: PHASE_COLOR_MAP[project.phase as keyof typeof PHASE_COLOR_MAP] || '#6b7280',
@@ -106,72 +275,16 @@ export async function fetchGanttTasks(
             phase: project.phase,
             budget: totalCost,
             spent: totalCost * (project.progress / 100),
-            cashFlows: project.cashflowEvents
+            cashFlows: project.cashflowEvents,
+            phaseId: null,
+            isCurrentPhase: true
           }
         });
-      });
-    }
+      }
+    });
   }
   
-  // MAH group
-  if (mahProjects.length > 0) {
-    const groupId = 'mah-group';
-    const isCollapsed = projectCollapseStates[groupId] || false;
-    
-    tasks.push({
-      id: groupId,
-      name: 'MAH (Menorca)',
-      start: new Date(),
-      end: new Date(),
-      progress: 0,
-      type: 'project',
-      hideChildren: isCollapsed,
-      displayOrder: displayOrder++,
-      businessData: {
-        projectId: groupId,
-        projectName: 'MAH Zone',
-        zone: 'MAH',
-        propertyType: 'multi_unit',
-        phase: 'Purchase',
-        budget: mahProjects.reduce((sum, p) => sum + (p.arrasAmount || 0) + (p.outstandingAmount || 0), 0),
-        spent: 0,
-        cashFlows: []
-      }
-    });
-    
-    if (!isCollapsed) {
-      mahProjects.forEach(project => {
-        const startDate = project.arrasSignedDate || DateTime.now().minus({ months: 1 });
-        const endDate = project.projectFinishDate || startDate.plus({ months: 6 });
-        const totalCost = (project.arrasAmount || 0) + (project.outstandingAmount || 0);
-        
-        tasks.push({
-          id: `mah-${project.id}`,
-          name: project.name,
-          start: startDate.toJSDate(),
-          end: endDate.toJSDate(),
-          progress: project.progress,
-          type: 'task',
-          project: groupId,
-          displayOrder: displayOrder++,
-          styles: {
-            backgroundColor: PHASE_COLOR_MAP[project.phase as keyof typeof PHASE_COLOR_MAP] || '#6b7280',
-            backgroundSelectedColor: PHASE_COLOR_MAP[project.phase as keyof typeof PHASE_COLOR_MAP] || '#6b7280'
-          },
-          businessData: {
-            projectId: project.id,
-            projectName: project.name,
-            zone: project.zone,
-            propertyType: 'single_unit',
-            phase: project.phase,
-            budget: totalCost,
-            spent: totalCost * (project.progress / 100),
-            cashFlows: project.cashflowEvents
-          }
-        });
-      });
-    }
-  }
+
   
   return tasks.sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
 }
@@ -222,19 +335,35 @@ export async function fetchGanttMetrics(dateRange: DateRange): Promise<GanttMetr
   const saleProjects = activeProjects.filter(p => p.phase === 'Completed / Our Stock');
   
   return {
-    totalProjects: relevantProjects.length,
-    activeProjects: activeProjects.length,
-    completedProjects: completedProjects.length,
-    totalRevenue,
-    totalCosts,
-    netValue: totalRevenue - totalCosts,
+    date: DateTime.now(),
+    phaseCapacities: [
+      {
+        type: 'purchase' as const,
+        current: purchaseProjects.length,
+        maximum: 4,
+        projects: purchaseProjects.map(p => p.id)
+      },
+      {
+        type: 'construction' as const,
+        current: constructionProjects.length, 
+        maximum: 4,
+        projects: constructionProjects.map(p => p.id)
+      },
+      {
+        type: 'sale' as const,
+        current: saleProjects.length,
+        maximum: 4, 
+        projects: saleProjects.map(p => p.id)
+      }
+    ],
     totalActiveBudget: activeBudget,
-    averageProjectDuration: averageDuration,
-    capacityUtilization: {
-      purchase: purchaseProjects.length / 4, // Assuming capacity of 4
-      construction: constructionProjects.length / 4,
-      sale: saleProjects.length / 4
-    }
+    projectedCashFlow: {
+      thisMonth: totalRevenue * 0.1, // Simplified projection
+      nextMonth: totalRevenue * 0.15,
+      nextQuarter: totalRevenue * 0.3
+    },
+    completedProjects: completedProjects.length,
+    averageProjectDuration: averageDuration
   };
 }
 
@@ -242,7 +371,7 @@ export async function fetchGanttMetrics(dateRange: DateRange): Promise<GanttMetr
 export async function getTasksForDateRange(
   startDate: DateTime,
   endDate: DateTime
-): Promise<Task[]> {
+): Promise<any[]> {
   const dateRange: DateRange = { start: startDate, end: endDate };
   const businessTasks = await fetchGanttTasks(dateRange);
   
@@ -254,11 +383,7 @@ export async function getTasksForDateRange(
     end: task.end,
     progress: task.progress,
     type: task.type,
-    styles: task.styles,
     project: task.project,
-    dependencies: task.dependencies,
-    hideChildren: task.hideChildren,
-    isDisabled: task.isDisabled,
     displayOrder: task.displayOrder
   }));
 } 
