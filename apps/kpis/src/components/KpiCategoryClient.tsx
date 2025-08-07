@@ -50,7 +50,8 @@ export default function KpiCategoryClient({
       const params = new URLSearchParams({
         kpiIds: kpiIds.join(','),
         startDate: dateRange.startDate,
-        endDate: dateRange.endDate
+        endDate: dateRange.endDate,
+        frequency: 'daily',
       });
 
       const response = await fetch(`/api/kpis/snapshots?${params}`);

@@ -347,6 +347,27 @@ export type Database = {
             referencedColumns: ["snapshot_id"]
           },
         ]
+      },
+      profiles: {
+        Row: {
+          created_at: string | null
+          full_name: string | null
+          monday_user_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          full_name?: string | null
+          monday_user_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          full_name?: string | null
+          monday_user_id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       sprint_boards: {
         Row: {
