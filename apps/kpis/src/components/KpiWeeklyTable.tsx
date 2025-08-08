@@ -5,13 +5,26 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { useState, useCallback, useEffect, useMemo } from "react";
-import type { Database } from "@isleno/types/db/public";
+import type {Database, Tables} from "@isleno/types/db/public";
 
 type Snapshot = Database["public"]["Tables"]["snapshots"]["Row"];
+
+type SnapshotRow = Database["public"]["Tables"]["snapshots"]["Row"];
+
 type Kpi = Database["public"]["Tables"]["kpis"]["Row"];
 
 type ViewMode = "general" | "closer" | "location";
 type OrderMode = "recent" | "oldest";
+
+
+type SnapshotX = SnapshotRow & {
+    snapshot_attributes?: Tables<"snapshot_attributes">[];
+    closer_monday_id?: string | null;
+    closer_name?: string | null;
+    location?: string | null;
+    _closer_id?: string | null;
+    _location?: string | null;
+};
 
 interface Interval {
     label: string;
@@ -39,7 +52,7 @@ const Checkbox = ({ checked, onCheckedChange, ...rest }: CheckboxProps) => (
 export default function KpiWeeklyTable({ initialKpis, kpiOrder, startDateISO, endDateISO }: Props) {
     const [view, setView] = useState<ViewMode>("general");
     const [order, setOrder] = useState<OrderMode>("recent");
-    const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
+    const [snapshots, setSnapshots] = useState<SnapshotX[]>([]);
     const [loading, setLoading] = useState(false);
     const [closerFilter, setCloserFilter] = useState<Set<string>>(new Set());
     const [locationFilter, setLocationFilter] = useState<Set<string>>(new Set());
@@ -91,6 +104,7 @@ export default function KpiWeeklyTable({ initialKpis, kpiOrder, startDateISO, en
             setSnapshots([]);
             return;
         }
+
         const ids = initialKpis.map(k => k.kpi_id).join(",");
         const earliest = intervals.reduce((m, i) => (i.startISO < m ? i.startISO : m), intervals[0].startISO);
         const latest = intervals.reduce((m, i) => (i.endISO > m ? i.endISO : m), intervals[0].endISO);
@@ -102,19 +116,25 @@ export default function KpiWeeklyTable({ initialKpis, kpiOrder, startDateISO, en
         try {
             const res = await fetch(`/api/kpis/snapshots?${params.toString()}`);
             const json = await res.json();
-            const raw: Snapshot[] = json.error ? [] : json.data ?? [];
+            const raw = (json.error ? [] : json.data ?? []) as SnapshotX[];
 
-            const keyMap = new Map<string, Snapshot>();
-            raw.forEach(s => {
-                const closerId =
-                    s.closer_monday_id ??
-                    s.snapshot_attributes?.find(a => a.snapshot_attribute === "closer_monday_id")?.snapshot_attribute_value ??
-                    "";
-                const loc =
-                    s.location ??
-                    s.snapshot_attributes?.find(a => a.snapshot_attribute === "location")?.snapshot_attribute_value ??
-                    "";
-                const k = `${s.kpi_id}|${s.snapshot_date}|${closerId}|${loc}`;
+            const normalized = raw.map(s => {
+                const closerFromAttr =
+                    s.snapshot_attributes?.find(a => a.snapshot_attribute === "closer_monday_id")?.snapshot_attribute_value ?? null;
+
+                const locFromAttr =
+                    s.snapshot_attributes?.find(a => a.snapshot_attribute === "location")?.snapshot_attribute_value ?? null;
+
+                const _closer_id = s.closer_monday_id ?? closerFromAttr ?? null;
+                const _location  = s.location ?? locFromAttr ?? null;
+
+                return { ...s, _closer_id, _location };
+            });
+
+
+            const keyMap = new Map<string, SnapshotX>();
+            normalized.forEach(s => {
+                const k = `${s.kpi_id}|${s.snapshot_date}|${s._closer_id ?? ""}|${s._location ?? ""}`;
                 const prev = keyMap.get(k);
                 if (!prev || new Date(s.created_at) > new Date(prev.created_at)) keyMap.set(k, s);
             });
@@ -125,17 +145,13 @@ export default function KpiWeeklyTable({ initialKpis, kpiOrder, startDateISO, en
         }
     }, [initialKpis, intervals, view]);
 
+
     useEffect(() => {
         loadSnapshots();
     }, [loadSnapshots, order]);
 
-    const getCloserId = (s: Snapshot) =>
-        s.closer_monday_id ??
-        s.snapshot_attributes?.find(a => a.snapshot_attribute === "closer_monday_id")?.snapshot_attribute_value ??
-        null;
-
-    const getLocation = (s: Snapshot) =>
-        s.location ?? s.snapshot_attributes?.find(a => a.snapshot_attribute === "location")?.snapshot_attribute_value ?? null;
+    const getCloserId = (s: SnapshotX) => s._closer_id ?? null;
+    const getLocation = (s: SnapshotX) => s._location ?? null;
 
     const closers = useMemo(() => {
         const map = new Map<string, string>();
@@ -296,7 +312,11 @@ export default function KpiWeeklyTable({ initialKpis, kpiOrder, startDateISO, en
                                     checked={closerFilter.has(c.id)}
                                     onCheckedChange={v => {
                                         const next = new Set(closerFilter);
-                                        v ? next.add(c.id) : next.delete(c.id);
+                                        if (v) {
+                                            next.add(c.id);
+                                        } else {
+                                            next.delete(c.id);
+                                        }
                                         setCloserFilter(next);
                                     }}
                                 />
@@ -314,7 +334,11 @@ export default function KpiWeeklyTable({ initialKpis, kpiOrder, startDateISO, en
                                     checked={locationFilter.has(loc)}
                                     onCheckedChange={v => {
                                         const next = new Set(locationFilter);
-                                        v ? next.add(loc) : next.delete(loc);
+                                        if (v) {
+                                            next.add(loc);
+                                        } else {
+                                            next.delete(loc);
+                                        }
                                         setLocationFilter(next);
                                     }}
                                 />

@@ -312,33 +312,23 @@ export type Database = {
       snapshot_attributes: {
         Row: {
           created_at: string | null
-          kpi_id: string
           snapshot_attribute: string
           snapshot_attribute_value: string | null
           snapshot_id: string
         }
         Insert: {
           created_at?: string | null
-          kpi_id: string
           snapshot_attribute: string
           snapshot_attribute_value?: string | null
           snapshot_id: string
         }
         Update: {
           created_at?: string | null
-          kpi_id?: string
           snapshot_attribute?: string
           snapshot_attribute_value?: string | null
           snapshot_id?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "snapshot_attributes_kpi_id_fkey"
-            columns: ["kpi_id"]
-            isOneToOne: false
-            referencedRelation: "kpis"
-            referencedColumns: ["kpi_id"]
-          },
           {
             foreignKeyName: "snapshot_attributes_snapshot_id_fkey"
             columns: ["snapshot_id"]
