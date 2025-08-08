@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
 
         const selectFields = byCloser
             ? "*, snapshot_attributes(snapshot_attribute,snapshot_attribute_value)"
-            : "*, snapshot_attributes(snapshot_attribute)";
+            : "*, snapshot_attributes(snapshot_attribute,snapshot_attribute_value)";
 
         let query = supabaseServer
             .from("snapshots")
