@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabaseServer";
+import { Database } from "@isleno/types";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -14,20 +15,20 @@ export async function OPTIONS() {
 interface SnapshotBody {
   kpi_key: string;
   snapshot_date: string;
-  snapshot_data?: any | null;
+  snapshot_data?: Database["public"]["Tables"]["snapshots"]["Insert"]["snapshot_data"];
   numeric_value?: number | null;
   date_value?: string | null;
   text_value?: string | null;
-  location?: string | null;
+  location?: Database["public"]["Enums"]["location"] | null;
   closer_monday_id?: string | null;
-  frequency?: "daily" | "weekly" | "monthly" | "quarterly" | "yearly" | null;
+  frequency?: Database["public"]["Enums"]["kpi_target_frequency"] | null;
 }
 
 type SnapshotInsert = {
   kpi_id: string;
   snapshot_date: string;
-  frequency: string;
-  snapshot_data?: any;
+  frequency: Database["public"]["Enums"]["kpi_target_frequency"];
+  snapshot_data?: Database["public"]["Tables"]["snapshots"]["Insert"]["snapshot_data"];
   numeric_value?: number;
   date_value?: string;
   text_value?: string;

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabaseServer";
+import { Database } from "@isleno/types";
 
 export async function GET(request: NextRequest) {
     try {
@@ -8,7 +9,7 @@ export async function GET(request: NextRequest) {
         const kpiIds     = searchParams.get("kpiIds");
         const startDate  = searchParams.get("startDate");
         const endDate    = searchParams.get("endDate");
-        const frequency  = searchParams.get("frequency")  || "daily";
+        const frequency  = (searchParams.get("frequency") || "daily") as Database["public"]["Enums"]["kpi_target_frequency"];
         const byCloser   = searchParams.get("byCloser");
         const byLocation = searchParams.get("byLocation");
 
@@ -25,12 +26,13 @@ export async function GET(request: NextRequest) {
             );
 
         const kpiIdsArray = kpiIds.split(",");
+        const supabase = await supabaseServer();
 
         const selectFields = byCloser
             ? "*, snapshot_attributes(snapshot_attribute,snapshot_attribute_value)"
             : "*, snapshot_attributes(snapshot_attribute,snapshot_attribute_value)";
 
-        let query = supabaseServer
+        let query = supabase
             .from("snapshots")
             .select(selectFields)
             .filter("kpi_id", "in", `(${kpiIdsArray.join(",")})`)
@@ -66,7 +68,7 @@ export async function GET(request: NextRequest) {
             ];
 
             if (closerIds.length) {
-                const { data: profiles, error: profilesError } = await supabaseServer
+                const { data: profiles, error: profilesError } = await supabase
                     .from("profiles")
                     .select("monday_user_id, full_name")
                     .in("monday_user_id", closerIds);
