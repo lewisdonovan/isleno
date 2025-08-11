@@ -23,7 +23,8 @@
     "ODOO_URL",
     "ODOO_DB_NAME",
     "ODOO_API_KEY",
-    "ODOO_USER_ID"
+    "ODOO_USER_ID",
+    "ODOO_MAIN_COMPANY_ID"
   ],
   "tasks": {
     "build": {

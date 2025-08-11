@@ -231,7 +231,19 @@
     "cancel": "Cancelar",
     "save": "Guardar",
     "selectInvoiceToView": "Selecciona una factura para ver el adjunto",
-    "title": "Aprobaciones de Facturas"
+    "title": "Aprobaciones de Facturas",
+    "project": "Proyecto",
+    "selectProject": "Seleccionar proyecto...",
+    "noProjectFound": "No se encontró proyecto.",
+    "category": "Categoría de gastos",
+    "selectCategory": "Seleccionar categoría de gastos...",
+    "noCategoryFound": "No se encontró categoría de gastos.",
+    "approveWithDetails": "Aprobar con Detalles",
+    "notApplicable": "N/A",
+    "refresh": "Actualizar",
+    "refreshing": "Actualizando...",
+    "refreshSuccess": "Factura actualizada exitosamente",
+    "refreshError": "Error al actualizar factura"
   },
   "components": {
     "boardTable": {

@@ -39,6 +39,8 @@ const nextConfig = {
       }
     ],
   },
+  // Disable static generation for API routes
+  trailingSlash: false
 };
 
 module.exports = withNextIntl(nextConfig);
