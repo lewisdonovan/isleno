@@ -173,8 +173,6 @@ export type Database = {
       }
       kpis: {
         Row: {
-          closer_name: string | null;
-          closer_monday_id: string | null;
           channel: string
           created_at: string
           created_by: string | null
@@ -315,11 +313,54 @@ export type Database = {
           },
         ]
       }
+      snapshot_attributes: {
+        Row: {
+          id: string
+          kpi_id: string
+          snapshot_attribute: string
+          snapshot_attribute_value: string
+          snapshot_id: string
+        }
+        Insert: {
+          id?: string
+          kpi_id: string
+          snapshot_attribute: string
+          snapshot_attribute_value: string
+          snapshot_id: string
+        }
+        Update: {
+          id?: string
+          kpi_id?: string
+          snapshot_attribute?: string
+          snapshot_attribute_value?: string
+          snapshot_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "snapshot_attributes_kpi_id_fkey"
+            columns: ["kpi_id"]
+            isOneToOne: false
+            referencedRelation: "kpis"
+            referencedColumns: ["kpi_id"]
+          },
+          {
+            foreignKeyName: "snapshot_attributes_snapshot_id_fkey"
+            columns: ["snapshot_id"]
+            isOneToOne: false
+            referencedRelation: "snapshots"
+            referencedColumns: ["snapshot_id"]
+          },
+        ]
+      }
       snapshots: {
         Row: {
+          closer_monday_id: string | null
+          closer_name: string | null
           created_at: string
           date_value: string | null
+          frequency: Database["public"]["Enums"]["kpi_target_frequency"] | null
           kpi_id: string
+          location: Database["public"]["Enums"]["location"] | null
           numeric_value: number | null
           snapshot_data: Json | null
           snapshot_date: string
@@ -327,9 +368,13 @@ export type Database = {
           text_value: string | null
         }
         Insert: {
+          closer_monday_id?: string | null
+          closer_name?: string | null
           created_at?: string
           date_value?: string | null
+          frequency?: Database["public"]["Enums"]["kpi_target_frequency"] | null
           kpi_id: string
+          location?: Database["public"]["Enums"]["location"] | null
           numeric_value?: number | null
           snapshot_data?: Json | null
           snapshot_date: string
@@ -337,9 +382,13 @@ export type Database = {
           text_value?: string | null
         }
         Update: {
+          closer_monday_id?: string | null
+          closer_name?: string | null
           created_at?: string
           date_value?: string | null
+          frequency?: Database["public"]["Enums"]["kpi_target_frequency"] | null
           kpi_id?: string
+          location?: Database["public"]["Enums"]["location"] | null
           numeric_value?: number | null
           snapshot_data?: Json | null
           snapshot_date?: string
@@ -355,56 +404,6 @@ export type Database = {
             referencedColumns: ["kpi_id"]
           },
         ]
-      }
-      snapshot_attributes: {
-        Row: {
-          created_at: string | null
-          snapshot_attribute: string
-          snapshot_attribute_value: string | null
-          snapshot_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          snapshot_attribute: string
-          snapshot_attribute_value?: string | null
-          snapshot_id: string
-        }
-        Update: {
-          created_at?: string | null
-          snapshot_attribute?: string
-          snapshot_attribute_value?: string | null
-          snapshot_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "snapshot_attributes_snapshot_id_fkey"
-            columns: ["snapshot_id"]
-            isOneToOne: false
-            referencedRelation: "snapshots"
-            referencedColumns: ["snapshot_id"]
-          },
-        ]
-      },
-      profiles: {
-        Row: {
-          created_at: string | null
-          full_name: string | null
-          monday_user_id: string
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          full_name?: string | null
-          monday_user_id: string
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          full_name?: string | null
-          monday_user_id?: string
-          updated_at?: string | null
-        }
-        Relationships: []
       }
       sprint_boards: {
         Row: {
@@ -533,6 +532,7 @@ export type Database = {
         | "count"
         | "ratio"
         | "text"
+      location: "PMI" | "MAH"
       symbol_position: "left" | "right"
     }
     CompositeTypes: {
@@ -692,6 +692,7 @@ export const Constants = {
         "ratio",
         "text",
       ],
+      location: ["PMI", "MAH"],
       symbol_position: ["left", "right"],
     },
   },
