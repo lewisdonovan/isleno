@@ -24,7 +24,8 @@
     "ODOO_DB_NAME",
     "ODOO_API_KEY",
     "ODOO_USER_ID",
-    "ODOO_MAIN_COMPANY_ID"
+    "ODOO_MAIN_COMPANY_ID",
+    "VERCEL_PROJECT_PRODUCTION_URL"
   ],
   "tasks": {
     "build": {
