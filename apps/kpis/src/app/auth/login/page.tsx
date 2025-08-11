@@ -21,9 +21,7 @@ function LoginForm() {
       const { error } = await supabaseClient.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${process.env.VERCEL_PROJECT_PRODUCTION_URL 
-            ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}/auth/callback${redirect ? `?redirect=${encodeURIComponent(redirect)}` : ''}` 
-            : 'http://localhost:3000'}/auth/callback${redirect ? `?redirect=${encodeURIComponent(redirect)}` : ''}`
+          redirectTo: `${window.location.origin}/auth/callback${redirect ? `?redirect=${encodeURIComponent(redirect)}` : ''}`
         }
       });
 

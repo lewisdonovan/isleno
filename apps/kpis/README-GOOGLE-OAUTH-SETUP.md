@@ -37,8 +37,6 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
 SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
 ```
 
-**Note**: For OAuth redirects, the application automatically uses Vercel's built-in `VERCEL_PROJECT_PRODUCTION_URL` environment variable in production, with a fallback to `http://localhost:3000` for local development. No additional configuration is needed for production deployments on Vercel.
-
 ## 4. Update Supabase Site URL
 
 In your Supabase dashboard:

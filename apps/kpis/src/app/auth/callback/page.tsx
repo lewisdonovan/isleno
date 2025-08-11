@@ -31,7 +31,7 @@ export default function AuthCallback() {
             console.log('Redirecting to:', targetPath)
             
             // Pass session info to help middleware recognize the auth state
-            const redirectUrl = new URL(targetPath, process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : 'http://localhost:3000')
+            const redirectUrl = new URL(targetPath, window.location.origin)
             redirectUrl.searchParams.set('fresh_auth', 'true')
             redirectUrl.searchParams.set('user_id', session.user.id)
             
@@ -72,7 +72,7 @@ export default function AuthCallback() {
           const targetPath = redirect || '/'
           
           // Pass session info to help middleware recognize the auth state
-          const redirectUrl = new URL(targetPath, process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : 'http://localhost:3000')
+          const redirectUrl = new URL(targetPath, window.location.origin)
           redirectUrl.searchParams.set('fresh_auth', 'true')
           redirectUrl.searchParams.set('user_id', session.user.id)
           
