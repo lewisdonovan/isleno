@@ -2,7 +2,7 @@
 import clsx from "clsx";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useTranslations } from 'next-intl';
-import type { Closer } from "@/types/kpis";
+import type { Closer } from "@isleno/types/kpis";
 
 interface KpiTableProps {
   title: string;

@@ -14,7 +14,12 @@
     "theme": "Tema",
     "light": "Claro",
     "dark": "Oscuro",
-    "system": "Sistema"
+    "system": "Sistema",
+    "signIn": "Iniciar Sesión",
+    "signOut": "Cerrar Sesión",
+    "dashboard": "Panel de Control",
+    "gantt": "Gráfico de Gantt",
+    "navigation": "Navegación"
   },
   "home": {
     "welcome": "Bienvenido al Workspace de Isleño",
@@ -23,11 +28,12 @@
     "kpisDashboard": "KPIs Dashboard"
   },
   "auth": {
-    "welcome": "Bienvenido a Isleno KPI UI",
-    "connectMonday": "Conecta tu cuenta de Monday.com para comenzar",
+    "welcome": "Bienvenido al Workspace de Isleño",
+    "description": "Inicia sesión con tu cuenta de Google para comenzar",
     "secureOAuth": "Autenticación OAuth segura",
-    "accessBoards": "Accede a tus tableros de Monday.com",
-    "continueWithMonday": "Continuar con Monday.com",
+    "accessDashboard": "Accede a tu panel de administración",
+    "continueWithGoogle": "Continuar con Google",
+    "signingIn": "Iniciando sesión...",
     "loading": "Cargando...",
     "termsAgreement": "Al continuar, aceptas nuestros términos de servicio y política de privacidad."
   },
@@ -71,8 +77,10 @@
     "inActiveProjects": "En proyectos activos",
     "netCashFlow": "Flujo de Caja Neto",
     "thisMonth": "Este mes",
+    "thisQuarter": "Este trimestre",
     "rental": "Alquiler",
     "name": "Nombre",
+    "items": "Elementos",
     "purchase": "Compra",
     "construction": "Construcción",
     "sale": "Venta",
@@ -108,7 +116,13 @@
     "progress": "Progreso",
     "duration": "Duración",
     "cashFlows": "Flujos de Efectivo",
-    "monthAbbr": "m"
+    "monthAbbr": "m",
+    "navigation": "Navegación",
+    "previous": "Anterior",
+    "next": "Siguiente",
+    "quarter": "Trimestre",
+    "collapseAll": "Colapsar Todo",
+    "expandAll": "Expandir Todo"
   },
   "kpis": {
     "configureKPIs": "Configurar KPIs",
@@ -143,7 +157,37 @@
     "itTask": "Tarea IT",
     "callToCollaborator": "Llamada a Colaborador",
     "collaborationMeeting": "Reunión de Colaboración",
-    "test": "Prueba"
+    "test": "Prueba",
+    "dashboard": "Dashboard de KPIs",
+    "description": "Monitorear y rastrear indicadores clave de rendimiento en todos los departamentos",
+    "liveKPIs": "KPIs en Vivo",
+    "liveKPIsDesc": "Ver datos de KPI en tiempo real y métricas de rendimiento",
+    "viewLiveKPIs": "Ver KPIs en Vivo",
+    "historicalData": "Datos Históricos",
+    "historicalDataDesc": "Analizar tendencias de KPI y rendimiento histórico",
+    "comingSoon": "Próximamente",
+    "kpiManagement": "Gestión de KPIs",
+    "kpiManagementDesc": "Configurar y gestionar configuraciones y configuraciones de KPI",
+    "departments": "Departamentos",
+    "departmentsDesc": "Navegar KPIs por departamento y categoría",
+    "viewKPIs": "Ver KPIs",
+    "noDepartmentsFound": "No se encontraron departamentos",
+    "quickStats": "Estadísticas Rápidas",
+    "quickStatsDesc": "Resumen de estadísticas del sistema de KPI",
+    "departmentsCount": "Departamentos",
+    "categories": "Categorías",
+    "activeKPIs": "KPIs Activos",
+    "lastUpdated": "Última Actualización",
+    "errorLoadingDepartments": "Error al cargar departamentos: {message}",
+    "errorLoadingCategories": "Error al cargar categorías: {message}",
+    "backToDepartments": "Volver a Departamentos",
+    "kpiCategories": "Categorías de KPI",
+    "selectCategoryDescription": "Selecciona una categoría para ver sus KPIs",
+    "noCategoriesFound": "No se encontraron categorías de KPI para este departamento.",
+    "backToCategories": "Volver a Categorías",
+    "kpiCategory": "Categoría de KPI",
+    "errorLoadingKPIs": "Error al cargar KPIs:",
+    "errorLoadingKPIDetails": "Error al cargar detalles de KPI:"
   },
   "forms": {
     "addKpiConfig": "Agregar KPI y Configuración",
@@ -186,7 +230,128 @@
     "subtotalDescription": "Por favor asegúrate de que el subtotal coincida con el monto antes de impuestos en la factura.",
     "cancel": "Cancelar",
     "save": "Guardar",
-    "selectInvoiceToView": "Selecciona una factura para ver el adjunto"
+    "selectInvoiceToView": "Selecciona una factura para ver el adjunto",
+    "title": "Aprobaciones de Facturas"
+  },
+  "components": {
+    "boardTable": {
+      "loading": "Cargando tableros...",
+      "name": "Nombre",
+      "id": "ID",
+      "state": "Estado",
+      "type": "Tipo",
+      "unknown": "Desconocido",
+      "standard": "Estándar",
+      "page": "Página",
+      "previous": "Anterior",
+      "next": "Siguiente"
+    },
+    "chartsDemo": {
+      "title": "Demo: implementación de gráficos shadcn/ui",
+      "description": "Esta página demuestra cómo usar los gráficos de shadcn/ui para mostrar datos. Para más información, consulta la documentación en el enlace de abajo.",
+      "warningTitle": "Advertencia",
+      "warningDescription": "Este es un marcador de posición para los gráficos reales. Los datos no son reales y los gráficos no están conectados a los datos reales."
+    },
+    "kpiConfig": {
+      "hideKpisGeneral": "Ocultar KPIs – General",
+      "hideKpisCollaborators": "Ocultar KPIs – Colaboradores",
+      "hideClosers": "Ocultar Closers"
+    },
+    "kpiDashboard": {
+      "generalKpis": "KPIs Generales"
+    },
+    "kpiCategory": {
+      "filters": "Filtros",
+      "dateRange": "Rango de Fechas",
+      "channels": "Canales",
+      "clearFilters": "Limpiar todos los filtros",
+      "biggestMovers": "Mayores Cambios",
+      "biggestChanges": "Mayores cambios este período",
+      "noDataAvailable": "No hay datos disponibles",
+      "channel": "canal",
+      "noChangesAvailable": "No hay cambios disponibles"
+    },
+    "cashflow": {
+      "projectProfitabilityTitle": "Análisis de Rentabilidad de Proyectos",
+      "projectProfitabilityDescription": "Métricas detalladas de rentabilidad para todos los proyectos",
+      "project": "Proyecto",
+      "zone": "Zona",
+      "phase": "Fase",
+      "totalCost": "Costo Total",
+      "salePrice": "Precio de Venta",
+      "margin": "Margen",
+      "weeklyValue": "Valor Semanal",
+      "status": "Estado",
+      "rental": "Alquiler",
+      "done": "Completado",
+      "failedToLoad": "Error al cargar datos de flujo de caja",
+      "loading": "Cargando datos de flujo de caja...",
+      "currentLiquidity": "Liquidez Actual",
+      "thirtyDayProjection": "Proyección 30 Días",
+      "ninetyDayProjection": "Proyección 90 Días",
+      "netCashflow": "Flujo de Caja Neto",
+      "avgProjectProfitability": "Rentabilidad Promedio de Proyectos",
+      "projectsAbove120": "Proyectos Sobre 120%",
+      "rentalProfitability": "Rentabilidad de Alquileres",
+      "weeklyValueCreation": "Creación de Valor Semanal",
+      "weeklyValueMargin": "Margen de Valor Semanal",
+      "activeProjects": "Proyectos Activos",
+      "avgProgress": "Progreso Promedio",
+      "completingThisMonth": "Completando Este Mes",
+      "zoneDistribution": "Distribución por Zona",
+      "weeklyInvestment": "Inversión Semanal",
+      "weeklyInvestmentDesc": "Costo promedio del proyecto",
+      "weeklyProjectValue": "Valor del Proyecto Semanal",
+      "weeklyProjectValueDesc": "Euros nominales por semana",
+      "weeklyValueMarginDesc": "Margen promedio del costo del proyecto",
+      "weeklyInvestmentNew": "Inversión Semanal",
+      "weeklyInvestmentNewDesc": "Gasto total, sin incluir costos de renovación",
+      "avgMonthlySpend": "Gasto Mensual Promedio",
+      "avgMonthlySpendDesc": "((gasto total * 52) / 12)",
+      "weeklyMargin": "Margen Semanal",
+      "weeklyMarginDesc": "Margen esperado / tiempo de construcción esperado (6 semanas)",
+      "generatedValue": "Valor Generado",
+      "generatedValueDesc": "Margen semanal - inversión semanal",
+      "activeProjectsDesc": "completados",
+      "avgProgressDesc": "En todos los proyectos activos",
+      "completingThisMonthDesc": "próximo mes",
+      "zoneDistributionDesc": "Proyectos PMI / MAH",
+      "cashflowProjectionTitle": "Proyección de Flujo de Caja 6 Meses",
+      "cashflowProjectionDesc": "Entradas, salidas y liquidez neta proyectadas",
+      "netChange6Months": "Cambio Neto (6 meses)",
+      "dataSource": {
+        "weeklyInvestment": "Datos del tablero de Proyectos de Desarrollo de Monday.com - calculado desde los campos arrasAmount + outstandingAmount en todos los proyectos activos",
+        "weeklyProjectValue": "Datos del tablero de Proyectos de Desarrollo de Monday.com - calculado desde salePrice/soldPrice vs costos totales del proyecto",
+        "weeklyValueMargin": "Datos del tablero de Proyectos de Desarrollo de Monday.com - promedio de creación de valor semanal como porcentaje del costo del proyecto",
+        "activeProjects": "Datos del tablero de Proyectos de Desarrollo de Monday.com - conteo de proyectos no marcados como 'Completed / Sold'",
+        "avgProgress": "Datos del tablero de Proyectos de Desarrollo de Monday.com - porcentaje de progreso extraído de nombres de proyectos (ej., '75% Nombre del Proyecto')",
+        "completingThisMonth": "Datos del tablero de Proyectos de Desarrollo de Monday.com - estimado basado en proyectos con progreso ≥90%",
+        "zoneDistribution": "Datos del tablero de Proyectos de Desarrollo de Monday.com - indicador de zona extraído de nombres de proyectos (ej., '| PMI |')",
+        "phaseCapacity": "Datos del tablero de Proyectos de Desarrollo de Monday.com - mapeo de estado del proyecto a fases (Compra, Construcción, Venta/Alquiler) con límites de capacidad definidos por fase",
+        "cashflowProjection": "Datos del tablero de Proyectos de Desarrollo de Monday.com - calculado desde eventos de flujo de caja estimados incluyendo depósitos de compra, costos de construcción, ingresos por venta e ingresos por alquiler basados en cronogramas de proyectos",
+        "projectProfitability": "Datos del tablero de Proyectos de Desarrollo de Monday.com - calculado desde arrasAmount + outstandingAmount + costos de construcción (50% del precio de compra) vs salePrice/soldPrice, con márgenes de rentabilidad y estimaciones de creación de valor semanal",
+        "weeklyInvestmentNew": "Datos del tablero de Base de Datos de Propiedades de Monday.com - calculado desde precio de adquisición (numbers4) + impuestos (numbers95), sin incluir costos de renovación",
+        "avgMonthlySpend": "Datos del tablero de Base de Datos de Propiedades de Monday.com - calculado como ((gasto total * 52) / 12) desde precio de adquisición + impuestos",
+        "weeklyMargin": "Datos del tablero de Base de Datos de Propiedades de Monday.com - calculado desde precio de venta pesimista (numbers90) - costo total (adquisición + renovación + impuestos) dividido por 6 semanas",
+        "generatedValue": "Datos del tablero de Base de Datos de Propiedades de Monday.com - calculado como margen semanal - inversión semanal"
+      }
+    }
+  },
+  "pages": {
+    "boards": {
+      "title": "Tableros de Monday.com",
+      "description": "Navega y visualiza tus tableros de Monday.com"
+    },
+    "kpisLive": {
+      "selectDateRange": "Selecciona un rango de fechas y haz clic en \"Obtener KPIs\""
+    },
+    "charts": {
+      "title": "Ejemplos de Gráficos"
+    },
+    "cashflow": {
+      "title": "Flujo de Caja y Análisis de Proyectos",
+      "description": "Proyecciones financieras en tiempo real y utilización de capacidad basada en datos de proyectos"
+    }
   },
   "common": {
     "loading": "Cargando...",
@@ -242,5 +407,76 @@
     "trace": "Rastro",
     "fatal": "Fatal",
     "critical": "Crítico"
+  },
+  "KpiDashboard": {
+    "title": "Dashboard de KPIs"
+  },
+  "MondayLink": {
+    "linkButton": "Conectar Cuenta de Monday.com",
+    "relinkButton": "Reconectar Cuenta de Monday.com",
+    "linkedStatus": "Conectada",
+    "notLinkedStatus": "No Conectada",
+    "linkSuccessTitle": "Cuenta de Monday.com Conectada",
+    "linkSuccessDescription": "Tu cuenta de Monday.com ha sido conectada exitosamente.",
+    "linkErrorTitle": "Error al Conectar la Cuenta de Monday.com",
+    "linkErrorDescription": "Ocurrió un error al conectar tu cuenta: {error}",
+    "configErrorTitle": "Error de Configuración",
+    "configErrorDescription": "La integración con Monday.com no está configurada correctamente."
+  },
+  "MondayData": {
+    "title": "Mis Paneles de Monday.com",
+    "fetchError": "Error al obtener datos de Monday.com.",
+    "noData": "No se encontraron paneles."
+  },
+  "errors": {
+    "accessDenied": "Acceso Denegado",
+    "insufficientPermissions": "No tienes permiso para acceder a esta página.",
+    "departmentAccessDenied": "Acceso al Departamento Denegado",
+    "noDepartmentPermissions": "No tienes permiso para acceder a los datos de este departamento.",
+    "goBack": "Volver",
+    "backToKpis": "Volver a KPIs"
+  },
+  "dashboard": {
+    "welcome": "Bienvenido al Workspace de Isleño",
+    "selectSection": "Selecciona una sección para comenzar",
+    "noAccessTitle": "Sin Acceso Disponible",
+    "noAccessMessage": "Tu cuenta actualmente no tiene acceso a ninguna sección de la aplicación.",
+    "contactIT": "Por favor contacta al soporte de TI para solicitar acceso",
+    "departmentAccessNotice": "Restricciones de Acceso al Departamento",
+    "departmentAccessDescription": "Tu acceso está limitado a los datos y recursos del departamento {department}.",
+    "accessTo": "Acceso a",
+    "kpisDescription": "Monitorear y rastrear indicadores clave de rendimiento para tu departamento",
+    "calendarDescription": "Ver cronogramas de proyectos, hitos y eventos programados",
+    "ganttDescription": "Visualizar cronogramas de proyectos y dependencias en formato de diagrama de Gantt",
+    "cashflowDescription": "Analizar el rendimiento financiero y las proyecciones de flujo de efectivo",
+    "invoicesDescription": "Revisar y aprobar facturas de proveedores y pagos",
+    "boardsDescription": "Acceder y gestionar tableros de proyectos de Monday.com",
+    "chartsDescription": "Ver análisis detallados y paneles de informes personalizados",
+    "accessLevel": "Nivel de Acceso",
+    "department": "Departamento",
+    "availableSections": "Mi Isleño",
+    "noAccessibleSections": "No hay secciones accesibles disponibles",
+    "contactAdministrator": "Por favor contacta a tu administrador para solicitar acceso"
+  },
+  "monday": {
+    "linkAccountTitle": "Conectar Cuenta de Monday.com",
+    "linkAccountDescription": "Conecta tu cuenta de Monday.com para acceder a tableros, KPIs y datos de proyectos directamente dentro del panel.",
+    "required": "Requerido",
+    "featuresTitle": "Desbloquear Funciones Avanzadas",
+    "featuresDescription": "Accede a tableros de proyectos, seguimiento de KPIs y sincronización de datos en tiempo real.",
+    "secureConnection": "Conexión OAuth segura",
+    "connectAccount": "Conectar Cuenta",
+    "connecting": "Conectando...",
+    "linkSuccessTitle": "Cuenta de Monday.com Conectada",
+    "linkSuccessDescription": "Tu cuenta de Monday.com ha sido vinculada exitosamente. Ahora tienes acceso a tableros y datos de KPI.",
+    "linkErrorTitle": "Falló la Conexión",
+    "linkErrorDescription": "Error al conectar tu cuenta de Monday.com: {error}. Por favor intenta de nuevo.",
+    "permissionErrorTitle": "Acceso Denegado",
+    "permissionErrorDescription": "No tienes permiso para vincular cuentas de Monday.com. Por favor contacta a tu administrador.",
+    "configErrorTitle": "Error de Configuración",
+    "configErrorDescription": "La integración de Monday.com no está configurada correctamente. Por favor contacta a tu administrador.",
+    "stateMismatchError": "La validación de seguridad falló. Por favor intenta de nuevo.",
+    "missingCodeError": "No se recibió el código de autorización. Por favor intenta de nuevo.",
+    "tokenExchangeError": "Error al intercambiar el código de autorización por el token de acceso. Por favor intenta de nuevo."
   }
 } 

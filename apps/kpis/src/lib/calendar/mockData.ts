@@ -1,5 +1,5 @@
 import { DateTime } from 'luxon';
-import { CalendarEvent, EventType, Zone, PropertyType, EventCategory, Phase } from '@/types/calendar';
+import { CalendarEvent, EventType, Zone, PropertyType, EventCategory, Phase } from '@isleno/types/calendar';
 
 // Sample property data
 const PROPERTIES = [

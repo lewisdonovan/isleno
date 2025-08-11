@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabaseServer";
+import { Database } from "@isleno/types";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -14,20 +15,20 @@ export async function OPTIONS() {
 interface SnapshotBody {
   kpi_key: string;
   snapshot_date: string;
-  snapshot_data?: any | null;
+  snapshot_data?: Database["public"]["Tables"]["snapshots"]["Insert"]["snapshot_data"];
   numeric_value?: number | null;
   date_value?: string | null;
   text_value?: string | null;
-  location?: string | null;
+  location?: Database["public"]["Enums"]["location"] | null;
   closer_monday_id?: string | null;
-  frequency?: "daily" | "weekly" | "monthly" | "quarterly" | "yearly" | null;
+  frequency?: Database["public"]["Enums"]["kpi_target_frequency"] | null;
 }
 
 type SnapshotInsert = {
   kpi_id: string;
   snapshot_date: string;
-  frequency: string;
-  snapshot_data?: any;
+  frequency: Database["public"]["Enums"]["kpi_target_frequency"];
+  snapshot_data?: Database["public"]["Tables"]["snapshots"]["Insert"]["snapshot_data"];
   numeric_value?: number;
   date_value?: string;
   text_value?: string;
@@ -53,7 +54,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, message: "Solo se permite un atributo: location o closer_monday_id" }, { status: 400, headers: corsHeaders });
     }
 
-    const { data: kpiData, error: kpiError } = await supabaseServer.from("kpis").select("kpi_id").eq("kpi_key", kpi_key).single();
+    const supabase = await supabaseServer();
+    const { data: kpiData, error: kpiError } = await supabase.from("kpis").select("kpi_id").eq("kpi_key", kpi_key).single();
 
     if (kpiError || !kpiData) {
       return NextResponse.json({ success: false, message: "kpi_key no encontrado" }, { status: 404, headers: corsHeaders });
@@ -66,7 +68,7 @@ export async function POST(request: NextRequest) {
     if (date_value != null) snapshotRow.date_value = date_value;
     if (text_value != null) snapshotRow.text_value = text_value;
 
-    const { data: insertSnap, error: insertSnapError } = await supabaseServer.from("snapshots").insert(snapshotRow).select("snapshot_id").single();
+    const { data: insertSnap, error: insertSnapError } = await supabase.from("snapshots").insert(snapshotRow).select("snapshot_id").single();
 
     if (insertSnapError) {
       return NextResponse.json({ success: false, message: insertSnapError.message }, { status: 500, headers: corsHeaders });
@@ -83,7 +85,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (attributes.length > 0) {
-      const { error: attrError } = await supabaseServer.from("snapshot_attributes").insert(attributes);
+      const { error: attrError } = await supabase.from("snapshot_attributes").insert(attributes);
       if (attrError) {
         return NextResponse.json({ success: false, message: attrError.message }, { status: 500, headers: corsHeaders });
       }

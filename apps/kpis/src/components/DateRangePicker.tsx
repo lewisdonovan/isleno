@@ -3,36 +3,17 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { DateUtils } from "@/lib/utils/dateUtils";
 
 interface DateRangePickerProps {
   onDateRangeChange: (startDate: string, endDate: string) => void;
   className?: string;
 }
 
-const PRESETS = [
-  { label: "Last 90 days", days: 90 },
-  { label: "Last 60 days", days: 60 },
-  { label: "Last 30 days", days: 30 },
-];
+import { DATE_RANGE_PRESETS } from '@/configs/dateRanges';
 
 export default function DateRangePicker({ onDateRangeChange, className }: DateRangePickerProps) {
-  // Helper function to ensure dates are in YYYY-MM-DD format
-  const formatDateForDB = (date: Date): string => {
-    return date.toISOString().split('T')[0];
-  };
-
-  // Calculate default date range (past 60 days to today)
-  const getDefaultDateRange = () => {
-    const endDate = new Date();
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - 60); // 60 days ago
-    return {
-      startDate: formatDateForDB(startDate),
-      endDate: formatDateForDB(endDate)
-    };
-  };
-
-  const defaultRange = getDefaultDateRange();
+  const defaultRange = DateUtils.getDefaultDateRange();
   const [startDate, setStartDate] = useState(defaultRange.startDate);
   const [endDate, setEndDate] = useState(defaultRange.endDate);
 
@@ -49,25 +30,19 @@ export default function DateRangePicker({ onDateRangeChange, className }: DateRa
   const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newStartDate = e.target.value;
     setStartDate(newStartDate);
-    if (newStartDate > endDate) {
-      setEndDate(newStartDate);
-    }
+    setEndDate(DateUtils.adjustEndDateIfNeeded(newStartDate, endDate));
   };
 
   const handleEndDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newEndDate = e.target.value;
     setEndDate(newEndDate);
-    if (newEndDate < startDate) {
-      setStartDate(newEndDate);
-    }
+    setStartDate(DateUtils.adjustStartDateIfNeeded(startDate, newEndDate));
   };
 
   const setPresetRange = (days: number) => {
-    const end = new Date();
-    const start = new Date();
-    start.setDate(end.getDate() - days);
-    setStartDate(formatDateForDB(start));
-    setEndDate(formatDateForDB(end));
+    const range = DateUtils.getDateRangeFromDays(days);
+    setStartDate(range.startDate);
+    setEndDate(range.endDate);
   };
 
   // Helper to check if a preset is active
@@ -76,29 +51,29 @@ export default function DateRangePicker({ onDateRangeChange, className }: DateRa
     const start = new Date();
     start.setDate(end.getDate() - days);
     return (
-      startDate === formatDateForDB(start) && endDate === formatDateForDB(end)
+      startDate === DateUtils.formatDateForDB(start) && endDate === DateUtils.formatDateForDB(end)
     );
   };
 
   return (
     <div className={`flex flex-col sm:flex-row sm:items-center sm:space-x-3 space-y-2 sm:space-y-0 ${className}`}>
-      <div className="flex items-center space-x-2 flex-shrink-0">
+      <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-2 w-full">
         <Input
           type="date"
           value={startDate}
           onChange={handleStartDateChange}
-          className="w-36"
+          className="w-full sm:w-auto min-w-0"
         />
-        <span className="text-sm text-muted-foreground">to</span>
+        <span className="text-sm text-muted-foreground text-center sm:text-left">to</span>
         <Input
           type="date"
           value={endDate}
           onChange={handleEndDateChange}
-          className="w-36"
+          className="w-full sm:w-auto min-w-0"
         />
       </div>
       <div className="flex flex-wrap gap-2 mt-1 sm:mt-0">
-        {PRESETS.map((preset) => (
+                    {DATE_RANGE_PRESETS.map((preset) => (
           <Button
             key={preset.label}
             variant={isPresetActive(preset.days) ? "default" : "outline"}

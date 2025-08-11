@@ -4,9 +4,10 @@ import * as React from "react"
 import * as RechartsPrimitive from "recharts"
 
 import { cn } from "@/lib/utils"
+import { CHART_THEMES } from '@/configs/themes';
 
 // Format: { THEME_NAME: CSS_SELECTOR }
-const THEMES = { light: "", dark: ".dark" } as const
+const THEMES = CHART_THEMES;
 
 export type ChartConfig = {
   [k in string]: {

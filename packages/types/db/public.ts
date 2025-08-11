@@ -173,8 +173,6 @@ export type Database = {
       }
       kpis: {
         Row: {
-          closer_name: string | null;
-          closer_monday_id: string | null;
           channel: string
           created_at: string
           created_by: string | null
@@ -268,11 +266,101 @@ export type Database = {
           },
         ]
       }
-      snapshots: {
+      profiles: {
         Row: {
           created_at: string
-          date_value: string | null
+          department_id: string | null
+          full_name: string | null
+          id: string
+          invoice_approval_alias: string | null
+          job_title: string | null
+          language: string | null
+          location: string | null
+          monday_user_id: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          department_id?: string | null
+          full_name?: string | null
+          id: string
+          invoice_approval_alias?: string | null
+          job_title?: string | null
+          language?: string | null
+          location?: string | null
+          monday_user_id?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          department_id?: string | null
+          full_name?: string | null
+          id?: string
+          invoice_approval_alias?: string | null
+          job_title?: string | null
+          language?: string | null
+          location?: string | null
+          monday_user_id?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["department_id"]
+          },
+        ]
+      }
+      snapshot_attributes: {
+        Row: {
+          id: string
           kpi_id: string
+          snapshot_attribute: string
+          snapshot_attribute_value: string
+          snapshot_id: string
+        }
+        Insert: {
+          id?: string
+          kpi_id: string
+          snapshot_attribute: string
+          snapshot_attribute_value: string
+          snapshot_id: string
+        }
+        Update: {
+          id?: string
+          kpi_id?: string
+          snapshot_attribute?: string
+          snapshot_attribute_value?: string
+          snapshot_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "snapshot_attributes_kpi_id_fkey"
+            columns: ["kpi_id"]
+            isOneToOne: false
+            referencedRelation: "kpis"
+            referencedColumns: ["kpi_id"]
+          },
+          {
+            foreignKeyName: "snapshot_attributes_snapshot_id_fkey"
+            columns: ["snapshot_id"]
+            isOneToOne: false
+            referencedRelation: "snapshots"
+            referencedColumns: ["snapshot_id"]
+          },
+        ]
+      }
+      snapshots: {
+        Row: {
+          closer_monday_id: string | null
+          closer_name: string | null
+          created_at: string
+          date_value: string | null
+          frequency: Database["public"]["Enums"]["kpi_target_frequency"] | null
+          kpi_id: string
+          location: Database["public"]["Enums"]["location"] | null
           numeric_value: number | null
           snapshot_data: Json | null
           snapshot_date: string
@@ -280,9 +368,13 @@ export type Database = {
           text_value: string | null
         }
         Insert: {
+          closer_monday_id?: string | null
+          closer_name?: string | null
           created_at?: string
           date_value?: string | null
+          frequency?: Database["public"]["Enums"]["kpi_target_frequency"] | null
           kpi_id: string
+          location?: Database["public"]["Enums"]["location"] | null
           numeric_value?: number | null
           snapshot_data?: Json | null
           snapshot_date: string
@@ -290,9 +382,13 @@ export type Database = {
           text_value?: string | null
         }
         Update: {
+          closer_monday_id?: string | null
+          closer_name?: string | null
           created_at?: string
           date_value?: string | null
+          frequency?: Database["public"]["Enums"]["kpi_target_frequency"] | null
           kpi_id?: string
+          location?: Database["public"]["Enums"]["location"] | null
           numeric_value?: number | null
           snapshot_data?: Json | null
           snapshot_date?: string
@@ -308,56 +404,6 @@ export type Database = {
             referencedColumns: ["kpi_id"]
           },
         ]
-      }
-      snapshot_attributes: {
-        Row: {
-          created_at: string | null
-          snapshot_attribute: string
-          snapshot_attribute_value: string | null
-          snapshot_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          snapshot_attribute: string
-          snapshot_attribute_value?: string | null
-          snapshot_id: string
-        }
-        Update: {
-          created_at?: string | null
-          snapshot_attribute?: string
-          snapshot_attribute_value?: string | null
-          snapshot_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "snapshot_attributes_snapshot_id_fkey"
-            columns: ["snapshot_id"]
-            isOneToOne: false
-            referencedRelation: "snapshots"
-            referencedColumns: ["snapshot_id"]
-          },
-        ]
-      },
-      profiles: {
-        Row: {
-          created_at: string | null
-          full_name: string | null
-          monday_user_id: string
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          full_name?: string | null
-          monday_user_id: string
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          full_name?: string | null
-          monday_user_id?: string
-          updated_at?: string | null
-        }
-        Relationships: []
       }
       sprint_boards: {
         Row: {
@@ -395,12 +441,67 @@ export type Database = {
         }
         Relationships: []
       }
+      user_monday_tokens: {
+        Row: {
+          created_at: string
+          id: string
+          monday_access_token: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          monday_access_token: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          monday_access_token?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      assign_user_role: {
+        Args: { target_user_id: string; target_role: string }
+        Returns: undefined
+      }
+      user_has_role: {
+        Args: { check_user_id: string; check_role: string }
+        Returns: boolean
+      }
     }
     Enums: {
       kpi_data_type:
@@ -431,6 +532,7 @@ export type Database = {
         | "count"
         | "ratio"
         | "text"
+      location: "PMI" | "MAH"
       symbol_position: "left" | "right"
     }
     CompositeTypes: {
@@ -590,6 +692,7 @@ export const Constants = {
         "ratio",
         "text",
       ],
+      location: ["PMI", "MAH"],
       symbol_position: ["left", "right"],
     },
   },

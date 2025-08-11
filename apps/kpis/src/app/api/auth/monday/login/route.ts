@@ -1,43 +1,72 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
+import { supabaseServer } from '@/lib/supabaseServer';
+
+const ELIGIBLE_ROLES = ['internal', 'admin', 'team_leader'];
 
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    const redirect = searchParams.get('redirect');
-    
+    // Check user authentication and role eligibility
+    const supabase = await supabaseServer();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.redirect(
+        new URL('/auth/login?error=unauthorized', request.url)
+      );
+    }
+
+    // Check user role
+    const { data: roleData } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.id);
+
+    if (!roleData || roleData.length === 0) {
+      return NextResponse.redirect(
+        new URL('/?mondayError=insufficient_permissions', request.url)
+      );
+    }
+
+    // Check if user has any eligible role
+    const hasEligibleRole = roleData.some(userRole => 
+      ELIGIBLE_ROLES.includes(userRole.role)
+    );
+
+    if (!hasEligibleRole) {
+      return NextResponse.redirect(
+        new URL('/?mondayError=insufficient_permissions', request.url)
+      );
+    }
+
+    // Generate OAuth state for security
+    const state = crypto.randomUUID();
+    const cookieStore = await cookies();
+    cookieStore.set('monday_oauth_state', state, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 60 * 60 * 24, // 24 hours
+      path: '/'
+    });
+
+    // Build OAuth URL
     const clientId = process.env.MONDAY_CLIENT_ID;
     const redirectUri = process.env.MONDAY_REDIRECT_URI;
     
     if (!clientId || !redirectUri) {
-      return NextResponse.json(
-        { error: 'OAuth configuration missing' },
-        { status: 500 }
+      console.error('Monday OAuth not configured properly');
+      return NextResponse.redirect(
+        new URL('/?mondayError=configuration_error', request.url)
       );
     }
 
-    // Generate a random state for security
-    const state = Math.random().toString(36).substring(2, 15);
-    const timestamp = Date.now();
-
-    // Store state and redirect path in cookies for verification
-    const response = NextResponse.redirect(
-      `https://auth.monday.com/oauth2/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&state=${state}&response_type=code`
-    );
-
-    // Set state cookie with redirect path
-    response.cookies.set('oauth_state', JSON.stringify({ state, timestamp, redirect }), {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 600, // 10 minutes
-    });
-
-    return response;
+    const authUrl = `https://auth.monday.com/oauth2/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&state=${state}`;
+    
+    return NextResponse.redirect(authUrl);
   } catch (error) {
-    console.error('OAuth login error:', error);
-    return NextResponse.json(
-      { error: 'Failed to initiate OAuth flow' },
-      { status: 500 }
+    console.error('Error initiating Monday OAuth:', error);
+    return NextResponse.redirect(
+      new URL('/?mondayError=initiation_failed', request.url)
     );
   }
 } 

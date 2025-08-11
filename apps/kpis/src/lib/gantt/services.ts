@@ -1,12 +1,13 @@
 import { DateTime } from 'luxon';
-import { DateRange, PhaseCapacity } from '@/types/gantt';
+import { DateRange, PhaseCapacity } from '@isleno/types/gantt';
 import { projectsDataService } from '@/lib/services/projectsDataService';
 import { 
   fetchGanttProjects as fetchGanttProjectsFromService, 
   fetchGanttTasks as fetchGanttTasksFromService, 
   fetchGanttMetrics as fetchGanttMetricsFromService
 } from '@/lib/services/ganttService';
-import { ProjectData, GanttProject, GanttMetrics, BusinessGanttTask } from '@/types/projects';
+import { ProjectData } from '@isleno/types/projects';
+import { GanttProject, GanttMetrics, BusinessGanttTask } from '@isleno/types/gantt';
 
 // Re-export phase colors for backward compatibility
 export { PHASE_COLORS } from '@/lib/constants/projectConstants';

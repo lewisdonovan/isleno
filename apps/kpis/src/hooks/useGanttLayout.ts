@@ -1,76 +1,48 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { ViewMode } from "gantt-task-react";
-import { DateRange } from '@/types/gantt';
-import { GANTT_CONFIG, VIEW_MODE_CONFIG } from '@/lib/gantt/config';
+import { DateRange } from '@isleno/types/gantt';
+import { GANTT_CONFIG } from '@/lib/gantt/config';
 
-export interface UseGanttLayoutResult {
+interface UseGanttLayoutProps {
+  viewMode: string;
+  dateRange: DateRange;
+}
+
+interface UseGanttLayoutResult {
   containerRef: React.RefObject<HTMLDivElement | null>;
-  containerWidth: number;
   calculateColumnWidth: () => number;
 }
 
-export const useGanttLayout = (viewMode: ViewMode, dateRange: DateRange): UseGanttLayoutResult => {
-  const [containerWidth, setContainerWidth] = useState(0);
+export const useGanttLayout = ({ viewMode, dateRange }: UseGanttLayoutProps): UseGanttLayoutResult => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState(0);
 
-  // Handle container width measurement
-  useEffect(() => {
-    const updateWidth = () => {
-      if (containerRef.current) {
-        setContainerWidth(containerRef.current.offsetWidth);
-      }
-    };
+  // Calculate periods count based on view mode
+  const periodsCount = viewMode === 'Month' ? 12 : 
+                      viewMode === 'Week' ? 52 : 
+                      365; // Day view
 
-    updateWidth();
-    
-    const resizeObserver = new ResizeObserver(updateWidth);
+  // Update container width on resize
+  const updateContainerWidth = useCallback(() => {
     if (containerRef.current) {
-      resizeObserver.observe(containerRef.current);
+      setContainerWidth(containerRef.current.offsetWidth);
     }
-
-    return () => {
-      resizeObserver.disconnect();
-    };
   }, []);
 
-  // Calculate dynamic column width to fill available space
+  useEffect(() => {
+    updateContainerWidth();
+    window.addEventListener('resize', updateContainerWidth);
+    return () => window.removeEventListener('resize', updateContainerWidth);
+  }, [updateContainerWidth]);
+
+  // Calculate column width based on view mode and container width
   const calculateColumnWidth = useCallback(() => {
-    const viewConfig = VIEW_MODE_CONFIG[viewMode as keyof typeof VIEW_MODE_CONFIG];
-    const defaultWidth = viewConfig?.defaultWidth || 120;
-    
-    if (containerWidth === 0) return defaultWidth;
-    
-    // Calculate available timeline width (container width - task list width - margins/scrollbar)
-    const availableWidth = containerWidth - parseInt(GANTT_CONFIG.TASK_LIST_WIDTH) - GANTT_CONFIG.MARGIN_WIDTH;
-    
-    if (availableWidth <= 0) return defaultWidth;
-    
-    // Estimate number of periods that would be visible
-    const rangeDuration = dateRange.end.diff(dateRange.start, 'days').days;
-    const periodsCount = viewMode === ViewMode.Day 
-      ? Math.min(rangeDuration, viewConfig?.maxDayViewLimit || rangeDuration)
-      : Math.ceil(rangeDuration / (viewConfig?.daysPerPeriod || 30));
-    
-    // Aim to show optimal number of periods in the visible area
-    const targetPeriods = Math.min(
-      Math.max(periodsCount, GANTT_CONFIG.TARGET_VISIBLE_PERIODS.MIN), 
-      GANTT_CONFIG.TARGET_VISIBLE_PERIODS.MAX
-    );
-    const calculatedWidth = Math.floor(availableWidth / targetPeriods);
-    
-    // Ensure reasonable bounds
-    const boundedWidth = Math.max(
-      GANTT_CONFIG.MIN_COLUMN_WIDTH, 
-      Math.min(calculatedWidth, GANTT_CONFIG.MAX_COLUMN_WIDTH)
-    );
-    
-    // Use the larger of calculated width or default width for better UX
-    return Math.max(boundedWidth, defaultWidth);
-  }, [containerWidth, viewMode, dateRange]);
+    const availableWidth = containerWidth - parseInt(GANTT_CONFIG.TASK_LIST_WIDTH);
+    const defaultWidth = viewMode === 'Month' ? 120 : viewMode === 'Week' ? 150 : 100;
+    return Math.max(defaultWidth, availableWidth / periodsCount);
+  }, [containerWidth, viewMode, periodsCount]);
 
   return {
     containerRef,
-    containerWidth,
     calculateColumnWidth
   };
 }; 

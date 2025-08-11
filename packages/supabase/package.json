@@ -1,18 +1,35 @@
 {
   "name": "@isleno/supabase",
   "version": "1.0.0",
-  "description": "Supabase utilities and type generation",
-  "main": "index.js",
+  "description": "Supabase utilities, type generation, and frontend client",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./server": "./src/server-only.ts"
+  },
   "scripts": {
-    "gentypes": "dotenv -e .env -- sh -c 'yes | npx -y supabase gen types typescript --project-id $SUPABASE_PROJECT_ID --schema public > ../types/db/public.ts'",
-    "build": "echo \"Supabase package - no build needed\"",
+    "gentypes": "dotenv -e ../../.env -- sh -c 'yes | npx -y supabase gen types typescript --project-id $SUPABASE_PROJECT_ID --schema public > ../types/db/public.ts'",
+    "build": "tsc",
+    "dev": "tsc --watch",
     "lint": "echo \"Supabase package - no lint needed\"",
-    "type-check": "echo \"Supabase package - no type-check needed\""
+    "type-check": "tsc --noEmit"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@supabase/auth-helpers-nextjs": "^0.10.0",
+    "@supabase/ssr": "^0.6.1",
+    "@supabase/supabase-js": "^2.51.0",
+    "dotenv": "^16.0.0",
     "dotenv-cli": "^7.4.2"
+  },
+  "devDependencies": {
+    "@isleno/types": "*",
+    "typescript": "^5.0.0"
+  },
+  "peerDependencies": {
+    "@isleno/types": "*"
   }
 }
