@@ -1,5 +1,6 @@
 import { odooApi } from './api';
 import { supabaseServer } from '@/lib/supabaseServer';
+import { ODOO_MAIN_COMPANY_ID } from '../constants/odoo';
 
 /**
  * Validates if a user has access to a specific invoice based on their invoice_approval_alias
@@ -8,7 +9,10 @@ export async function validateInvoiceAccess(invoiceId: number, userAlias: string
   if (!userAlias) return false;
   
   try {
-    const invoices = await odooApi.searchRead('account.move', [['id', '=', invoiceId]], {
+    
+    const invoices = await odooApi.searchRead('account.move', [
+      ['id', '=', invoiceId]
+    ], {
       fields: ['x_studio_project_manager_1']
     });
     
@@ -50,5 +54,34 @@ export async function getCurrentUserInvoiceAlias(): Promise<{
   } catch (error) {
     console.error('Error getting user invoice alias:', error);
     return { user: null, alias: null, error: 'Internal server error' };
+  }
+}
+
+/**
+ * Checks if the current user has the external_basic permission
+ */
+export async function hasExternalBasicPermission(): Promise<boolean> {
+  try {
+    const supabase = await supabaseServer();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return false;
+    }
+
+    const { data: roles, error: rolesError } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.id);
+
+    if (rolesError) {
+      console.error('Failed to fetch user roles:', rolesError);
+      return false;
+    }
+
+    return roles.some(role => role.role === 'external_basic');
+  } catch (error) {
+    console.error('Error checking user permissions:', error);
+    return false;
   }
 } 

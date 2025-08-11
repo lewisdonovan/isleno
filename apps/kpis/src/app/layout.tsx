@@ -63,7 +63,7 @@ export default async function RootLayout({
                 </main>
               ) : (
                 // Normal layout with sidebar and top bar for app pages
-            <SidebarProvider>
+            <SidebarProvider defaultOpen={false}>
               <div className="flex min-h-screen w-full">
                 <AppSidebar />
                 <main className="flex-1 min-w-0">

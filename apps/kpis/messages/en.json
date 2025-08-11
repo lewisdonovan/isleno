@@ -231,7 +231,19 @@
     "cancel": "Cancel",
     "save": "Save",
     "selectInvoiceToView": "Select an invoice to view the attachment",
-    "title": "Invoice Approvals"
+    "title": "Invoice Approvals",
+    "project": "Project",
+    "selectProject": "Select project...",
+    "noProjectFound": "No project found.",
+    "category": "Spend category",
+    "selectCategory": "Select spend category...",
+    "noCategoryFound": "No spend category found.",
+    "approveWithDetails": "Approve with Details",
+    "notApplicable": "N/A",
+    "refresh": "Refresh",
+    "refreshing": "Refreshing...",
+    "refreshSuccess": "Invoice refreshed successfully",
+    "refreshError": "Failed to refresh invoice"
   },
   "components": {
     "boardTable": {
