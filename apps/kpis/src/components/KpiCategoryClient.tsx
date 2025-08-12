@@ -3,16 +3,9 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import { BarChart3, TrendingUp, TrendingDown, Filter, X, CalendarDays, Users, Download } from "lucide-react";
+import { BarChart3, Download } from "lucide-react";
 import KpiTimeSeriesChart from "@/components/KpiTimeSeriesChart";
-import DateRangePicker from "@/components/DateRangePicker";
+import KpiWeeklyTable from "@/components/KpiWeeklyTable";
 import type { Database } from "@isleno/types/db/public";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -35,7 +28,7 @@ export default function KpiCategoryClient({
   initialKpis,
   kpiOrder
 }: KpiCategoryClientProps) {
-  const t = useTranslations('components.kpiCategory');
+  // const t = useTranslations('components.kpiCategory'); // Available for future i18n use
   const [kpis] = useState(initialKpis);
   const [snapshots, setSnapshots] = useState<Database['public']['Tables']['snapshots']['Row'][]>([]);
   const [loading, setLoading] = useState(false);
@@ -123,110 +116,120 @@ export default function KpiCategoryClient({
     setExportDialogOpen(false);
   };
 
-  const handleExport = () => {
-    const csvData = KpiCategoryService.prepareCsvData(kpis, snapshots);
-    const csv = arrayToCsv(csvData);
-    downloadStringAsFile(csv, `${exportFilename}.csv`);
-    setExportDialogOpen(false);
-  };
+  // const handleExport = () => {
+  //   const csvData = KpiCategoryService.prepareCsvData(kpis, snapshots);
+  //   const csv = arrayToCsv(csvData);
+  //   downloadStringAsFile(csv, `${exportFilename}.csv`);
+  //   setExportDialogOpen(false);
+  // };
 
-    return (
-    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-      {/* Summary Sidebar - 1/4 column */}
-      <div className="lg:col-span-1">
-        <div className="lg:sticky lg:top-6">
-          {/* Filters and Movers Section */}
-          <div className="space-y-4">
-            <FilterAccordion
-              onDateRangeChange={handleDateRangeChange}
-              availableChannels={availableChannels}
-              selectedChannels={selectedChannels}
-              setSelectedChannels={setSelectedChannels}
-            />
-            
-            <SummaryAccordion
-              selectedChannels={selectedChannels}
-              summaryData={summaryData}
-            />
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        {/* Summary Sidebar */}
+        <div className="lg:col-span-1">
+          <div className="lg:sticky lg:top-6">
+            {/* Filters and Movers Section */}
+            <div className="space-y-4">
+              <FilterAccordion
+                onDateRangeChange={handleDateRangeChange}
+                availableChannels={availableChannels}
+                selectedChannels={selectedChannels}
+                setSelectedChannels={setSelectedChannels}
+              />
+              
+              <SummaryAccordion
+                selectedChannels={selectedChannels}
+                summaryData={summaryData}
+              />
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Charts Grid - 3/4 column */}
-      <div className="lg:col-span-3 space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <BarChart3 className="h-5 w-5" />
-              <span>KPI Time Series Data</span>
-              {loading && (
-                <div className="text-sm text-muted-foreground ml-2">
-                  Loading...
-                </div>
-              )}
-            </CardTitle>
-            <div className="flex items-center justify-between">
-              <CardDescription>
-                Recent performance data for KPIs in this category
-              </CardDescription>
-              <Dialog open={exportDialogOpen} onOpenChange={setExportDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button variant="outline" size="sm">
-                    <Download className="h-4 w-4 mr-1" />
-                    Export All CSV
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Export All KPI Data</DialogTitle>
-                    <DialogDescription>Download all snapshot data in the current view as a CSV file.</DialogDescription>
-                  </DialogHeader>
-                  <div className="flex items-center gap-2">
-                    <Input
-                      value={exportFilename}
-                      onChange={e => setExportFilename(e.target.value.replace(/[^a-zA-Z0-9_-]+/g, '_'))}
-                      className="w-full"
-                      placeholder="Filename"
-                    />
-                    <span className="text-muted-foreground select-none">.csv</span>
-                  </div>
-                  <DialogFooter>
-                    <Button onClick={handleExportAll} type="button">
-                      <Download className="h-4 w-4 mr-1" />
-                      Download
-                    </Button>
-                    <Button variant="ghost" onClick={() => setExportDialogOpen(false)} type="button">Cancel</Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-            </div>
-          </CardHeader>
-        </Card>
-        
-        {filteredKpis.length > 0 ? (
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 auto-rows-fr">
-            {filteredKpis.map((kpi) => {
-              const kpiSnapshots = snapshots.filter(s => s.kpi_id === kpi.kpi_id);
-              return (
-                <KpiTimeSeriesChart
-                  key={kpi.kpi_id}
-                  kpi={kpi}
-                  snapshots={kpiSnapshots}
-                  loading={loading}
-                />
-              );
-            })}
-          </div>
-        ) : (
+        {/* Charts Grid */}
+        <div className="lg:col-span-3">
+          {/* Weekly Table - Restored from your version */}
+          <KpiWeeklyTable
+            initialKpis={filteredKpis}
+            kpiOrder={kpiOrder}
+            startDateISO={dateRange.startDate}
+            endDateISO={dateRange.endDate}
+          />
+          
           <Card>
-            <CardContent>
-              <div className="text-center py-8 text-muted-foreground">
-                <BarChart3 className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>No active KPIs found in this category.</p>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <BarChart3 className="h-5 w-5" />
+                <span>KPI Time Series Data</span>
+                {loading && (
+                  <div className="text-sm text-muted-foreground ml-2">
+                    Loading...
+                  </div>
+                )}
+              </CardTitle>
+              <div className="flex items-center justify-between">
+                <CardDescription>
+                  Recent performance data for KPIs in this category
+                </CardDescription>
+                <Dialog open={exportDialogOpen} onOpenChange={setExportDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <Download className="h-4 w-4 mr-1" />
+                      Export All CSV
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Export All KPI Data</DialogTitle>
+                      <DialogDescription>Download all snapshot data in the current view as a CSV file.</DialogDescription>
+                    </DialogHeader>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        value={exportFilename}
+                        onChange={e => setExportFilename(e.target.value.replace(/[^a-zA-Z0-9_-]+/g, '_'))}
+                        className="w-full"
+                        placeholder="Filename"
+                      />
+                      <span className="text-muted-foreground select-none">.csv</span>
+                    </div>
+                    <DialogFooter>
+                      <Button onClick={handleExportAll} type="button">
+                        <Download className="h-4 w-4 mr-1" />
+                        Download
+                      </Button>
+                      <Button variant="ghost" onClick={() => setExportDialogOpen(false)} type="button">Cancel</Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
               </div>
-            </CardContent>
+            </CardHeader>
           </Card>
-        )}
+
+          {filteredKpis.length > 0 ? (
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 auto-rows-fr mt-6">
+              {filteredKpis.map((kpi) => {
+                const kpiSnapshots = snapshots.filter(s => s.kpi_id === kpi.kpi_id);
+                return (
+                  <KpiTimeSeriesChart
+                    key={kpi.kpi_id}
+                    kpi={kpi}
+                    snapshots={kpiSnapshots}
+                    loading={loading}
+                  />
+                );
+              })}
+            </div>
+          ) : (
+            <Card>
+              <CardContent>
+                <div className="text-center py-8 text-muted-foreground">
+                  <BarChart3 className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>No active KPIs found in this category.</p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
       </div>
     </div>
   );
