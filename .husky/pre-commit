@@ -1,4 +1,23 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
-node scripts/check-env-sync.js
+# Try to find Node.js in common installation locations
+NODE_PATH=""
+if [ -f "/usr/local/bin/node" ]; then
+  NODE_PATH="/usr/local/bin/node"
+elif [ -f "/opt/homebrew/bin/node" ]; then
+  NODE_PATH="/opt/homebrew/bin/node"
+elif [ -f "/usr/bin/node" ]; then
+  NODE_PATH="/usr/bin/node"
+elif [ -f "$HOME/.nvm/versions/node/$(cat "$HOME/.nvm/alias/default" 2>/dev/null)/bin/node" ]; then
+  NODE_PATH="$HOME/.nvm/versions/node/$(cat "$HOME/.nvm/alias/default" 2>/dev/null)/bin/node"
+elif [ -f "$HOME/.nvm/current/bin/node" ]; then
+  NODE_PATH="$HOME/.nvm/current/bin/node"
+else
+  echo "Error: Could not find Node.js executable"
+  echo "Please ensure Node.js is installed and accessible"
+  exit 1
+fi
+
+# Execute the script directly with the found Node.js path
+"$NODE_PATH" "$(dirname -- "$0")/../scripts/check-env-sync.js"

@@ -136,6 +136,7 @@ export default async function CategoryPage({ params }: PageProps) {
           _initialDepartment={department}
           _initialCategory={category}
           initialKpis={kpis}
+          kpiOrder={kpiSorting}
         />
       </div>
     </DepartmentProtectedRoute>

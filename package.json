@@ -14,7 +14,8 @@
     "lint": "turbo lint",
     "clean": "turbo clean",
     "type-check": "turbo type-check",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "check-env-sync": "node scripts/check-env-sync.js"
   },
   "devDependencies": {
     "husky": "^8.0.0",
