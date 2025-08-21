@@ -52,7 +52,6 @@ export async function getPendingInvoices(invoiceApprovalAlias?: string) {
     const domain = [
         ["move_type", "=", "in_invoice"],
         ["x_studio_project_manager_review_status", "=", "pending"],
-        // ["amount_untaxed", ">", 0]  // Exclude invoices with zero subtotal (OCR not complete)
     ];
 
     // Add user-specific filtering if invoice_approval_alias is provided
@@ -266,7 +265,7 @@ export async function getOtherInvoices(invoiceApprovalAlias?: string) {
         "!",
         ["x_studio_project_manager_review_status", "=", "approved"],
         "!",
-        ["state", "=", "sent"],
+        ["state", "=", "posted"],
         "!",
         ["state", "=", "paid"]
     ];

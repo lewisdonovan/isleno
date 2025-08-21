@@ -58,6 +58,7 @@ export default function InvoiceDetailPage() {
   const { profile, isLoading: userLoading } = useCurrentUser();
   const DEPARTMENT_IDENTIFIERS = ["Department","Departmento"];
   const PROJECT_IDENTIFIERS = ["Project","Proyecto"];
+  const CONSTRUCTION_DEPT_ID = 17;
   
   const [invoice, setInvoice] = useState<Invoice | null>(null);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
@@ -82,7 +83,6 @@ export default function InvoiceDetailPage() {
 
   // Pre-populate department when profile and projects are loaded
   useEffect(() => {
-    console.log({profile, projects});
     if (profile?.odoo_group_id && projects.length > 0 && !selectedDepartment) {
       const userDeptProject = projects.find(p => 
         p.id === profile.odoo_group_id &&
@@ -130,7 +130,6 @@ export default function InvoiceDetailPage() {
         throw new Error(`Failed to fetch projects: ${response.status}`);
       }
       const data = await response.json();
-      console.log({data})
       setProjects(data);
     } catch (error) {
       console.error("Failed to fetch projects:", error);
@@ -374,7 +373,7 @@ export default function InvoiceDetailPage() {
             </div>
             
             {/* Project Field - Only visible when "Construction" department is selected */}
-            {selectedDepartment && selectedDepartment.id === 17 && (
+            {selectedDepartment && selectedDepartment.id === CONSTRUCTION_DEPT_ID && (
               <div className="space-y-2">
                 <label className="text-sm font-medium">{t('project')}</label>
                 <select 
