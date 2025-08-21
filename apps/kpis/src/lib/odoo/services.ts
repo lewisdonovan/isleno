@@ -324,14 +324,38 @@ export async function getProjects() {
     
     const projects = await odooApi.searchRead(PROJECT_MODEL, domain, { fields, ...kwargs });
     
+    // Debug: Log raw projects data to see what we're getting from Odoo
+    console.log('Raw projects from Odoo:', projects.length, 'items');
+    console.log('Sample projects:', projects.slice(0, 5));
+    
     // Additional deduplication on the backend as a safety measure
+    // First deduplicate by ID, then by name to handle cases where Odoo returns duplicates
     const uniqueProjects = projects.reduce((acc: any[], project: any) => {
-        const existingProject = acc.find(p => p.id === project.id);
-        if (!existingProject) {
-            acc.push(project);
+        // Check if we already have a project with this ID
+        const existingProjectById = acc.find(p => p.id === project.id);
+        if (existingProjectById) {
+            return acc; // Skip if ID already exists
         }
+        
+        // Check if we already have a project with this name
+        const existingProjectByName = acc.find(p => p.name === project.name);
+        if (existingProjectByName) {
+            // If we have a duplicate name, prefer the one with a plan_id if available
+            if (project.plan_id && !existingProjectByName.plan_id) {
+                // Replace the existing one with this one that has plan_id
+                const index = acc.findIndex(p => p.name === project.name);
+                acc[index] = project;
+            }
+            return acc; // Skip if name already exists
+        }
+        
+        acc.push(project);
         return acc;
     }, []);
+    
+    // Debug: Log deduplication results
+    console.log('After deduplication:', uniqueProjects.length, 'unique items');
+    console.log('Sample unique projects:', uniqueProjects.slice(0, 5));
     
     return uniqueProjects;
 }

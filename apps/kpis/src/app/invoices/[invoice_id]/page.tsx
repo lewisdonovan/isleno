@@ -57,6 +57,7 @@ export default function InvoiceDetailPage() {
   const invoiceId = params.invoice_id as string;
   const { profile, isLoading: userLoading } = useCurrentUser();
   const DEPARTMENT_IDENTIFIERS = ["Department","Departmento"];
+  const PROJECT_IDENTIFIERS = ["Project","Proyecto"];
   
   const [invoice, setInvoice] = useState<Invoice | null>(null);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
@@ -386,7 +387,7 @@ export default function InvoiceDetailPage() {
                 >
                   <option value="">{t('selectProject')}</option>
                   {projects
-                    .filter(p => p.plan_id && (p.plan_id[1] === t('projectType') || p.plan_id[1] === "Proyecto"))
+                    .filter(p => p.plan_id && (PROJECT_IDENTIFIERS.includes(p.plan_id[1])))
                     .map((project) => (
                       <option key={project.id} value={project.id}>
                         {project.name}
