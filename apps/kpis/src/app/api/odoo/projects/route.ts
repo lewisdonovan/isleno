@@ -5,10 +5,7 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(_request: NextRequest) {
   try {
-    console.log('Fetching projects from Odoo...');
     const projects = await getProjects();
-    console.log('Projects fetched from Odoo:', projects.length, 'projects');
-    console.log('Sample project:', projects[0]);
     
     return NextResponse.json(projects);
   } catch (error: any) {

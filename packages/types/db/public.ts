@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
@@ -22,6 +22,7 @@ export type Database = {
           department_name: string
           description: string | null
           key: string
+          odoo_group_id: number | null
           updated_at: string
           updated_by: string | null
         }
@@ -32,6 +33,7 @@ export type Database = {
           department_name: string
           description?: string | null
           key: string
+          odoo_group_id?: number | null
           updated_at?: string
           updated_by?: string | null
         }
@@ -42,6 +44,7 @@ export type Database = {
           department_name?: string
           description?: string | null
           key?: string
+          odoo_group_id?: number | null
           updated_at?: string
           updated_by?: string | null
         }
@@ -495,11 +498,11 @@ export type Database = {
     }
     Functions: {
       assign_user_role: {
-        Args: { target_user_id: string; target_role: string }
+        Args: { target_role: string; target_user_id: string }
         Returns: undefined
       }
       user_has_role: {
-        Args: { check_user_id: string; check_role: string }
+        Args: { check_role: string; check_user_id: string }
         Returns: boolean
       }
     }

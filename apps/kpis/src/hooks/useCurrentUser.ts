@@ -40,7 +40,8 @@ export function useCurrentUser(): EnhancedUser {
             departments (
               department_id,
               department_name,
-              key
+              key,
+              odoo_group_id
             )
           `)
           .eq('id', user.id)
@@ -67,6 +68,7 @@ export function useCurrentUser(): EnhancedUser {
           department_id: profileData.department_id,
           department_name: profileData.departments?.department_name || null,
           department_key: profileData.departments?.key || null,
+          odoo_group_id: profileData.departments?.odoo_group_id || null,
           job_title: profileData.job_title,
           language: profileData.language,
           location: profileData.location,

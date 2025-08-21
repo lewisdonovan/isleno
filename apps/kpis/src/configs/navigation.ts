@@ -12,6 +12,7 @@ export const NAVIGATION_ITEMS: NavigationItem[] = [
   { href: '/kpis', label: 'kpis', icon: 'BarChart2' },
   { href: '/boards', label: 'boards', icon: 'Table' },
   { href: '/calendar', label: 'calendar', icon: 'Calendar' },
+  { href: '/invoices', label: 'invoices', icon: 'FileText' },
 ];
 
 export const SECTION_DESCRIPTIONS: Record<string, string> = {

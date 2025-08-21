@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getPendingInvoices } from '@/lib/odoo/services';
+import { getAllInvoices } from '@/lib/odoo/services';
 import { getCurrentUserInvoiceAlias } from '@/lib/odoo/utils';
 
 export async function GET(_request: NextRequest) {
@@ -12,8 +12,8 @@ export async function GET(_request: NextRequest) {
       return NextResponse.json({ error }, { status: statusCode });
     }
 
-    // Get invoices filtered by user's invoice_approval_alias
-    const invoices = await getPendingInvoices(alias || undefined);
+    // Get all invoices filtered by user's invoice_approval_alias
+    const invoices = await getAllInvoices(alias || undefined);
     
     return NextResponse.json(invoices);
   } catch (error: any) {
