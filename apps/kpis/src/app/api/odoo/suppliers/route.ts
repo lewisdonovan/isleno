@@ -6,7 +6,6 @@ export const dynamic = 'force-dynamic';
 export async function GET(_request: NextRequest) {
   try {
     const suppliers = await getSuppliers();
-    console.log(JSON.stringify(suppliers, null, 2));
     return NextResponse.json(suppliers);
   } catch (error: any) {
     console.error("Failed to fetch suppliers:", error);

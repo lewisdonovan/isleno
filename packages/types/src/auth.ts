@@ -4,6 +4,7 @@ export interface UserProfile {
   department_id: string | null
   department_name: string | null
   department_key: string | null
+  odoo_group_id: number | null
   job_title: string | null
   language: string | null
   location: string | null

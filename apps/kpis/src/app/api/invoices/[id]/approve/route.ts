@@ -10,7 +10,7 @@ export async function POST(
     const { id } = await params;
     const invoiceId = parseInt(id, 10);
     const body = await request.json();
-    const { projectId, accountingCode } = body;
+    const { departmentId, projectId, accountingCode } = body;
 
     // Get current user's invoice approval alias
     const { alias, error } = await getCurrentUserInvoiceAlias();
@@ -26,7 +26,7 @@ export async function POST(
       return NextResponse.json({ error: 'Access denied: You can only approve invoices assigned to you' }, { status: 403 });
     }
 
-    await approveInvoice(invoiceId, projectId, accountingCode);
+    await approveInvoice(invoiceId, departmentId, projectId, accountingCode);
     return NextResponse.json({ success: true });
   } catch (error: any) {
     const { id } = await params;
