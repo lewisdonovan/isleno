@@ -447,8 +447,6 @@ export async function approveInvoice(invoiceId: number, departmentId?: number, p
                 return false;
             });
 
-            console.log('Expense lines (starting with 6):', expenseLines);
-
             if (expenseLines.length > 0) {
                 const lineIds = expenseLines.map((line: any) => line.id);
                 
@@ -456,7 +454,30 @@ export async function approveInvoice(invoiceId: number, departmentId?: number, p
                 const updateData: Record<string, any> = {};
                 
                 if (accountingCode && accountingCode.trim() !== '') {
-                    updateData['account_id'] = parseInt(accountingCode);
+                    // The accountingCode parameter is the account_code string (e.g., '62700022')
+                    // We need to find the actual account_id that corresponds to this account_code
+                    // Let's fetch the account record by code to get its ID
+                    try {
+                        const accountRecord = await odooApi.searchRead(ACCOUNT_MODEL, [
+                            ["code", "=", accountingCode]
+                        ], {
+                            fields: ["id"]
+                        });
+                        
+                        if (accountRecord && accountRecord.length > 0) {
+                            // Update both account_id and account_code
+                            updateData['account_id'] = accountRecord[0].id;
+                            updateData['account_code'] = accountingCode;
+                        } else {
+                            console.warn(`No account found with code: ${accountingCode}`);
+                            // Still update account_code even if we can't find the account_id
+                            updateData['account_code'] = accountingCode;
+                        }
+                    } catch (error) {
+                        console.error('Failed to fetch account by code:', error);
+                        // Fallback: just update account_code
+                        updateData['account_code'] = accountingCode;
+                    }
                 }
                 
                 // Handle project allocation based on department selection
