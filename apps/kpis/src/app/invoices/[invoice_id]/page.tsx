@@ -350,8 +350,8 @@ export default function InvoiceDetailPage() {
               <label className="text-sm font-medium">
                 {t('department')} <span className="text-red-500">*</span>
               </label>
-                            <select 
-                className="w-full p-3 pr-12 border rounded-md"
+              <select 
+                className="w-full p-3 border rounded-md"
                 value={selectedDepartment?.id || ''}
                 onChange={(e) => {
                   const dept = projects.find(p => p.id === parseInt(e.target.value));
@@ -370,14 +370,14 @@ export default function InvoiceDetailPage() {
                     </option>
                   ))}
               </select>
-              </div>
+            </div>
             
             {/* Project Field - Only visible when "Construction" department is selected */}
             {selectedDepartment && selectedDepartment.id === 17 && (
               <div className="space-y-2">
                 <label className="text-sm font-medium">{t('project')}</label>
                 <select 
-                  className="w-full p-3 pr-12 border rounded-md"
+                  className="w-full p-3 border rounded-md"
                   value={selectedProject?.id || ''}
                   onChange={(e) => {
                     const project = projects.find(p => p.id === parseInt(e.target.value));
@@ -401,7 +401,7 @@ export default function InvoiceDetailPage() {
               <div className="space-y-2">
                 <label className="text-sm font-medium">{t('spendCategory')}</label>
                 <select 
-                  className="w-full p-3 pr-8 border rounded-md"
+                  className="w-full p-3 border rounded-md"
                   value={selectedCategory}
                   onChange={(e) => setSelectedCategory(e.target.value)}
                 >
