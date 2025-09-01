@@ -70,7 +70,7 @@ export default function InvoiceClientPage() {
       const invoices = Array.isArray(data) ? data : data.invoices;
       
       // Log OCR refresh information if available
-      if (data.metadata) {
+      if (!Array.isArray(data) && data.metadata) {
         console.log('Invoice fetch metadata:', data.metadata);
         if (data.metadata.ocrRefreshPerformed) {
           console.log(`OCR refresh performed for ${data.metadata.zeroValueInvoicesRefreshed} invoices`);

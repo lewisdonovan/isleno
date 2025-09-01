@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAllInvoices } from '@/lib/odoo/services';
 import { getCurrentUserInvoiceAlias } from '@/lib/odoo/utils';
+import { isZeroValueInvoice } from '@/lib/utils/invoiceUtils';
 
 export async function GET(_request: NextRequest) {
   try {
@@ -22,9 +23,7 @@ export async function GET(_request: NextRequest) {
     const zeroValueInvoicesRefreshed = Array.isArray(result) ? 0 : result.zeroValueInvoicesRefreshed;
     
     // Count zero-value invoices after refresh
-    const zeroValueCount = invoices.filter((invoice: any) => 
-        invoice.amount_untaxed === 0 || invoice.amount_untaxed === null || invoice.amount_untaxed === undefined
-    ).length;
+    const zeroValueCount = invoices.filter(isZeroValueInvoice).length;
     
     return NextResponse.json({
       invoices,

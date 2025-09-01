@@ -1,6 +1,7 @@
 import { odooApi } from "./api";
 import { ODOO_MAIN_COMPANY_ID } from "../constants/odoo";
 import { createClient } from '@supabase/supabase-js';
+import { isZeroValueInvoice } from "../utils/invoiceUtils";
 
 const INVOICE_MODEL = 'account.move';
 const SUPPLIER_MODEL = 'res.partner';
@@ -128,9 +129,7 @@ export async function getAllInvoices(invoiceApprovalAlias?: string) {
     }
 
     // Identify zero-value invoices and refresh their OCR data
-    const zeroValueInvoices = invoices.filter(invoice => 
-        (invoice.amount_untaxed ?? 0) === 0
-    );
+    const zeroValueInvoices = invoices.filter(isZeroValueInvoice);
 
     // Refresh OCR data for zero-value invoices
     if (zeroValueInvoices.length > 0) {
