@@ -253,6 +253,7 @@
     "department": "Department",
     "selectDepartment": "Select a department...",
     "attachments": "Attachments",
+    "attachmentCount": "{count} attachment{count, plural, one {} other {s}}",
     "view": "View",
     "previewNotAvailable": "Preview not available for",
     "allCaughtUp": "All caught up! No invoices require action.",
@@ -272,7 +273,41 @@
     "loadingInvoice": "Loading invoice...",
     "noReference": "No reference",
     "departmentType": "Department",
-    "projectType": "Project"
+    "projectType": "Project",
+    "status": {
+      "pending": "Pending",
+      "awaitingApproval": "Awaiting Approval",
+      "sentForPayment": "Sent for Payment",
+      "paid": "Paid",
+      "other": "Other"
+    },
+    "amount": {
+      "label": "Amount",
+      "zero": "Zero"
+    },
+    "date": {
+      "invoice": "Invoice Date",
+      "due": "Due Date"
+    },
+    "ocrRefresh": {
+      "running": "OCR Refresh in Progress",
+      "complete": "OCR Refresh Complete",
+      "partial": "OCR Refresh Partially Complete",
+      "failed": "OCR Refresh Failed",
+      "error": "OCR Refresh Error",
+      "inProgress": "In Progress",
+      "success": "Success",
+      "partialSuccess": "Partial Success",
+      "failure": "Failed",
+      "progress": "Processing {completed} of {total} invoices ({percentage}%)",
+      "successDescription": "Successfully refreshed {count} invoice{count, plural, one {} other {s}} in {duration}s",
+      "partialDescription": "Refreshed {successful}/{total} invoices successfully. {failed} failed in {duration}s",
+      "failureDescription": "Failed to refresh {count} invoice{count, plural, one {} other {s}}. Please try again.",
+      "errorDescription": "An error occurred: {error}",
+      "failedInvoices": "Failed Invoices",
+      "invoiceId": "Invoice ID",
+      "andMore": "...and {count} more"
+    }
   },
   "components": {
     "boardTable": {

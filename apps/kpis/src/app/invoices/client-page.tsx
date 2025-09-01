@@ -8,6 +8,8 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Check, RefreshCw } from "lucide-react";
 import { useTranslations } from 'next-intl';
 import { InvoiceCard } from "@/components/InvoiceCard";
+import { useOcrRefreshStatus } from '@/hooks/useOcrRefreshStatus';
+import { OcrRefreshProgress } from '@/components/OcrRefreshProgress';
 
 interface Invoice {
   id: number;
@@ -16,22 +18,17 @@ interface Invoice {
   invoice_date_due: string;
   amount_untaxed: number;
   currency_id: [number, string];
-  attachments: Attachment[];
-  state?: string;
-  name?: string;
-  x_studio_project_manager_review_status?: string;
-  x_studio_is_over_budget?: boolean;
-  x_studio_amount_over_budget?: number;
-  x_studio_cfo_sign_off?: boolean;
-  x_studio_ceo_sign_off?: boolean;
+  attachments?: any[];
+  state: string;
+  name: string;
+  x_studio_project_manager_review_status: string;
+  x_studio_is_over_budget: boolean;
+  x_studio_amount_over_budget: number;
+  x_studio_cfo_sign_off: boolean;
+  x_studio_ceo_sign_off: boolean;
 }
 
-interface Attachment {
-  id: number;
-  name: string;
-  mimetype: string;
-  datas: string;
-}
+
 
 interface Supplier {
   id: number;
@@ -50,6 +47,14 @@ export default function InvoiceClientPage() {
   const [paidInvoices, setPaidInvoices] = useState<Invoice[]>([]);
   const [otherInvoices, setOtherInvoices] = useState<Invoice[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [zeroValueInvoiceIds, setZeroValueInvoiceIds] = useState<number[]>([]);
+
+  // OCR refresh status tracking
+  const { status: ocrStatus, isComplete, hasUpdates } = useOcrRefreshStatus({
+    zeroValueInvoiceIds,
+    enabled: zeroValueInvoiceIds.length > 0,
+    pollingInterval: 5000
+  });
 
   useEffect(() => {
     fetchInvoices();
@@ -64,7 +69,24 @@ export default function InvoiceClientPage() {
       if (!response.ok) {
         throw new Error(`Failed to fetch invoices: ${response.status}`);
       }
-      const invoices = await response.json();
+      const data = await response.json();
+      
+      // Handle both old format (array) and new format (object with invoices property)
+      const invoices = Array.isArray(data) ? data : data.invoices;
+      
+      // Log OCR refresh information if available
+      if (!Array.isArray(data) && data.metadata) {
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Invoice fetch metadata:', data.metadata);
+          if (data.metadata.ocrRefreshPerformed) {
+            console.log(`OCR refresh performed for ${data.metadata.zeroValueInvoicesRefreshed} invoices`);
+          }
+        }
+        // Store zero-value invoice IDs for OCR refresh tracking
+        if (data.metadata.zeroValueInvoiceIds) {
+          setZeroValueInvoiceIds(data.metadata.zeroValueInvoiceIds);
+        }
+      }
       
       // Group invoices by status on the client side for now
       const actionRequired = invoices.filter((inv: Invoice) => inv.x_studio_project_manager_review_status === 'pending');
@@ -100,16 +122,71 @@ export default function InvoiceClientPage() {
 
   const fetchSuppliers = async () => {
     try {
-    const response = await fetch("/api/odoo/suppliers");
+      const response = await fetch("/api/odoo/suppliers");
       if (!response.ok) {
         throw new Error(`Failed to fetch suppliers: ${response.status}`);
       }
-    const data = await response.json();
-    setSuppliers(data);
+      const data = await response.json();
+      setSuppliers(data);
     } catch (error) {
       console.error("Failed to fetch suppliers:", error);
       setSuppliers([]);
-  }
+    }
+  };
+
+  // Helper function to check if an invoice is being refreshed
+  const isInvoiceRefreshing = (invoiceId: number) => {
+    return zeroValueInvoiceIds.includes(invoiceId) && !isComplete;
+  };
+
+  // Helper function to handle manual refresh
+  const handleManualRefresh = async (invoiceId: number) => {
+    try {
+      const response = await fetch(`/api/invoices/${invoiceId}/refresh-ocr`, {
+        method: 'POST'
+      });
+      
+      if (response.ok) {
+        // Add to zero value IDs to track refresh
+        setZeroValueInvoiceIds(prev => [...new Set([...prev, invoiceId])]);
+      } else {
+        // Handle specific HTTP error responses
+        let errorMessage = `Failed to refresh invoice ${invoiceId}`;
+        
+        try {
+          const errorData = await response.json();
+          if (errorData.error) {
+            errorMessage = `${errorMessage}: ${errorData.error}`;
+          }
+          if (errorData.details) {
+            errorMessage = `${errorMessage} (${errorData.details})`;
+          }
+        } catch (parseError) {
+          errorMessage = `${errorMessage}: HTTP ${response.status} - ${response.statusText}`;
+        }
+        
+        console.error(errorMessage);
+        // You could also show a toast notification here if needed
+      }
+    } catch (error) {
+      let errorMessage = 'Failed to refresh invoice';
+      
+      if (error instanceof Error) {
+        if (error.name === 'TypeError' && error.message.includes('fetch')) {
+          errorMessage = 'Network error: Unable to connect to the server. Please check your internet connection.';
+        } else if (error.message.includes('timeout')) {
+          errorMessage = 'Request timeout: The refresh operation took too long. Please try again.';
+        } else {
+          errorMessage = `${errorMessage}: ${error.message}`;
+        }
+      }
+      
+      console.error(errorMessage, {
+        invoiceId,
+        error,
+        timestamp: new Date().toISOString()
+      });
+    }
   };
 
   const handleRefresh = async () => {
@@ -155,6 +232,9 @@ export default function InvoiceClientPage() {
         </Button>
       </div>
 
+      {/* OCR Refresh Progress */}
+      <OcrRefreshProgress />
+
       {/* Invoice Groups */}
       <Accordion type="single" defaultValue="action_required" className="space-y-4">
         {/* Action Required */}
@@ -179,7 +259,8 @@ export default function InvoiceClientPage() {
                   <InvoiceCard 
                     key={invoice.id} 
                     invoice={invoice} 
-                    suppliers={suppliers}
+                    isRefreshing={isInvoiceRefreshing(invoice.id)}
+                    onRefresh={() => handleManualRefresh(invoice.id)}
                     onClick={() => router.push(`/invoices/${invoice.id}`)}
                   />
                 ))}
@@ -209,7 +290,8 @@ export default function InvoiceClientPage() {
                   <InvoiceCard 
                     key={invoice.id} 
                     invoice={invoice} 
-                    suppliers={suppliers}
+                    isRefreshing={isInvoiceRefreshing(invoice.id)}
+                    onRefresh={() => handleManualRefresh(invoice.id)}
                     onClick={() => router.push(`/invoices/${invoice.id}`)}
                   />
                 ))}
@@ -239,7 +321,8 @@ export default function InvoiceClientPage() {
                   <InvoiceCard 
                     key={invoice.id} 
                     invoice={invoice} 
-                    suppliers={suppliers}
+                    isRefreshing={isInvoiceRefreshing(invoice.id)}
+                    onRefresh={() => handleManualRefresh(invoice.id)}
                     onClick={() => router.push(`/invoices/${invoice.id}`)}
                   />
                 ))}
@@ -269,7 +352,8 @@ export default function InvoiceClientPage() {
                   <InvoiceCard 
                     key={invoice.id} 
                     invoice={invoice} 
-                    suppliers={suppliers}
+                    isRefreshing={isInvoiceRefreshing(invoice.id)}
+                    onRefresh={() => handleManualRefresh(invoice.id)}
                     onClick={() => router.push(`/invoices/${invoice.id}`)}
                   />
                 ))}

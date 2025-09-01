@@ -253,6 +253,7 @@
     "department": "Departamento",
     "selectDepartment": "Selecciona un departamento...",
     "attachments": "Adjuntos",
+    "attachmentCount": "{count} adjunto{count, plural, one {} other {s}}",
     "view": "Ver",
     "previewNotAvailable": "Vista previa no disponible para",
     "allCaughtUp": "¡Todo al día! No hay facturas que requieran acción.",
@@ -272,7 +273,41 @@
     "loadingInvoice": "Cargando factura...",
     "noReference": "Sin referencia",
     "departmentType": "Departamento",
-    "projectType": "Proyecto"
+    "projectType": "Proyecto",
+    "status": {
+      "pending": "Pendiente",
+      "awaitingApproval": "Esperando Aprobación",
+      "sentForPayment": "Enviado para Pago",
+      "paid": "Pagado",
+      "other": "Otro"
+    },
+    "amount": {
+      "label": "Monto",
+      "zero": "Cero"
+    },
+    "date": {
+      "invoice": "Fecha de Factura",
+      "due": "Fecha de Vencimiento"
+    },
+    "ocrRefresh": {
+      "running": "Actualización OCR en Progreso",
+      "complete": "Actualización OCR Completada",
+      "partial": "Actualización OCR Parcialmente Completada",
+      "failed": "Actualización OCR Fallida",
+      "error": "Error de Actualización OCR",
+      "inProgress": "En Progreso",
+      "success": "Éxito",
+      "partialSuccess": "Éxito Parcial",
+      "failure": "Fallido",
+      "progress": "Procesando {completed} de {total} facturas ({percentage}%)",
+      "successDescription": "Se actualizaron exitosamente {count} factura{count, plural, one {} other {s}} en {duration}s",
+      "partialDescription": "Se actualizaron {successful}/{total} facturas exitosamente. {failed} fallaron en {duration}s",
+      "failureDescription": "No se pudieron actualizar {count} factura{count, plural, one {} other {s}}. Por favor intente de nuevo.",
+      "errorDescription": "Ocurrió un error: {error}",
+      "failedInvoices": "Facturas Fallidas",
+      "invoiceId": "ID de Factura",
+      "andMore": "...y {count} más"
+    }
   },
   "components": {
     "boardTable": {

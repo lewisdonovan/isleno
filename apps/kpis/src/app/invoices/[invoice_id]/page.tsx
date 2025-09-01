@@ -10,7 +10,7 @@ import { ArrowLeft, Eye, Check, Calendar, DollarSign, Building2, Tag } from "luc
 import { useTranslations } from 'next-intl';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useCurrentUser } from '@/hooks/useCurrentUser';
-import { getStatusBadge } from '@/lib/utils/invoiceUtils';
+import { getStatusBadgeInfo } from '@/lib/utils/invoiceUtils';
 
 interface Invoice {
   id: number;
@@ -257,7 +257,10 @@ export default function InvoiceDetailPage() {
           <h1 className="text-2xl font-bold">{t('invoice')} #{invoice.id}</h1>
           <p className="text-muted-foreground">{invoice.name || t('noReference')}</p>
         </div>
-        {getStatusBadge(invoice.state)}
+        {(() => {
+          const badgeInfo = getStatusBadgeInfo(invoice.state);
+          return <Badge variant={badgeInfo.variant} className="text-xs">{badgeInfo.text}</Badge>;
+        })()}
       </div>
 
       {/* Invoice Details */}
