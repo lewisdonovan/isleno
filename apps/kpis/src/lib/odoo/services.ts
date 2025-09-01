@@ -157,18 +157,30 @@ export async function getAllInvoices(invoiceApprovalAlias?: string) {
         const updatedInvoiceIds = zeroValueInvoices.map(inv => inv.id);
         const updatedInvoices = await odooApi.searchRead(INVOICE_MODEL, [['id', 'in', updatedInvoiceIds]], { fields });
         
+        // Fetch attachments for all updated invoices in a single query
+        const attachmentDomain = [
+            ["res_model", "=", INVOICE_MODEL],
+            ["res_id", "in", updatedInvoiceIds],
+        ];
+        const attachmentFields = ["id", "name", "mimetype", "datas", "res_id"];
+        const allAttachments = await odooApi.searchRead(ATTACHMENT_MODEL, attachmentDomain, { fields: attachmentFields });
+        
+        // Group attachments by invoice ID
+        const attachmentsByInvoiceId = allAttachments.reduce((acc: any, attachment: any) => {
+            const invoiceId = attachment.res_id;
+            if (!acc[invoiceId]) {
+                acc[invoiceId] = [];
+            }
+            acc[invoiceId].push(attachment);
+            return acc;
+        }, {});
+        
         // Replace the original invoices with refreshed data
         for (const updatedInvoice of updatedInvoices) {
             const originalIndex = invoices.findIndex((inv: any) => inv.id === updatedInvoice.id);
             if (originalIndex !== -1) {
-                // Fetch attachments for the updated invoice
-                const attachmentDomain = [
-                    ["res_model", "=", INVOICE_MODEL],
-                    ["res_id", "=", updatedInvoice.id],
-                ];
-                const attachmentFields = ["id", "name", "mimetype", "datas"];
-                const attachments = await odooApi.searchRead(ATTACHMENT_MODEL, attachmentDomain, { fields: attachmentFields });
-                updatedInvoice.attachments = attachments;
+                // Assign attachments to the updated invoice
+                updatedInvoice.attachments = attachmentsByInvoiceId[updatedInvoice.id] || [];
                 
                 // Replace the entire invoice object to capture all potential OCR updates
                 invoices[originalIndex] = updatedInvoice;

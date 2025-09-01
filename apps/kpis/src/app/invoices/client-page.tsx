@@ -73,7 +73,7 @@ export default function InvoiceClientPage() {
       if (data.metadata) {
         console.log('Invoice fetch metadata:', data.metadata);
         if (data.metadata.ocrRefreshPerformed) {
-          console.log(`OCR refresh performed for ${data.metadata.zeroValueInvoicesAfterRefresh} invoices`);
+          console.log(`OCR refresh performed for ${data.metadata.zeroValueInvoicesRefreshed} invoices`);
         }
       }
       
