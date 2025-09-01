@@ -288,6 +288,25 @@
     "date": {
       "invoice": "Invoice Date",
       "due": "Due Date"
+    },
+    "ocrRefresh": {
+      "running": "OCR Refresh in Progress",
+      "complete": "OCR Refresh Complete",
+      "partial": "OCR Refresh Partially Complete",
+      "failed": "OCR Refresh Failed",
+      "error": "OCR Refresh Error",
+      "inProgress": "In Progress",
+      "success": "Success",
+      "partialSuccess": "Partial Success",
+      "failure": "Failed",
+      "progress": "Processing {completed} of {total} invoices ({percentage}%)",
+      "successDescription": "Successfully refreshed {count} invoice{count, plural, one {} other {s}} in {duration}s",
+      "partialDescription": "Refreshed {successful}/{total} invoices successfully. {failed} failed in {duration}s",
+      "failureDescription": "Failed to refresh {count} invoice{count, plural, one {} other {s}}. Please try again.",
+      "errorDescription": "An error occurred: {error}",
+      "failedInvoices": "Failed Invoices",
+      "invoiceId": "Invoice ID",
+      "andMore": "...and {count} more"
     }
   },
   "components": {

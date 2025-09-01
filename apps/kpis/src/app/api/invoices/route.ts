@@ -17,11 +17,26 @@ export async function GET(_request: NextRequest) {
     // This will automatically refresh OCR data for zero-value invoices
     const result = await getAllInvoices(alias || undefined);
     
-    // Handle both old format (array) and new format (object with metadata)
-    const invoices = Array.isArray(result) ? result : result.invoices;
-    const ocrRefreshPerformed = Array.isArray(result) ? false : result.ocrRefreshPerformed;
-    const zeroValueInvoicesRefreshed = Array.isArray(result) ? 0 : result.zeroValueInvoicesRefreshed;
-    const zeroValueInvoiceIds = Array.isArray(result) ? [] : (result.zeroValueInvoiceIds || []);
+    // Helper function to extract data from result (handles both old and new formats)
+    const extractResultData = (result: any) => {
+      if (Array.isArray(result)) {
+        return {
+          invoices: result,
+          ocrRefreshPerformed: false,
+          zeroValueInvoicesRefreshed: 0,
+          zeroValueInvoiceIds: []
+        };
+      }
+      
+      return {
+        invoices: result.invoices,
+        ocrRefreshPerformed: result.ocrRefreshPerformed ?? false,
+        zeroValueInvoicesRefreshed: result.zeroValueInvoicesRefreshed ?? 0,
+        zeroValueInvoiceIds: result.zeroValueInvoiceIds ?? []
+      };
+    };
+
+    const { invoices, ocrRefreshPerformed, zeroValueInvoicesRefreshed, zeroValueInvoiceIds } = extractResultData(result);
     
     // Count zero-value invoices after refresh
     const zeroValueCount = invoices.filter(isZeroValueInvoice).length;

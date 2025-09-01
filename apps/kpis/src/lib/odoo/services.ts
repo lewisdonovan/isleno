@@ -2,6 +2,7 @@ import { odooApi } from "./api";
 import { ODOO_MAIN_COMPANY_ID } from "../constants/odoo";
 import { createClient } from '@supabase/supabase-js';
 import { isZeroValueInvoice } from "../utils/invoiceUtils";
+import { ocrNotificationService } from "../services/ocrNotificationService";
 
 const INVOICE_MODEL = 'account.move';
 const SUPPLIER_MODEL = 'res.partner';
@@ -133,10 +134,20 @@ export async function getAllInvoices(invoiceApprovalAlias?: string, skipOcrRefre
 
     // If OCR refresh is enabled and there are zero-value invoices, start background refresh
     if (!skipOcrRefresh && zeroValueInvoices.length > 0) {
+        const invoiceIds = zeroValueInvoices.map(inv => inv.id);
+        
+        // Notify that OCR refresh is starting
+        ocrNotificationService.startRefresh(invoiceIds);
+        
         // Start background OCR refresh without blocking the response
-        refreshOcrDataForInvoices(zeroValueInvoices.map(inv => inv.id)).catch(error => {
-            console.error('Background OCR refresh failed:', error);
-        });
+        refreshOcrDataForInvoices(invoiceIds)
+            .then(result => {
+                ocrNotificationService.completeRefresh(result);
+            })
+            .catch(error => {
+                console.error('Background OCR refresh failed:', error);
+                ocrNotificationService.failRefresh(error instanceof Error ? error.message : 'Unknown error');
+            });
     }
 
     return {
@@ -154,7 +165,11 @@ export async function getAllInvoices(invoiceApprovalAlias?: string, skipOcrRefre
 async function refreshOcrDataForInvoices(invoiceIds: number[]) {
     console.log(`Starting background OCR refresh for ${invoiceIds.length} invoices...`);
     
-    const refreshPromises = invoiceIds.map(async (invoiceId: number) => {
+    const startTime = Date.now();
+    const results = [];
+    
+    for (let i = 0; i < invoiceIds.length; i++) {
+        const invoiceId = invoiceIds[i];
         try {
             await odooApi.executeKw(
                 'account.move',
@@ -162,23 +177,42 @@ async function refreshOcrDataForInvoices(invoiceIds: number[]) {
                 [[invoiceId]]
             );
             console.log(`Successfully refreshed OCR data for invoice ${invoiceId}`);
-            return { invoiceId, success: true };
+            results.push({ invoiceId, success: true, error: null });
         } catch (error) {
             console.error(`Failed to refresh OCR data for invoice ${invoiceId}:`, error);
-            return { invoiceId, success: false, error };
+            results.push({ 
+                invoiceId, 
+                success: false, 
+                error: error instanceof Error ? error.message : 'Unknown error' 
+            });
         }
-    });
-
-    // Wait for all OCR refresh operations to complete
-    const results = await Promise.allSettled(refreshPromises);
+        
+        // Update progress after each invoice
+        ocrNotificationService.updateProgress(i + 1, invoiceIds.length);
+    }
     
-    const successful = results.filter(result => 
-        result.status === 'fulfilled' && result.value.success
-    ).length;
+    const endTime = Date.now();
+    const duration = endTime - startTime;
     
-    console.log(`Background OCR refresh completed: ${successful}/${invoiceIds.length} successful`);
+    const successful = results.filter(r => r.success).length;
+    const failed = results.filter(r => !r.success).length;
     
-    return results;
+    console.log(`Background OCR refresh completed in ${duration}ms: ${successful}/${invoiceIds.length} successful, ${failed} failed`);
+    
+    // Log detailed results for debugging
+    if (failed > 0) {
+        const failedInvoices = results.filter(r => !r.success);
+        console.log('Failed invoices:', failedInvoices.map(r => ({ id: r.invoiceId, error: r.error })));
+    }
+    
+    return {
+        totalInvoices: invoiceIds.length,
+        successful,
+        failed,
+        duration,
+        results,
+        completedAt: new Date().toISOString()
+    };
 }
 
 export async function getAwaitingApprovalInvoices(invoiceApprovalAlias?: string) {

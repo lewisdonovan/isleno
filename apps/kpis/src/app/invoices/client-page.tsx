@@ -9,6 +9,7 @@ import { Check, RefreshCw } from "lucide-react";
 import { useTranslations } from 'next-intl';
 import { InvoiceCard } from "@/components/InvoiceCard";
 import { useOcrRefreshStatus } from '@/hooks/useOcrRefreshStatus';
+import { OcrRefreshProgress } from '@/components/OcrRefreshProgress';
 
 interface Invoice {
   id: number;
@@ -27,12 +28,7 @@ interface Invoice {
   x_studio_ceo_sign_off: boolean;
 }
 
-interface Attachment {
-  id: number;
-  name: string;
-  mimetype: string;
-  datas: string;
-}
+
 
 interface Supplier {
   id: number;
@@ -80,9 +76,11 @@ export default function InvoiceClientPage() {
       
       // Log OCR refresh information if available
       if (!Array.isArray(data) && data.metadata) {
-        console.log('Invoice fetch metadata:', data.metadata);
-        if (data.metadata.ocrRefreshPerformed) {
-          console.log(`OCR refresh performed for ${data.metadata.zeroValueInvoicesRefreshed} invoices`);
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Invoice fetch metadata:', data.metadata);
+          if (data.metadata.ocrRefreshPerformed) {
+            console.log(`OCR refresh performed for ${data.metadata.zeroValueInvoicesRefreshed} invoices`);
+          }
         }
         // Store zero-value invoice IDs for OCR refresh tracking
         if (data.metadata.zeroValueInvoiceIds) {
@@ -147,12 +145,47 @@ export default function InvoiceClientPage() {
       const response = await fetch(`/api/invoices/${invoiceId}/refresh-ocr`, {
         method: 'POST'
       });
+      
       if (response.ok) {
         // Add to zero value IDs to track refresh
         setZeroValueInvoiceIds(prev => [...new Set([...prev, invoiceId])]);
+      } else {
+        // Handle specific HTTP error responses
+        let errorMessage = `Failed to refresh invoice ${invoiceId}`;
+        
+        try {
+          const errorData = await response.json();
+          if (errorData.error) {
+            errorMessage = `${errorMessage}: ${errorData.error}`;
+          }
+          if (errorData.details) {
+            errorMessage = `${errorMessage} (${errorData.details})`;
+          }
+        } catch (parseError) {
+          errorMessage = `${errorMessage}: HTTP ${response.status} - ${response.statusText}`;
+        }
+        
+        console.error(errorMessage);
+        // You could also show a toast notification here if needed
       }
     } catch (error) {
-      console.error('Failed to refresh invoice:', error);
+      let errorMessage = 'Failed to refresh invoice';
+      
+      if (error instanceof Error) {
+        if (error.name === 'TypeError' && error.message.includes('fetch')) {
+          errorMessage = 'Network error: Unable to connect to the server. Please check your internet connection.';
+        } else if (error.message.includes('timeout')) {
+          errorMessage = 'Request timeout: The refresh operation took too long. Please try again.';
+        } else {
+          errorMessage = `${errorMessage}: ${error.message}`;
+        }
+      }
+      
+      console.error(errorMessage, {
+        invoiceId,
+        error,
+        timestamp: new Date().toISOString()
+      });
     }
   };
 
@@ -198,6 +231,9 @@ export default function InvoiceClientPage() {
           {refreshing ? t('refreshing') : t('refresh')}
         </Button>
       </div>
+
+      {/* OCR Refresh Progress */}
+      <OcrRefreshProgress />
 
       {/* Invoice Groups */}
       <Accordion type="single" defaultValue="action_required" className="space-y-4">
