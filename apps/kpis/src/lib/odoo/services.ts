@@ -128,6 +128,7 @@ export async function getAllInvoices(invoiceApprovalAlias?: string) {
     }
 
     // Identify zero-value invoices and refresh their OCR data
+    const zeroValueInvoices = invoices.filter(invoice => 
         (invoice.amount_untaxed ?? 0) === 0
     );
 
