@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 interface OcrRefreshStatus {
   totalChecked: number;
@@ -22,6 +22,7 @@ export function useOcrRefreshStatus({
   const [status, setStatus] = useState<OcrRefreshStatus | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const checkStatus = useCallback(async () => {
     if (!enabled || zeroValueInvoiceIds.length === 0) {
@@ -103,6 +104,11 @@ export function useOcrRefreshStatus({
   useEffect(() => {
     if (!enabled || zeroValueInvoiceIds.length === 0) {
       setStatus(null);
+      // Clear any existing interval
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
       return;
     }
 
@@ -110,10 +116,25 @@ export function useOcrRefreshStatus({
     checkStatus();
 
     // Set up polling
-    const interval = setInterval(checkStatus, pollingInterval);
+    intervalRef.current = setInterval(async () => {
+      await checkStatus();
+    }, pollingInterval);
 
-    return () => clearInterval(interval);
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
   }, [enabled, zeroValueInvoiceIds, checkStatus, pollingInterval]);
+
+  // Effect to stop polling when OCR refresh is complete
+  useEffect(() => {
+    if (status && status.stillZeroValue === 0 && intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+  }, [status]);
 
   const isComplete = status && status.stillZeroValue === 0;
   const hasUpdates = status && status.updatedInvoices > 0;
