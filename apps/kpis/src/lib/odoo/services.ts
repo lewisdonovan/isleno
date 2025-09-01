@@ -127,6 +127,56 @@ export async function getAllInvoices(invoiceApprovalAlias?: string) {
         invoice.attachments = attachments;
     }
 
+    // Identify zero-value invoices and refresh their OCR data
+    const zeroValueInvoices = invoices.filter((invoice: any) => 
+        invoice.amount_untaxed === 0 || invoice.amount_untaxed === null || invoice.amount_untaxed === undefined
+    );
+
+    // Refresh OCR data for zero-value invoices
+    if (zeroValueInvoices.length > 0) {
+        console.log(`Found ${zeroValueInvoices.length} zero-value invoices, refreshing OCR data...`);
+        
+        const refreshPromises = zeroValueInvoices.map(async (invoice: any) => {
+            try {
+                await odooApi.executeKw(
+                    'account.move',
+                    'action_reload_ai_data',
+                    [[invoice.id]]
+                );
+                console.log(`Successfully refreshed OCR data for invoice ${invoice.id}`);
+            } catch (error) {
+                console.error(`Failed to refresh OCR data for invoice ${invoice.id}:`, error);
+                // Continue with other invoices even if one fails
+            }
+        });
+
+        // Wait for all OCR refresh operations to complete
+        await Promise.allSettled(refreshPromises);
+        
+        // Fetch updated invoice data for zero-value invoices
+        const updatedInvoices = await odooApi.searchRead(INVOICE_MODEL, domain, { fields });
+        
+        // Update the original invoices with refreshed data
+        for (const updatedInvoice of updatedInvoices) {
+            const originalIndex = invoices.findIndex((inv: any) => inv.id === updatedInvoice.id);
+            if (originalIndex !== -1) {
+                // Update amount_untaxed and other fields that might have changed
+                invoices[originalIndex].amount_untaxed = updatedInvoice.amount_untaxed;
+                invoices[originalIndex].partner_id = updatedInvoice.partner_id;
+                invoices[originalIndex].invoice_date = updatedInvoice.invoice_date;
+                invoices[originalIndex].invoice_date_due = updatedInvoice.invoice_date_due;
+                invoices[originalIndex].currency_id = updatedInvoice.currency_id;
+                invoices[originalIndex].x_studio_project_manager_review_status = updatedInvoice.x_studio_project_manager_review_status;
+                invoices[originalIndex].state = updatedInvoice.state;
+                invoices[originalIndex].name = updatedInvoice.name;
+                invoices[originalIndex].x_studio_is_over_budget = updatedInvoice.x_studio_is_over_budget;
+                invoices[originalIndex].x_studio_amount_over_budget = updatedInvoice.x_studio_amount_over_budget;
+                invoices[originalIndex].x_studio_cfo_sign_off = updatedInvoice.x_studio_cfo_sign_off;
+                invoices[originalIndex].x_studio_ceo_sign_off = updatedInvoice.x_studio_ceo_sign_off;
+            }
+        }
+    }
+
     return invoices;
 }
 

@@ -13,9 +13,22 @@ export async function GET(_request: NextRequest) {
     }
 
     // Get all invoices filtered by user's invoice_approval_alias
+    // This will automatically refresh OCR data for zero-value invoices
     const invoices = await getAllInvoices(alias || undefined);
     
-    return NextResponse.json(invoices);
+    // Count zero-value invoices after refresh
+    const zeroValueCount = invoices.filter((invoice: any) => 
+        invoice.amount_untaxed === 0 || invoice.amount_untaxed === null || invoice.amount_untaxed === undefined
+    ).length;
+    
+    return NextResponse.json({
+      invoices,
+      metadata: {
+        totalInvoices: invoices.length,
+        zeroValueInvoicesAfterRefresh: zeroValueCount,
+        ocrRefreshPerformed: zeroValueCount > 0
+      }
+    });
   } catch (error: any) {
     console.error("Failed to fetch invoices:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });

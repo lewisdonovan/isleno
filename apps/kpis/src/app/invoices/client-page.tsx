@@ -64,7 +64,18 @@ export default function InvoiceClientPage() {
       if (!response.ok) {
         throw new Error(`Failed to fetch invoices: ${response.status}`);
       }
-      const invoices = await response.json();
+      const data = await response.json();
+      
+      // Handle both old format (array) and new format (object with invoices property)
+      const invoices = Array.isArray(data) ? data : data.invoices;
+      
+      // Log OCR refresh information if available
+      if (data.metadata) {
+        console.log('Invoice fetch metadata:', data.metadata);
+        if (data.metadata.ocrRefreshPerformed) {
+          console.log(`OCR refresh performed for ${data.metadata.zeroValueInvoicesAfterRefresh} invoices`);
+        }
+      }
       
       // Group invoices by status on the client side for now
       const actionRequired = invoices.filter((inv: Invoice) => inv.x_studio_project_manager_review_status === 'pending');
