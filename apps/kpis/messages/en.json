@@ -253,6 +253,7 @@
     "department": "Department",
     "selectDepartment": "Select a department...",
     "attachments": "Attachments",
+    "attachmentCount": "{count} attachment{count, plural, one {} other {s}}",
     "view": "View",
     "previewNotAvailable": "Preview not available for",
     "allCaughtUp": "All caught up! No invoices require action.",
@@ -272,7 +273,22 @@
     "loadingInvoice": "Loading invoice...",
     "noReference": "No reference",
     "departmentType": "Department",
-    "projectType": "Project"
+    "projectType": "Project",
+    "status": {
+      "pending": "Pending",
+      "awaitingApproval": "Awaiting Approval",
+      "sentForPayment": "Sent for Payment",
+      "paid": "Paid",
+      "other": "Other"
+    },
+    "amount": {
+      "label": "Amount",
+      "zero": "Zero"
+    },
+    "date": {
+      "invoice": "Invoice Date",
+      "due": "Due Date"
+    }
   },
   "components": {
     "boardTable": {

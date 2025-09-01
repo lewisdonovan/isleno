@@ -87,7 +87,7 @@ export async function getPendingInvoices(invoiceApprovalAlias?: string) {
     return invoices;
 }
 
-export async function getAllInvoices(invoiceApprovalAlias?: string) {
+export async function getAllInvoices(invoiceApprovalAlias?: string, skipOcrRefresh: boolean = false) {
     
     const domain = [
         ["move_type", "=", "in_invoice"]
@@ -128,70 +128,57 @@ export async function getAllInvoices(invoiceApprovalAlias?: string) {
         invoice.attachments = attachments;
     }
 
-    // Identify zero-value invoices and refresh their OCR data
+    // Identify zero-value invoices
     const zeroValueInvoices = invoices.filter(isZeroValueInvoice);
 
-    // Refresh OCR data for zero-value invoices
-    if (zeroValueInvoices.length > 0) {
-        console.log(`Found ${zeroValueInvoices.length} zero-value invoices, refreshing OCR data...`);
-        
-        const refreshPromises = zeroValueInvoices.map(async (invoice: any) => {
-            try {
-                await odooApi.executeKw(
-                    'account.move',
-                    'action_reload_ai_data',
-                    [[invoice.id]]
-                );
-                console.log(`Successfully refreshed OCR data for invoice ${invoice.id}`);
-            } catch (error) {
-                console.error(`Failed to refresh OCR data for invoice ${invoice.id}:`, error);
-                // Continue with other invoices even if one fails
-            }
+    // If OCR refresh is enabled and there are zero-value invoices, start background refresh
+    if (!skipOcrRefresh && zeroValueInvoices.length > 0) {
+        // Start background OCR refresh without blocking the response
+        refreshOcrDataForInvoices(zeroValueInvoices.map(inv => inv.id)).catch(error => {
+            console.error('Background OCR refresh failed:', error);
         });
-
-        // Wait for all OCR refresh operations to complete
-        await Promise.allSettled(refreshPromises);
-        
-        // Fetch updated invoice data only for the invoices that were refreshed
-        const updatedInvoiceIds = zeroValueInvoices.map(inv => inv.id);
-        const updatedInvoices = await odooApi.searchRead(INVOICE_MODEL, [['id', 'in', updatedInvoiceIds]], { fields });
-        
-        // Fetch attachments for all updated invoices in a single query
-        const attachmentDomain = [
-            ["res_model", "=", INVOICE_MODEL],
-            ["res_id", "in", updatedInvoiceIds],
-        ];
-        const attachmentFields = ["id", "name", "mimetype", "datas", "res_id"];
-        const allAttachments = await odooApi.searchRead(ATTACHMENT_MODEL, attachmentDomain, { fields: attachmentFields });
-        
-        // Group attachments by invoice ID
-        const attachmentsByInvoiceId = allAttachments.reduce((acc: any, attachment: any) => {
-            const invoiceId = attachment.res_id;
-            if (!acc[invoiceId]) {
-                acc[invoiceId] = [];
-            }
-            acc[invoiceId].push(attachment);
-            return acc;
-        }, {});
-        
-        // Replace the original invoices with refreshed data
-        for (const updatedInvoice of updatedInvoices) {
-            const originalIndex = invoices.findIndex((inv: any) => inv.id === updatedInvoice.id);
-            if (originalIndex !== -1) {
-                // Assign attachments to the updated invoice
-                updatedInvoice.attachments = attachmentsByInvoiceId[updatedInvoice.id] || [];
-                
-                // Replace the entire invoice object to capture all potential OCR updates
-                invoices[originalIndex] = updatedInvoice;
-            }
-        }
     }
 
     return {
         invoices,
-        ocrRefreshPerformed: zeroValueInvoices.length > 0,
-        zeroValueInvoicesRefreshed: zeroValueInvoices.length
+        ocrRefreshPerformed: !skipOcrRefresh && zeroValueInvoices.length > 0,
+        zeroValueInvoicesRefreshed: zeroValueInvoices.length,
+        zeroValueInvoiceIds: zeroValueInvoices.map(inv => inv.id)
     };
+}
+
+/**
+ * Background function to refresh OCR data for zero-value invoices
+ * This runs asynchronously and doesn't block the main response
+ */
+async function refreshOcrDataForInvoices(invoiceIds: number[]) {
+    console.log(`Starting background OCR refresh for ${invoiceIds.length} invoices...`);
+    
+    const refreshPromises = invoiceIds.map(async (invoiceId: number) => {
+        try {
+            await odooApi.executeKw(
+                'account.move',
+                'action_reload_ai_data',
+                [[invoiceId]]
+            );
+            console.log(`Successfully refreshed OCR data for invoice ${invoiceId}`);
+            return { invoiceId, success: true };
+        } catch (error) {
+            console.error(`Failed to refresh OCR data for invoice ${invoiceId}:`, error);
+            return { invoiceId, success: false, error };
+        }
+    });
+
+    // Wait for all OCR refresh operations to complete
+    const results = await Promise.allSettled(refreshPromises);
+    
+    const successful = results.filter(result => 
+        result.status === 'fulfilled' && result.value.success
+    ).length;
+    
+    console.log(`Background OCR refresh completed: ${successful}/${invoiceIds.length} successful`);
+    
+    return results;
 }
 
 export async function getAwaitingApprovalInvoices(invoiceApprovalAlias?: string) {

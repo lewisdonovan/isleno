@@ -253,6 +253,7 @@
     "department": "Departamento",
     "selectDepartment": "Selecciona un departamento...",
     "attachments": "Adjuntos",
+    "attachmentCount": "{count} adjunto{count, plural, one {} other {s}}",
     "view": "Ver",
     "previewNotAvailable": "Vista previa no disponible para",
     "allCaughtUp": "¡Todo al día! No hay facturas que requieran acción.",
@@ -272,7 +273,22 @@
     "loadingInvoice": "Cargando factura...",
     "noReference": "Sin referencia",
     "departmentType": "Departamento",
-    "projectType": "Proyecto"
+    "projectType": "Proyecto",
+    "status": {
+      "pending": "Pendiente",
+      "awaitingApproval": "Esperando Aprobación",
+      "sentForPayment": "Enviado para Pago",
+      "paid": "Pagado",
+      "other": "Otro"
+    },
+    "amount": {
+      "label": "Monto",
+      "zero": "Cero"
+    },
+    "date": {
+      "invoice": "Fecha de Factura",
+      "due": "Fecha de Vencimiento"
+    }
   },
   "components": {
     "boardTable": {

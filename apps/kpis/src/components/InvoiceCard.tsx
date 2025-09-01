@@ -1,103 +1,130 @@
-import { Card, CardContent } from "@/components/ui/card";
-import { Calendar, Building2 } from "lucide-react";
-import { useTranslations } from 'next-intl';
-import { getStatusBadge } from "@/lib/utils/invoiceUtils";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { RefreshCw, FileText, Download } from "lucide-react";
+
+import { useTranslations } from "next-intl";
 
 interface Invoice {
   id: number;
+  name: string;
   partner_id: [number, string];
   invoice_date: string;
   invoice_date_due: string;
   amount_untaxed: number;
   currency_id: [number, string];
-  attachments: Attachment[];
-  state?: string;
-  name?: string;
-}
-
-interface Attachment {
-  id: number;
-  name: string;
-  mimetype: string;
-  datas: string;
-}
-
-interface Supplier {
-  id: number;
-  name: string;
-  x_studio_accounting_code?: [number, string];
+  x_studio_project_manager_review_status: string;
+  state: string;
+  x_studio_is_over_budget: boolean;
+  x_studio_amount_over_budget: number;
+  x_studio_cfo_sign_off: boolean;
+  x_studio_ceo_sign_off: boolean;
+  attachments?: any[];
 }
 
 interface InvoiceCardProps {
   invoice: Invoice;
-  suppliers: Supplier[];
-  onClick: () => void;
+  isRefreshing?: boolean;
+  onRefresh?: () => void;
 }
 
-const CurrencySymbol = ({ currencyId }: { currencyId: string }) => {
-  switch (currencyId) {
-    case "EUR":
-      return "€";
-    case "USD":
-      return "$";
-    default:
-      return currencyId;
-  }
-};
-
-
-
-export function InvoiceCard({ invoice, suppliers, onClick }: InvoiceCardProps) {
-  const supplier = suppliers.find(s => s.id === invoice.partner_id[0]);
+export function InvoiceCard({ invoice, isRefreshing = false, onRefresh }: InvoiceCardProps) {
   const t = useTranslations('invoices');
+
+  const getStatusBadge = () => {
+    const status = invoice.x_studio_project_manager_review_status;
+    const state = invoice.state;
+    
+    if (status === 'pending') {
+      return <Badge variant="destructive">{t('status.pending')}</Badge>;
+    } else if (status === 'approved' && invoice.x_studio_is_over_budget) {
+      return <Badge variant="secondary">{t('status.awaitingApproval')}</Badge>;
+    } else if (state === 'posted') {
+      return <Badge variant="secondary">{t('status.sentForPayment')}</Badge>;
+    } else if (state === 'paid') {
+      return <Badge variant="default">{t('status.paid')}</Badge>;
+    } else {
+      return <Badge variant="outline">{t('status.other')}</Badge>;
+    }
+  };
+
+  const getAmountDisplay = () => {
+    const amount = invoice.amount_untaxed;
+    const isZero = !amount || amount === 0;
+    
+    return (
+      <div className="flex items-center gap-2">
+        <span className={`text-lg font-semibold ${isZero ? 'text-muted-foreground' : ''}`}>
+          {isZero ? t('amount.zero') : `${invoice.currency_id[1]} ${amount.toFixed(2)}`}
+        </span>
+        {isRefreshing && (
+          <RefreshCw className="h-4 w-4 animate-spin text-blue-500" />
+        )}
+      </div>
+    );
+  };
+
   return (
-    <Card 
-      className="cursor-pointer hover:shadow-md transition-shadow border-l-4 border-l-primary py-4"
-      onClick={onClick}
-    >
-      <CardContent className="px-4">
-        {/* Mobile: Vertical stack, left-aligned */}
-        <div className="flex flex-col gap-3 text-sm sm:hidden">
-          <div className="flex items-center gap-2">
-            <Building2 className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-            <span className="font-bold text-lg">{supplier?.name || invoice.partner_id[1]}</span>
-            {getStatusBadge(invoice.state)}
+    <Card className={`transition-all duration-200 ${isRefreshing ? 'ring-2 ring-blue-200 bg-blue-50/50' : ''}`}>
+      <CardHeader className="pb-3">
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              {invoice.name}
+            </CardTitle>
+            <p className="text-lg font-semibold mt-1">
+              {invoice.partner_id[1]}
+            </p>
           </div>
           <div className="flex items-center gap-2">
-            <Calendar className="h-3 w-3 text-muted-foreground" />
-            <span className="text-muted-foreground">Due:</span>
-            <span className="font-medium text-xs">{new Date(invoice.invoice_date_due).toLocaleDateString()}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="text-lg font-bold">
-              {t('subtotal')}:
-              {' '}
-              <CurrencySymbol currencyId={invoice.currency_id[1]} />
-              {invoice.amount_untaxed.toFixed(2)}
-            </div>
+            {getStatusBadge()}
+            {onRefresh && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onRefresh}
+                disabled={isRefreshing}
+                className="h-8 w-8 p-0"
+              >
+                <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+              </Button>
+            )}
           </div>
         </div>
-
-        {/* Desktop: Horizontal layout with centered due date */}
-        <div className="hidden sm:flex items-center gap-4 text-sm">
-          <div className="flex items-center gap-2 min-w-0">
-            <Building2 className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-            <span className="font-medium text-sm truncate">{supplier?.name || invoice.partner_id[1]}</span>
-            {getStatusBadge(invoice.state)}
+      </CardHeader>
+      
+      <CardContent className="pt-0">
+        <div className="space-y-3">
+          <div className="flex justify-between items-center">
+            <span className="text-sm text-muted-foreground">{t('amount.label')}</span>
+            {getAmountDisplay()}
           </div>
-          <div className="flex items-center gap-2 flex-shrink-0 mx-auto">
-            <Calendar className="h-3 w-3 text-muted-foreground" />
-            <span className="text-muted-foreground">Due:</span>
-            <span className="font-medium">{new Date(invoice.invoice_date_due).toLocaleDateString()}</span>
+          
+          <div className="flex justify-between items-center">
+            <span className="text-sm text-muted-foreground">{t('date.invoice')}</span>
+            <span className="text-sm">
+              {invoice.invoice_date ? new Date(invoice.invoice_date).toLocaleDateString() : '-'}
+            </span>
           </div>
-          <div className="flex items-center gap-2 text-right flex-shrink-0">
-            <div className="text-lg font-bold">
-              {t('subtotal')}:
-              {' '}
-              <CurrencySymbol currencyId={invoice.currency_id[1]} />
-              {invoice.amount_untaxed.toFixed(2)}
+          
+          <div className="flex justify-between items-center">
+            <span className="text-sm text-muted-foreground">{t('date.due')}</span>
+            <span className="text-sm">
+              {invoice.invoice_date_due ? new Date(invoice.invoice_date_due).toLocaleDateString() : '-'}
+            </span>
+          </div>
+          
+          {invoice.attachments && invoice.attachments.length > 0 && (
+            <div className="flex items-center gap-2 pt-2 border-t">
+              <FileText className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">
+                {t('attachmentCount', { count: invoice.attachments.length })}
+              </span>
+              <Button variant="ghost" size="sm" className="h-6 w-6 p-0 ml-auto">
+                <Download className="h-3 w-3" />
+              </Button>
             </div>
-          </div>
+          )}
         </div>
       </CardContent>
     </Card>

@@ -21,6 +21,7 @@ export async function GET(_request: NextRequest) {
     const invoices = Array.isArray(result) ? result : result.invoices;
     const ocrRefreshPerformed = Array.isArray(result) ? false : result.ocrRefreshPerformed;
     const zeroValueInvoicesRefreshed = Array.isArray(result) ? 0 : result.zeroValueInvoicesRefreshed;
+    const zeroValueInvoiceIds = Array.isArray(result) ? [] : (result.zeroValueInvoiceIds || []);
     
     // Count zero-value invoices after refresh
     const zeroValueCount = invoices.filter(isZeroValueInvoice).length;
@@ -31,7 +32,8 @@ export async function GET(_request: NextRequest) {
         totalInvoices: invoices.length,
         zeroValueInvoicesAfterRefresh: zeroValueCount,
         zeroValueInvoicesRefreshed,
-        ocrRefreshPerformed
+        ocrRefreshPerformed,
+        zeroValueInvoiceIds
       }
     });
   } catch (error: any) {
