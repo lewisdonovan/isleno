@@ -156,23 +156,21 @@ export async function getAllInvoices(invoiceApprovalAlias?: string) {
         // Fetch updated invoice data for zero-value invoices
         const updatedInvoices = await odooApi.searchRead(INVOICE_MODEL, domain, { fields });
         
-        // Update the original invoices with refreshed data
+        // Replace the original invoices with refreshed data
         for (const updatedInvoice of updatedInvoices) {
             const originalIndex = invoices.findIndex((inv: any) => inv.id === updatedInvoice.id);
             if (originalIndex !== -1) {
-                // Update amount_untaxed and other fields that might have changed
-                invoices[originalIndex].amount_untaxed = updatedInvoice.amount_untaxed;
-                invoices[originalIndex].partner_id = updatedInvoice.partner_id;
-                invoices[originalIndex].invoice_date = updatedInvoice.invoice_date;
-                invoices[originalIndex].invoice_date_due = updatedInvoice.invoice_date_due;
-                invoices[originalIndex].currency_id = updatedInvoice.currency_id;
-                invoices[originalIndex].x_studio_project_manager_review_status = updatedInvoice.x_studio_project_manager_review_status;
-                invoices[originalIndex].state = updatedInvoice.state;
-                invoices[originalIndex].name = updatedInvoice.name;
-                invoices[originalIndex].x_studio_is_over_budget = updatedInvoice.x_studio_is_over_budget;
-                invoices[originalIndex].x_studio_amount_over_budget = updatedInvoice.x_studio_amount_over_budget;
-                invoices[originalIndex].x_studio_cfo_sign_off = updatedInvoice.x_studio_cfo_sign_off;
-                invoices[originalIndex].x_studio_ceo_sign_off = updatedInvoice.x_studio_ceo_sign_off;
+                // Fetch attachments for the updated invoice
+                const attachmentDomain = [
+                    ["res_model", "=", INVOICE_MODEL],
+                    ["res_id", "=", updatedInvoice.id],
+                ];
+                const attachmentFields = ["id", "name", "mimetype", "datas"];
+                const attachments = await odooApi.searchRead(ATTACHMENT_MODEL, attachmentDomain, { fields: attachmentFields });
+                updatedInvoice.attachments = attachments;
+                
+                // Replace the entire invoice object to capture all potential OCR updates
+                invoices[originalIndex] = updatedInvoice;
             }
         }
     }
