@@ -26,15 +26,25 @@ export interface OcrRefreshStatus {
 }
 
 class OcrNotificationService {
-  private static instance: OcrNotificationService;
   private status: OcrRefreshStatus = { isRunning: false };
   private listeners: Array<(status: OcrRefreshStatus) => void> = [];
+  private static instance: OcrNotificationService | null = null;
+  private static instancePromise: Promise<OcrNotificationService> | null = null;
+
+  private constructor() {
+    // Private constructor to prevent direct instantiation
+  }
 
   static getInstance(): OcrNotificationService {
     if (!OcrNotificationService.instance) {
       OcrNotificationService.instance = new OcrNotificationService();
     }
     return OcrNotificationService.instance;
+  }
+
+  // Reset method for testing and cleanup
+  static reset(): void {
+    OcrNotificationService.instance = null;
   }
 
   startRefresh(invoiceIds: number[]) {

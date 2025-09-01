@@ -26,9 +26,10 @@ interface InvoiceCardProps {
   invoice: Invoice;
   isRefreshing?: boolean;
   onRefresh?: () => void;
+  onClick?: () => void;
 }
 
-export function InvoiceCard({ invoice, isRefreshing = false, onRefresh }: InvoiceCardProps) {
+export function InvoiceCard({ invoice, isRefreshing = false, onRefresh, onClick }: InvoiceCardProps) {
   const t = useTranslations('invoices');
 
   const getStatusBadge = () => {
@@ -65,7 +66,10 @@ export function InvoiceCard({ invoice, isRefreshing = false, onRefresh }: Invoic
   };
 
   return (
-    <Card className={`transition-all duration-200 ${isRefreshing ? 'ring-2 ring-blue-200 bg-blue-50/50' : ''}`}>
+    <Card 
+      className={`transition-all duration-200 ${isRefreshing ? 'ring-2 ring-blue-200 bg-blue-50/50' : ''} ${onClick ? 'cursor-pointer hover:shadow-md' : ''}`}
+      onClick={onClick}
+    >
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div className="flex-1">

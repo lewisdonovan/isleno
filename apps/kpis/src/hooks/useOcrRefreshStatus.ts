@@ -23,12 +23,20 @@ export function useOcrRefreshStatus({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const isCheckingRef = useRef(false);
 
   const checkStatus = useCallback(async () => {
     if (!enabled || zeroValueInvoiceIds.length === 0) {
       return;
     }
 
+    // Prevent concurrent executions
+    if (isCheckingRef.current) {
+      console.log('OCR status check already in progress, skipping...');
+      return;
+    }
+
+    isCheckingRef.current = true;
     setIsLoading(true);
     setError(null);
 
@@ -98,6 +106,7 @@ export function useOcrRefreshStatus({
       setError(errorMessage);
     } finally {
       setIsLoading(false);
+      isCheckingRef.current = false;
     }
   }, [enabled, zeroValueInvoiceIds]);
 
@@ -115,9 +124,9 @@ export function useOcrRefreshStatus({
     // Initial check
     checkStatus();
 
-    // Set up polling
-    intervalRef.current = setInterval(async () => {
-      await checkStatus();
+    // Set up polling with concurrent execution prevention
+    intervalRef.current = setInterval(() => {
+      checkStatus();
     }, pollingInterval);
 
     return () => {
@@ -125,6 +134,8 @@ export function useOcrRefreshStatus({
         clearInterval(intervalRef.current);
         intervalRef.current = null;
       }
+      // Reset the checking flag on cleanup
+      isCheckingRef.current = false;
     };
   }, [enabled, zeroValueInvoiceIds, checkStatus, pollingInterval]);
 

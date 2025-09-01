@@ -261,6 +261,7 @@ export default function InvoiceClientPage() {
                     invoice={invoice} 
                     isRefreshing={isInvoiceRefreshing(invoice.id)}
                     onRefresh={() => handleManualRefresh(invoice.id)}
+                    onClick={() => router.push(`/invoices/${invoice.id}`)}
                   />
                 ))}
               </div>
@@ -291,6 +292,7 @@ export default function InvoiceClientPage() {
                     invoice={invoice} 
                     isRefreshing={isInvoiceRefreshing(invoice.id)}
                     onRefresh={() => handleManualRefresh(invoice.id)}
+                    onClick={() => router.push(`/invoices/${invoice.id}`)}
                   />
                 ))}
               </div>
@@ -321,6 +323,7 @@ export default function InvoiceClientPage() {
                     invoice={invoice} 
                     isRefreshing={isInvoiceRefreshing(invoice.id)}
                     onRefresh={() => handleManualRefresh(invoice.id)}
+                    onClick={() => router.push(`/invoices/${invoice.id}`)}
                   />
                 ))}
               </div>
@@ -351,6 +354,7 @@ export default function InvoiceClientPage() {
                     invoice={invoice} 
                     isRefreshing={isInvoiceRefreshing(invoice.id)}
                     onRefresh={() => handleManualRefresh(invoice.id)}
+                    onClick={() => router.push(`/invoices/${invoice.id}`)}
                   />
                 ))}
               </div>
