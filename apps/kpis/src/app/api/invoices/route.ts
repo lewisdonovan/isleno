@@ -14,7 +14,12 @@ export async function GET(_request: NextRequest) {
 
     // Get all invoices filtered by user's invoice_approval_alias
     // This will automatically refresh OCR data for zero-value invoices
-    const invoices = await getAllInvoices(alias || undefined);
+    const result = await getAllInvoices(alias || undefined);
+    
+    // Handle both old format (array) and new format (object with metadata)
+    const invoices = Array.isArray(result) ? result : result.invoices;
+    const ocrRefreshPerformed = Array.isArray(result) ? false : result.ocrRefreshPerformed;
+    const zeroValueInvoicesRefreshed = Array.isArray(result) ? 0 : result.zeroValueInvoicesRefreshed;
     
     // Count zero-value invoices after refresh
     const zeroValueCount = invoices.filter((invoice: any) => 
@@ -26,7 +31,8 @@ export async function GET(_request: NextRequest) {
       metadata: {
         totalInvoices: invoices.length,
         zeroValueInvoicesAfterRefresh: zeroValueCount,
-        ocrRefreshPerformed: zeroValueCount > 0
+        zeroValueInvoicesRefreshed,
+        ocrRefreshPerformed
       }
     });
   } catch (error: any) {

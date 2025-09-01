@@ -153,8 +153,9 @@ export async function getAllInvoices(invoiceApprovalAlias?: string) {
         // Wait for all OCR refresh operations to complete
         await Promise.allSettled(refreshPromises);
         
-        // Fetch updated invoice data for zero-value invoices
-        const updatedInvoices = await odooApi.searchRead(INVOICE_MODEL, domain, { fields });
+        // Fetch updated invoice data only for the invoices that were refreshed
+        const updatedInvoiceIds = zeroValueInvoices.map(inv => inv.id);
+        const updatedInvoices = await odooApi.searchRead(INVOICE_MODEL, [['id', 'in', updatedInvoiceIds]], { fields });
         
         // Replace the original invoices with refreshed data
         for (const updatedInvoice of updatedInvoices) {
@@ -175,7 +176,11 @@ export async function getAllInvoices(invoiceApprovalAlias?: string) {
         }
     }
 
-    return invoices;
+    return {
+        invoices,
+        ocrRefreshPerformed: zeroValueInvoices.length > 0,
+        zeroValueInvoicesRefreshed: zeroValueInvoices.length
+    };
 }
 
 export async function getAwaitingApprovalInvoices(invoiceApprovalAlias?: string) {
