@@ -11,7 +11,8 @@ export async function validateInvoiceAccess(invoiceId: number, userAlias: string
   try {
     
     const invoices = await odooApi.searchRead('account.move', [
-      ['id', '=', invoiceId]
+      ['id', '=', invoiceId],
+      ['company_id', '=', ODOO_MAIN_COMPANY_ID]
     ], {
       fields: ['x_studio_project_manager_1']
     });

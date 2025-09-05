@@ -26,7 +26,7 @@ class OdooApiClient {
       body: JSON.stringify({
         jsonrpc: '2.0',
         method: 'call',
-        params: [...params, ["company_id", "=", 1]], // Isleno main company only
+        params: params,
         id: Math.floor(Math.random() * 1000000000),
       }),
     });

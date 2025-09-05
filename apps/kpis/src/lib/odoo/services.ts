@@ -14,7 +14,8 @@ const LINE_ITEM_MODEL = 'account.move.line';
 export async function getInvoice(invoiceId: number) {
     const domain = [
         ["id", "=", invoiceId],
-        ["move_type", "=", "in_invoice"]
+        ["move_type", "=", "in_invoice"],
+        ["company_id", "=", ODOO_MAIN_COMPANY_ID]
     ];
 
     const fields = [
@@ -41,6 +42,7 @@ export async function getInvoice(invoiceId: number) {
     const attachmentDomain = [
         ["res_model", "=", INVOICE_MODEL],
         ["res_id", "=", invoice.id],
+        ["company_id", "=", ODOO_MAIN_COMPANY_ID]
     ];
     const attachmentFields = ["id", "name", "mimetype", "datas"];
     const attachments = await odooApi.searchRead(ATTACHMENT_MODEL, attachmentDomain, { fields: attachmentFields });
@@ -54,6 +56,7 @@ export async function getPendingInvoices(invoiceApprovalAlias?: string) {
     const domain = [
         ["move_type", "=", "in_invoice"],
         ["x_studio_project_manager_review_status", "=", "pending"],
+        ["company_id", "=", ODOO_MAIN_COMPANY_ID]
     ];
 
     // Add user-specific filtering if invoice_approval_alias is provided
@@ -79,6 +82,7 @@ export async function getPendingInvoices(invoiceApprovalAlias?: string) {
         const attachmentDomain = [
             ["res_model", "=", INVOICE_MODEL],
             ["res_id", "=", invoice.id],
+            ["company_id", "=", ODOO_MAIN_COMPANY_ID]
         ];
         const attachmentFields = ["id", "name", "mimetype", "datas"];
         const attachments = await odooApi.searchRead(ATTACHMENT_MODEL, attachmentDomain, { fields: attachmentFields });
@@ -91,7 +95,8 @@ export async function getPendingInvoices(invoiceApprovalAlias?: string) {
 export async function getAllInvoices(invoiceApprovalAlias?: string, skipOcrRefresh: boolean = false) {
     
     const domain = [
-        ["move_type", "=", "in_invoice"]
+        ["move_type", "=", "in_invoice"],
+        ["company_id", "=", ODOO_MAIN_COMPANY_ID]
         // Remove the status filter to get all invoices
     ];
 
@@ -123,6 +128,7 @@ export async function getAllInvoices(invoiceApprovalAlias?: string, skipOcrRefre
         const attachmentDomain = [
             ["res_model", "=", INVOICE_MODEL],
             ["res_id", "=", invoice.id],
+            ["company_id", "=", ODOO_MAIN_COMPANY_ID]
         ];
         const attachmentFields = ["id", "name", "mimetype", "datas"];
         const attachments = await odooApi.searchRead(ATTACHMENT_MODEL, attachmentDomain, { fields: attachmentFields });
@@ -220,6 +226,7 @@ export async function getAwaitingApprovalInvoices(invoiceApprovalAlias?: string)
         ["move_type", "=", "in_invoice"],
         ["x_studio_project_manager_review_status", "=", "approved"],
         ["x_studio_is_over_budget", "=", true],
+        ["company_id", "=", ODOO_MAIN_COMPANY_ID],
         "|",
         ["x_studio_cfo_sign_off", "=", false],
         "&",
@@ -255,6 +262,7 @@ export async function getAwaitingApprovalInvoices(invoiceApprovalAlias?: string)
         const attachmentDomain = [
             ["res_model", "=", INVOICE_MODEL],
             ["res_id", "=", invoice.id],
+            ["company_id", "=", ODOO_MAIN_COMPANY_ID]
         ];
         const attachmentFields = ["id", "name", "mimetype", "datas"];
         const attachments = await odooApi.searchRead(ATTACHMENT_MODEL, attachmentDomain, { fields: attachmentFields });
@@ -267,7 +275,8 @@ export async function getAwaitingApprovalInvoices(invoiceApprovalAlias?: string)
 export async function getSentForPaymentInvoices(invoiceApprovalAlias?: string) {
     const domain = [
         ["move_type", "=", "in_invoice"],
-        ["state", "=", "posted"]
+        ["state", "=", "posted"],
+        ["company_id", "=", ODOO_MAIN_COMPANY_ID]
     ];
 
     // Add user-specific filtering if invoice_approval_alias is provided
@@ -294,6 +303,7 @@ export async function getSentForPaymentInvoices(invoiceApprovalAlias?: string) {
         const attachmentDomain = [
             ["res_model", "=", INVOICE_MODEL],
             ["res_id", "=", invoice.id],
+            ["company_id", "=", ODOO_MAIN_COMPANY_ID]
         ];
         const attachmentFields = ["id", "name", "mimetype", "datas"];
         const attachments = await odooApi.searchRead(ATTACHMENT_MODEL, attachmentDomain, { fields: attachmentFields });
@@ -306,7 +316,8 @@ export async function getSentForPaymentInvoices(invoiceApprovalAlias?: string) {
 export async function getPaidInvoices(invoiceApprovalAlias?: string) {
     const domain = [
         ["move_type", "=", "in_invoice"],
-        ["state", "=", "paid"]
+        ["state", "=", "paid"],
+        ["company_id", "=", ODOO_MAIN_COMPANY_ID]
     ];
 
     // Add user-specific filtering if invoice_approval_alias is provided
@@ -333,6 +344,7 @@ export async function getPaidInvoices(invoiceApprovalAlias?: string) {
         const attachmentDomain = [
             ["res_model", "=", INVOICE_MODEL],
             ["res_id", "=", invoice.id],
+            ["company_id", "=", ODOO_MAIN_COMPANY_ID]
         ];
         const attachmentFields = ["id", "name", "mimetype", "datas"];
         const attachments = await odooApi.searchRead(ATTACHMENT_MODEL, attachmentDomain, { fields: attachmentFields });
@@ -347,6 +359,7 @@ export async function getOtherInvoices(invoiceApprovalAlias?: string) {
         ["move_type", "=", "in_invoice"],
         "!",
         ["x_studio_project_manager_review_status", "=", "pending"],
+        ["company_id", "=", ODOO_MAIN_COMPANY_ID],
         "!",
         ["x_studio_project_manager_review_status", "=", "approved"],
         "!",
@@ -379,6 +392,7 @@ export async function getOtherInvoices(invoiceApprovalAlias?: string) {
         const attachmentDomain = [
             ["res_model", "=", INVOICE_MODEL],
             ["res_id", "=", invoice.id],
+            ["company_id", "=", ODOO_MAIN_COMPANY_ID]
         ];
         const attachmentFields = ["id", "name", "mimetype", "datas"];
         const attachments = await odooApi.searchRead(ATTACHMENT_MODEL, attachmentDomain, { fields: attachmentFields });
@@ -399,6 +413,7 @@ export async function getProjects() {
         ["active", "=", true],
         ["name", "!=", false], 
         ["name", "!=", ""],
+        ["company_id", "=", ODOO_MAIN_COMPANY_ID],
         ["plan_id.name", "=", "Project"], // Projects only
     ];
     const fields = ["id", "name", "code", "plan_id"];
@@ -418,6 +433,7 @@ export async function getSpendCategories() {
     // Note: account.account model may not have 'active' field, so we'll filter by code instead
     const domain = [
         ["x_studio_show_to_pm_mostrar_a_pm", "=", true],  // Only show categories marked for PM visibility
+        ["company_id", "=", ODOO_MAIN_COMPANY_ID]
     ];
     
     const fields = ["id", "name", "code"];
@@ -482,7 +498,8 @@ export async function approveInvoice(invoiceId: number, departmentId?: number, p
         // First, let's test what fields are available and see the accounting codes
         const lineItems = await odooApi.searchRead(LINE_ITEM_MODEL, [
             ["move_id", "=", invoiceId], 
-            ["tax_line_id", "=", false]  // Filter out tax lines
+            ["tax_line_id", "=", false],  // Filter out tax lines
+            ["company_id", "=", ODOO_MAIN_COMPANY_ID]
         ], {
             fields: ['id', 'account_id', 'account_code', 'name', 'debit', 'credit']
         });
@@ -511,7 +528,8 @@ export async function approveInvoice(invoiceId: number, departmentId?: number, p
                     // Let's fetch the account record by code to get its ID
                     try {
                         const accountRecord = await odooApi.searchRead(ACCOUNT_MODEL, [
-                            ["code", "=", accountingCode]
+                            ["code", "=", accountingCode],
+                            ["company_id", "=", ODOO_MAIN_COMPANY_ID]
                         ], {
                             fields: ["id"]
                         });
