@@ -285,6 +285,22 @@
       "paid": "Paid",
       "other": "Other"
     },
+    "budgetImpact": {
+      "title": "Budget Impact Analysis",
+      "currentStatus": "Current Budget Status",
+      "afterApproval": "After Approval",
+      "totalBudget": "Total Budget",
+      "alreadySpent": "Already Spent",
+      "remaining": "Remaining",
+      "usage": "Usage",
+      "thisInvoiceAmount": "This Invoice Amount",
+      "totalSpent": "Total Spent",
+      "sessionApprovals": "Current session approvals",
+      "mockDataNote": "Using sample budget data for demonstration",
+      "warningOverBudget": "Warning: This approval will exceed the budget by",
+      "noticeHighUsage": "Notice: This approval will use",
+      "ofTheBudget": "of the budget"
+    },
     "invoiceViews": {
       "myInvoices": "My Invoices",
       "departmentInvoices": "Department Invoices",

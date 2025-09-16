@@ -285,6 +285,22 @@
       "paid": "Pagado",
       "other": "Otro"
     },
+    "budgetImpact": {
+      "title": "Análisis de Impacto Presupuestario",
+      "currentStatus": "Estado Actual del Presupuesto",
+      "afterApproval": "Después de la Aprobación",
+      "totalBudget": "Presupuesto Total",
+      "alreadySpent": "Ya Gastado",
+      "remaining": "Restante",
+      "usage": "Uso",
+      "thisInvoiceAmount": "Monto de Esta Factura",
+      "totalSpent": "Total Gastado",
+      "sessionApprovals": "Aprobaciones de la sesión actual",
+      "mockDataNote": "Usando datos de presupuesto de muestra para demostración",
+      "warningOverBudget": "Advertencia: Esta aprobación excederá el presupuesto por",
+      "noticeHighUsage": "Aviso: Esta aprobación usará",
+      "ofTheBudget": "del presupuesto"
+    },
     "invoiceViews": {
       "myInvoices": "Mis Facturas",
       "departmentInvoices": "Facturas del Departamento",

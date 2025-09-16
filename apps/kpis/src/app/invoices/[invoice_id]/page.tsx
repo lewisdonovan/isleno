@@ -13,6 +13,8 @@ import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { getStatusBadgeInfo } from '@/lib/utils/invoiceUtils';
 import { OdooInvoice, OdooInvoiceAttachment } from '@isleno/types/odoo';
 import { OdooSupplier, OdooProject, OdooSpendCategory } from '@isleno/types/odoo';
+import { useBudgetImpact, addSessionApproval } from '@/hooks/useBudgetImpact';
+import { BudgetImpactCard } from '@/components/BudgetImpactCard';
 
 
 
@@ -37,6 +39,14 @@ export default function InvoiceDetailPage() {
   const [hasExternalBasicPermission, setHasExternalBasicPermission] = useState(false);
   const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
   const hasAttemptedPopulate = useRef(false);
+  
+  // Budget impact data
+  const budgetImpact = useBudgetImpact(
+    selectedDepartment?.id || null,
+    selectedProject?.id || null,
+    invoice?.amount_untaxed || 0,
+    invoice?.id || 0
+  );
 
   useEffect(() => {
     if (invoiceId) {
@@ -176,6 +186,8 @@ export default function InvoiceDetailPage() {
       });
 
       if (response.ok) {
+        // Add to session approvals
+        addSessionApproval(invoice.id, invoice.amount_untaxed || 0);
         // Redirect back to invoices list
         router.push('/invoices');
       } else {
@@ -433,6 +445,20 @@ export default function InvoiceDetailPage() {
       )}
 
 
+
+      {/* Budget Impact Analysis */}
+      {hasExternalBasicPermission && (selectedDepartment || selectedProject) && (
+        <BudgetImpactCard
+          currentBudget={budgetImpact.currentBudget}
+          projectedBudget={budgetImpact.projectedBudget}
+          invoiceAmount={invoice.amount_untaxed || 0}
+          currencySymbol={invoice.currency_id?.[1] === 'EUR' ? '€' : '$'}
+          loading={budgetImpact.loading}
+          error={budgetImpact.error}
+          sessionTotal={budgetImpact.sessionTotal}
+          mock={budgetImpact.mock}
+        />
+      )}
 
       {/* Actions */}
       <div className="flex gap-3">
