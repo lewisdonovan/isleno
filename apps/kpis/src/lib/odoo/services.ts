@@ -11,6 +11,7 @@ const ATTACHMENT_MODEL = 'ir.attachment';
 const PROJECT_MODEL = 'account.analytic.account';
 const ACCOUNT_MODEL = 'account.account';
 const LINE_ITEM_MODEL = 'account.move.line';
+const BUDGET_MODEL = 'account.report.budget';
 
 export async function getInvoice(invoiceId: number): Promise<OdooInvoice | null> {
     const domain = [
@@ -597,4 +598,46 @@ export async function approveInvoice(invoiceId: number, departmentId?: number, p
     }
 
     return odooApi.write(INVOICE_MODEL, [invoiceId], data);
+}
+
+export async function getBudgetSummaryByAnalytic(analyticId: number): Promise<{
+    analytic_id: number;
+    planned_amount: number;
+    practical_amount: number;
+}> {
+    try {
+        const domain = [
+            ["analytic_account_id", "=", analyticId]
+        ];
+        const fields = [
+            "analytic_account_id",
+            "planned_amount",
+            "practical_amount"
+        ];
+
+        const lines = await odooApi.searchRead(BUDGET_MODEL, domain, { fields, limit: 1000 });
+
+        let planned = 0;
+        let practical = 0;
+
+        for (const line of lines) {
+            const linePlanned = Number(line.planned_amount) || 0;
+            const linePractical = Number(line.practical_amount) || 0;
+            planned += linePlanned;
+            practical += linePractical;
+        }
+
+        return {
+            analytic_id: analyticId,
+            planned_amount: planned,
+            practical_amount: practical
+        };
+    } catch (error) {
+        console.error('Failed to fetch budget summary from Odoo:', error);
+        return {
+            analytic_id: analyticId,
+            planned_amount: 0,
+            practical_amount: 0
+        };
+    }
 }

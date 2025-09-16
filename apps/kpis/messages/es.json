@@ -327,6 +327,18 @@
       "failedInvoices": "Facturas Fallidas",
       "invoiceId": "ID de Factura",
       "andMore": "...y {count} más"
+    },
+    "budget": {
+      "title": "Impacto en Presupuesto",
+      "fetching": "Obteniendo presupuesto...",
+      "unavailable": "Presupuesto no disponible para el elemento seleccionado.",
+      "analyticLabel": "Analítica",
+      "planned": "Planificado",
+      "spent": "Gastado (Odoo)",
+      "sessionPending": "Pendiente (sesión)",
+      "remaining": "Restante",
+      "beforeApproval": "Antes de aprobar",
+      "afterApproval": "Después de aprobar"
     }
   },
   "components": {

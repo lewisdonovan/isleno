@@ -327,6 +327,18 @@
       "failedInvoices": "Failed Invoices",
       "invoiceId": "Invoice ID",
       "andMore": "...and {count} more"
+    },
+    "budget": {
+      "title": "Budget Impact",
+      "fetching": "Fetching budget...",
+      "unavailable": "Budget not available for the selected item.",
+      "analyticLabel": "Analytic",
+      "planned": "Planned",
+      "spent": "Spent (Odoo)",
+      "sessionPending": "Session Pending",
+      "remaining": "Remaining",
+      "beforeApproval": "Before Approval",
+      "afterApproval": "After Approval"
     }
   },
   "components": {

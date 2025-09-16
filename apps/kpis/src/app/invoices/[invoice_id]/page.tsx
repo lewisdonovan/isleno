@@ -38,6 +38,41 @@ export default function InvoiceDetailPage() {
   const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
   const hasAttemptedPopulate = useRef(false);
 
+  const [budgetLoading, setBudgetLoading] = useState(false);
+  const [budgetError, setBudgetError] = useState<string | null>(null);
+  const [budgetSummary, setBudgetSummary] = useState<{ planned_amount: number; practical_amount: number } | null>(null);
+
+  const getSessionPendingKey = (analyticId: number) => `budget_pending_${analyticId}`;
+  const getSessionPendingAmount = (analyticId: number): number => {
+    if (typeof window === 'undefined') return 0;
+    const raw = window.sessionStorage.getItem(getSessionPendingKey(analyticId));
+    return raw ? parseFloat(raw) || 0 : 0;
+  };
+  const addToSessionPendingAmount = (analyticId: number, amount: number) => {
+    if (typeof window === 'undefined') return;
+    const current = getSessionPendingAmount(analyticId);
+    const next = current + amount;
+    window.sessionStorage.setItem(getSessionPendingKey(analyticId), String(next));
+  };
+
+  const fetchBudget = async (analyticId: number) => {
+    try {
+      setBudgetLoading(true);
+      setBudgetError(null);
+      const res = await fetch(`/api/odoo/budgets?analytic_id=${analyticId}`);
+      if (!res.ok) {
+        throw new Error(`Failed to fetch budget ${res.status}`);
+      }
+      const data = await res.json();
+      setBudgetSummary({ planned_amount: data.planned_amount || 0, practical_amount: data.practical_amount || 0 });
+    } catch (e: any) {
+      setBudgetError(e.message || 'Failed to fetch budget');
+      setBudgetSummary(null);
+    } finally {
+      setBudgetLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (invoiceId) {
       fetchInvoice();
@@ -80,6 +115,17 @@ export default function InvoiceDetailPage() {
 
     prePopulateDepartment();
   }, [invoice, projects, loading]);
+
+  // Fetch budget when user selects department or project
+  useEffect(() => {
+    const analytic = (selectedProject?.id ?? selectedDepartment?.id) as number | undefined;
+    if (analytic) {
+      fetchBudget(analytic);
+    } else {
+      setBudgetSummary(null);
+      setBudgetError(null);
+    }
+  }, [selectedDepartment, selectedProject]);
 
   const fetchInvoice = async () => {
     try {
@@ -176,6 +222,11 @@ export default function InvoiceDetailPage() {
       });
 
       if (response.ok) {
+        // Update session running total for the selected analytic account
+        const analytic = (selectedProject?.id ?? selectedDepartment?.id) as number | undefined;
+        if (analytic) {
+          addToSessionPendingAmount(analytic, invoice.amount_untaxed || 0);
+        }
         // Redirect back to invoices list
         router.push('/invoices');
       } else {
@@ -435,6 +486,88 @@ export default function InvoiceDetailPage() {
 
 
       {/* Actions */}
+      {/* Budget Impact */}
+      {hasExternalBasicPermission && (selectedDepartment || selectedProject) && (
+        <Card>
+          <CardHeader>
+            <CardTitle>{t('budget.title')}</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {budgetLoading && (
+              <div className="text-sm text-muted-foreground">{t('budget.fetching')}</div>
+            )}
+            {!budgetLoading && budgetError && (
+              <div className="text-sm text-red-600">{budgetError}</div>
+            )}
+            {!budgetLoading && !budgetError && budgetSummary && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <div className="text-sm text-muted-foreground">{t('budget.beforeApproval')}</div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">{t('budget.planned')}</span>
+                    <span className="font-medium">
+                      <CurrencySymbol currencyId={invoice.currency_id?.[1] || 'EUR'} />
+                      {(budgetSummary.planned_amount).toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">{t('budget.spent')}</span>
+                    <span className="font-medium">
+                      <CurrencySymbol currencyId={invoice.currency_id?.[1] || 'EUR'} />
+                      {(budgetSummary.practical_amount).toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">{t('budget.sessionPending')}</span>
+                    <span className="font-medium">
+                      <CurrencySymbol currencyId={invoice.currency_id?.[1] || 'EUR'} />
+                      {(getSessionPendingAmount((selectedProject?.id ?? selectedDepartment!.id) as number)).toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">{t('budget.remaining')}</span>
+                    <span className="font-semibold">
+                      <CurrencySymbol currencyId={invoice.currency_id?.[1] || 'EUR'} />
+                      {(budgetSummary.planned_amount - budgetSummary.practical_amount - getSessionPendingAmount((selectedProject?.id ?? selectedDepartment!.id) as number)).toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <div className="text-sm text-muted-foreground">{t('budget.afterApproval')}</div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">{t('budget.planned')}</span>
+                    <span className="font-medium">
+                      <CurrencySymbol currencyId={invoice.currency_id?.[1] || 'EUR'} />
+                      {(budgetSummary.planned_amount).toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">{t('budget.spent')}</span>
+                    <span className="font-medium">
+                      <CurrencySymbol currencyId={invoice.currency_id?.[1] || 'EUR'} />
+                      {(budgetSummary.practical_amount + invoice.amount_untaxed).toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">{t('budget.sessionPending')}</span>
+                    <span className="font-medium">
+                      <CurrencySymbol currencyId={invoice.currency_id?.[1] || 'EUR'} />
+                      {(getSessionPendingAmount((selectedProject?.id ?? selectedDepartment!.id) as number)).toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">{t('budget.remaining')}</span>
+                    <span className="font-semibold">
+                      <CurrencySymbol currencyId={invoice.currency_id?.[1] || 'EUR'} />
+                      {(budgetSummary.planned_amount - (budgetSummary.practical_amount + invoice.amount_untaxed) - getSessionPendingAmount((selectedProject?.id ?? selectedDepartment!.id) as number)).toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
       <div className="flex gap-3">
         <Button 
           variant="outline" 
