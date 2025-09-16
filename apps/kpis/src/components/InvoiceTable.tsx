@@ -39,7 +39,7 @@ export default function InvoiceTable({
   const t = useTranslations('invoices.invoiceViews');
   const ti = useTranslations('invoices');
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('pending');
+  const [statusFilter, setStatusFilter] = useState('all');
   const [departmentFilter, setDepartmentFilter] = useState('all');
   const [aliasFilter, setAliasFilter] = useState('all');
   const [departments, setDepartments] = useState<Department[]>([]);

@@ -10,9 +10,10 @@ export interface UserProfile {
   location: string | null
   monday_user_id: number | null
   invoice_approval_alias: string | null
+  role?: UserRoleType
 }
 
-export type UserRoleType = 'default' | 'internal' | 'admin' | 'external_basic' | 'team_leader'
+export type UserRoleType = 'default' | 'internal' | 'admin' | 'external_basic' | 'department_head'
 
 export interface UserPermissions {
   canAccessKpis: boolean
