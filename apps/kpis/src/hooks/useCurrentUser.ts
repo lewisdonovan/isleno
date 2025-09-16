@@ -37,7 +37,7 @@ export function useCurrentUser(): EnhancedUser {
           .from('profiles')
           .select(`
             *,
-            departments (
+            department_id (
               department_id,
               department_name,
               key,
@@ -66,9 +66,9 @@ export function useCurrentUser(): EnhancedUser {
           id: profileData.id,
           full_name: profileData.full_name,
           department_id: profileData.department_id,
-          department_name: profileData.departments?.department_name || null,
-          department_key: profileData.departments?.key || null,
-          odoo_group_id: profileData.departments?.odoo_group_id || null,
+          department_name: profileData.department_id?.department_name || null,
+          department_key: profileData.department_id?.key || null,
+          odoo_group_id: profileData.department_id?.odoo_group_id || null,
           job_title: profileData.job_title,
           language: profileData.language,
           location: profileData.location,

@@ -269,6 +269,102 @@ export type Database = {
           },
         ]
       }
+      maintenance_status: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          end_time: string
+          id: string
+          is_active: boolean
+          reason: string | null
+          start_time: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          end_time: string
+          id?: string
+          is_active?: boolean
+          reason?: string | null
+          start_time: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          end_time?: string
+          id?: string
+          is_active?: boolean
+          reason?: string | null
+          start_time?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      permission_audit: {
+        Row: {
+          action: string
+          changed_at: string
+          changed_by: string | null
+          id: string
+          new_values: Json | null
+          old_values: Json | null
+          record_id: string
+          table_name: string
+        }
+        Insert: {
+          action: string
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          new_values?: Json | null
+          old_values?: Json | null
+          record_id: string
+          table_name: string
+        }
+        Update: {
+          action?: string
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          new_values?: Json | null
+          old_values?: Json | null
+          record_id?: string
+          table_name?: string
+        }
+        Relationships: []
+      }
+      permissions: {
+        Row: {
+          action: Database["public"]["Enums"]["permission_action"]
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          resource_type: Database["public"]["Enums"]["resource_type"]
+          updated_at: string
+        }
+        Insert: {
+          action: Database["public"]["Enums"]["permission_action"]
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          resource_type: Database["public"]["Enums"]["resource_type"]
+          updated_at?: string
+        }
+        Update: {
+          action?: Database["public"]["Enums"]["permission_action"]
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          resource_type?: Database["public"]["Enums"]["resource_type"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -313,6 +409,68 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "departments"
             referencedColumns: ["department_id"]
+          },
+        ]
+      }
+      resources: {
+        Row: {
+          created_at: string
+          id: string
+          metadata: Json | null
+          name: string | null
+          resource_id: string
+          resource_type: Database["public"]["Enums"]["resource_type"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          name?: string | null
+          resource_id: string
+          resource_type: Database["public"]["Enums"]["resource_type"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          name?: string | null
+          resource_id?: string
+          resource_type?: Database["public"]["Enums"]["resource_type"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      role_permissions: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          permission_id: string
+          role_name: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          permission_id: string
+          role_name: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          permission_id?: string
+          role_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "role_permissions_permission_id_fkey"
+            columns: ["permission_id"]
+            isOneToOne: false
+            referencedRelation: "permissions"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -468,6 +626,63 @@ export type Database = {
         }
         Relationships: []
       }
+      user_permissions: {
+        Row: {
+          conditions: Json | null
+          created_at: string
+          department_id: string | null
+          expires_at: string | null
+          granted_at: string
+          granted_by: string | null
+          id: string
+          is_active: boolean
+          permission_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          conditions?: Json | null
+          created_at?: string
+          department_id?: string | null
+          expires_at?: string | null
+          granted_at?: string
+          granted_by?: string | null
+          id?: string
+          is_active?: boolean
+          permission_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          conditions?: Json | null
+          created_at?: string
+          department_id?: string | null
+          expires_at?: string | null
+          granted_at?: string
+          granted_by?: string | null
+          id?: string
+          is_active?: boolean
+          permission_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_permissions_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["department_id"]
+          },
+          {
+            foreignKeyName: "user_permissions_permission_id_fkey"
+            columns: ["permission_id"]
+            isOneToOne: false
+            referencedRelation: "permissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -500,6 +715,65 @@ export type Database = {
       assign_user_role: {
         Args: { target_role: string; target_user_id: string }
         Returns: undefined
+      }
+      can_access_department_resource: {
+        Args: {
+          action: string
+          check_user_id: string
+          resource_type: string
+          target_department_id: string
+        }
+        Returns: boolean
+      }
+      check_permission_conditions: {
+        Args: { conditions: Json; context: Json }
+        Returns: boolean
+      }
+      cleanup_expired_maintenance: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      get_current_maintenance: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          created_by: string
+          end_time: string
+          id: string
+          reason: string
+          start_time: string
+        }[]
+      }
+      get_user_department: {
+        Args: { check_user_id: string }
+        Returns: string
+      }
+      get_user_permissions: {
+        Args: { check_user_id: string }
+        Returns: {
+          action: string
+          conditions: Json
+          expires_at: string
+          permission_description: string
+          permission_name: string
+          resource_type: string
+          source: string
+        }[]
+      }
+      is_department_head: {
+        Args: { check_user_id: string }
+        Returns: boolean
+      }
+      is_maintenance_active: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      user_has_permission: {
+        Args: {
+          check_user_id: string
+          permission_name: string
+          resource_context?: Json
+        }
+        Returns: boolean
       }
       user_has_role: {
         Args: { check_role: string; check_user_id: string }
@@ -536,6 +810,32 @@ export type Database = {
         | "ratio"
         | "text"
       location: "PMI" | "MAH"
+      permission_action:
+        | "view"
+        | "create"
+        | "edit"
+        | "delete"
+        | "approve"
+        | "snapshot"
+        | "manage_roles"
+        | "manage_permissions"
+        | "admin"
+        | "audit"
+        | "export"
+        | "import"
+        | "configure"
+      resource_type:
+        | "kpi"
+        | "department"
+        | "project"
+        | "invoice"
+        | "user"
+        | "system"
+        | "snapshot"
+        | "board"
+        | "integration"
+        | "audit"
+        | "admin"
       symbol_position: "left" | "right"
     }
     CompositeTypes: {
@@ -696,6 +996,34 @@ export const Constants = {
         "text",
       ],
       location: ["PMI", "MAH"],
+      permission_action: [
+        "view",
+        "create",
+        "edit",
+        "delete",
+        "approve",
+        "snapshot",
+        "manage_roles",
+        "manage_permissions",
+        "admin",
+        "audit",
+        "export",
+        "import",
+        "configure",
+      ],
+      resource_type: [
+        "kpi",
+        "department",
+        "project",
+        "invoice",
+        "user",
+        "system",
+        "snapshot",
+        "board",
+        "integration",
+        "audit",
+        "admin",
+      ],
       symbol_position: ["left", "right"],
     },
   },

@@ -4,26 +4,10 @@ import { Button } from "@/components/ui/button";
 import { RefreshCw, FileText, Download } from "lucide-react";
 
 import { useTranslations } from "next-intl";
-
-interface Invoice {
-  id: number;
-  name: string;
-  partner_id: [number, string];
-  invoice_date: string;
-  invoice_date_due: string;
-  amount_untaxed: number;
-  currency_id: [number, string];
-  x_studio_project_manager_review_status: string;
-  state: string;
-  x_studio_is_over_budget: boolean;
-  x_studio_amount_over_budget: number;
-  x_studio_cfo_sign_off: boolean;
-  x_studio_ceo_sign_off: boolean;
-  attachments?: any[];
-}
+import { OdooInvoice } from '@isleno/types/odoo';
 
 interface InvoiceCardProps {
-  invoice: Invoice;
+  invoice: OdooInvoice;
   isRefreshing?: boolean;
   onRefresh?: () => void;
   onClick?: () => void;
@@ -56,7 +40,7 @@ export function InvoiceCard({ invoice, isRefreshing = false, onRefresh, onClick 
     return (
       <div className="flex items-center gap-2">
         <span className={`text-lg font-semibold ${isZero ? 'text-muted-foreground' : ''}`}>
-          {isZero ? t('amount.zero') : `${invoice.currency_id[1]} ${amount.toFixed(2)}`}
+          {isZero ? t('amount.zero') : `${invoice.currency_id?.[1] || 'EUR'} ${amount.toFixed(2)}`}
         </span>
         {isRefreshing && (
           <RefreshCw className="h-4 w-4 animate-spin text-blue-500" />
@@ -77,7 +61,7 @@ export function InvoiceCard({ invoice, isRefreshing = false, onRefresh, onClick 
               {invoice.name}
             </CardTitle>
             <p className="text-lg font-semibold mt-1">
-              {invoice.partner_id[1]}
+              {invoice.partner_id?.[1] || 'Unknown Supplier'}
             </p>
           </div>
           <div className="flex items-center gap-2">

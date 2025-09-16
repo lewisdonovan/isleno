@@ -13,6 +13,7 @@ export const NAVIGATION_ITEMS: NavigationItem[] = [
   { href: '/boards', label: 'boards', icon: 'Table' },
   { href: '/calendar', label: 'calendar', icon: 'Calendar' },
   { href: '/invoices', label: 'invoices', icon: 'FileText' },
+  { href: '/admin/user-roles', label: 'user_roles', icon: 'Users' },
 ];
 
 export const SECTION_DESCRIPTIONS: Record<string, string> = {
@@ -25,4 +26,5 @@ export const SECTION_DESCRIPTIONS: Record<string, string> = {
   '/cashflow': 'Cash flow analysis and projections with detailed financial insights.',
   '/charts': 'Data visualization tools and chart galleries for in-depth analysis.',
   '/invoices': 'Invoice management and approval workflow for financial operations.',
+  '/admin/user-roles': 'Manage user roles and permissions. Admin access required.',
 } as const; 

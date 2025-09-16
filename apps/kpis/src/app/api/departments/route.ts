@@ -1,19 +1,23 @@
-import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { NextRequest, NextResponse } from 'next/server';
+import { supabaseServer } from '@/lib/supabaseServer';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+export async function GET(_request: NextRequest) {
+  try {
+    const supabase = await supabaseServer();
+    
+    const { data: departments, error } = await supabase
+      .from('departments')
+      .select('department_id, department_name')
+      .order('department_name');
 
-export async function GET() {
-  const { data, error } = await supabase
-    .from('departments')
-    .select('department_id, department_name')
-    .order('department_name');
+    if (error) {
+      console.error('Error fetching departments:', error);
+      return NextResponse.json({ error: 'Failed to fetch departments' }, { status: 500 });
+    }
 
-  if (error) {
+    return NextResponse.json({ departments });
+  } catch (error: any) {
+    console.error('Error fetching departments:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
-  return NextResponse.json({ departments: data }, { status: 200 });
-} 
+}

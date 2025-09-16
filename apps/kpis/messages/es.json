@@ -18,6 +18,7 @@
     "signIn": "Iniciar Sesión",
     "signOut": "Cerrar Sesión",
     "dashboard": "Panel de Control",
+    "user_roles": "Roles de Usuario",
     "gantt": "Gráfico de Gantt",
     "navigation": "Navegación"
   },
@@ -219,7 +220,9 @@
   "invoices": {
     "invoice": "Factura",
     "loadingInvoices": "Cargando facturas...",
+    "myInvoices": "Mis Facturas",
     "supplier": "Proveedor",
+    "projectManager": "Project Manager",
     "invoiceDate": "Fecha de Factura",
     "dueDate": "Fecha de Vencimiento",
     "subtotal": "Subtotal",
@@ -249,7 +252,7 @@
     "backToInvoices": "Volver a Facturas",
     "invoiceNotFound": "Factura No Encontrada",
     "invoiceDetails": "Detalles de Factura",
-    "assignmentDetails": "Detalles de Asignación",
+    "assignmentDetails": "Selecciona el departamento relevante",
     "department": "Departamento",
     "selectDepartment": "Selecciona un departamento...",
     "attachments": "Adjuntos",
@@ -257,29 +260,46 @@
     "view": "Ver",
     "previewNotAvailable": "Vista previa no disponible para",
     "allCaughtUp": "¡Todo al día! No hay facturas que requieran acción.",
-    "noInvoicesAwaitingApproval": "No hay facturas esperando aprobación.",
+    "noInvoicesAwaitingApproval": "No hay facturas esperando aprobación de CFO.",
     "noInvoicesSentForPayment": "No hay facturas enviadas para pago.",
     "noPaidInvoices": "No hay facturas pagadas.",
     "totalInvoices": "facturas totales",
     "requireAction": "requieren acción",
     "actionRequired": "Acción Requerida",
-    "awaitingApproval": "Esperando Aprobación",
+    "awaitingApproval": "Esperando Aprobación de CFO",
     "sentForPayment": "Enviado para Pago",
     "paid": "Pagado",
     "openByDefault": "Abierto por defecto",
     "spendCategory": "Categoría de Gastos",
     "selectSpendCategory": "Selecciona una categoría...",
     "approveInvoice": "Aprobar Factura",
+    "alreadyApproved": "Ya Aprobada",
     "loadingInvoice": "Cargando factura...",
-    "noReference": "Sin referencia",
     "departmentType": "Departamento",
     "projectType": "Proyecto",
     "status": {
       "pending": "Pendiente",
-      "awaitingApproval": "Esperando Aprobación",
+      "actionRequired": "Acción Requerida",
+      "awaitingApproval": "Esperando Aprobación de CFO",
       "sentForPayment": "Enviado para Pago",
       "paid": "Pagado",
       "other": "Otro"
+    },
+    "invoiceViews": {
+      "myInvoices": "Mis Facturas",
+      "departmentInvoices": "Facturas del Departamento",
+      "allInvoices": "Todas las Facturas",
+      "approvalAlias": "Alias de Aprobación",
+      "department": "Departamento",
+      "searchInvoices": "Buscar facturas...",
+      "filterByStatus": "Filtrar por estado",
+      "filterByDepartment": "Filtrar por departamento",
+      "filterByAlias": "Filtrar por alias",
+      "allStatuses": "Todos los Estados",
+      "allDepartments": "Todos los Departamentos",
+      "allAliases": "Todos los Project Managers",
+      "showingResults": "Mostrando {filtered} de {total} facturas",
+      "noInvoicesFound": "No se encontraron facturas que coincidan con sus filtros."
     },
     "amount": {
       "label": "Monto",
@@ -482,7 +502,8 @@
     "debug": "Depuración",
     "trace": "Rastro",
     "fatal": "Fatal",
-    "critical": "Crítico"
+    "critical": "Crítico",
+    "report": "Para reportar un problema, por favor envía un email a"
   },
   "KpiDashboard": {
     "title": "Dashboard de KPIs"
@@ -554,5 +575,19 @@
     "stateMismatchError": "La validación de seguridad falló. Por favor intenta de nuevo.",
     "missingCodeError": "No se recibió el código de autorización. Por favor intenta de nuevo.",
     "tokenExchangeError": "Error al intercambiar el código de autorización por el token de acceso. Por favor intenta de nuevo."
+  },
+  "maintenance": {
+    "title": "Mantenimiento Programado",
+    "message": "La interfaz de administración de Isleño no está disponible actualmente debido a un mantenimiento programado. Estará disponible nuevamente a las {time} del {date}. Si esta hora ya ha pasado, por favor envía un email a lewis@isleno.es.",
+    "contactEmail": "lewis@isleno.es",
+    "timeFormat": "HH:mm",
+    "dateFormat": "DD/MM/YYYY",
+    "timezone": "CET",
+    "reason": "Motivo: {reason}",
+    "noReason": "No se proporcionó motivo",
+    "checkingStatus": "Verificando estado de mantenimiento...",
+    "errorCheckingStatus": "Error al verificar el estado de mantenimiento",
+    "retry": "Reintentar",
+    "refresh": "Actualizar Página"
   }
 } 

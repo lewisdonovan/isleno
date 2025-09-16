@@ -18,6 +18,7 @@
     "signIn": "Sign In",
     "signOut": "Sign Out",
     "dashboard": "Dashboard",
+    "user_roles": "User Roles",
     "gantt": "Gantt chart",
     "navigation": "Navigation"
   },
@@ -219,7 +220,9 @@
   "invoices": {
     "invoice": "Invoice",
     "loadingInvoices": "Loading invoices...",
+    "myInvoices": "My Invoices",
     "supplier": "Supplier",
+    "projectManager": "Project Manager",
     "invoiceDate": "Invoice Date",
     "dueDate": "Due Date",
     "subtotal": "Subtotal",
@@ -249,7 +252,7 @@
     "backToInvoices": "Back to Invoices",
     "invoiceNotFound": "Invoice Not Found",
     "invoiceDetails": "Invoice Details",
-    "assignmentDetails": "Assignment Details",
+    "assignmentDetails": "Select the relevant department",
     "department": "Department",
     "selectDepartment": "Select a department...",
     "attachments": "Attachments",
@@ -257,29 +260,46 @@
     "view": "View",
     "previewNotAvailable": "Preview not available for",
     "allCaughtUp": "All caught up! No invoices require action.",
-    "noInvoicesAwaitingApproval": "No invoices awaiting approval.",
+    "noInvoicesAwaitingApproval": "No invoices awaiting CFO approval.",
     "noInvoicesSentForPayment": "No invoices sent for payment.",
     "noPaidInvoices": "No paid invoices.",
     "totalInvoices": "total invoices",
     "requireAction": "require action",
     "actionRequired": "Action Required",
-    "awaitingApproval": "Awaiting Approval",
+    "awaitingApproval": "Awaiting CFO Approval",
     "sentForPayment": "Sent for Payment",
     "paid": "Paid",
     "openByDefault": "Open by default",
     "spendCategory": "Spend Category",
     "selectSpendCategory": "Select a category...",
     "approveInvoice": "Approve Invoice",
+    "alreadyApproved": "Already Approved",
     "loadingInvoice": "Loading invoice...",
-    "noReference": "No reference",
     "departmentType": "Department",
     "projectType": "Project",
     "status": {
       "pending": "Pending",
-      "awaitingApproval": "Awaiting Approval",
+      "actionRequired": "Action Required",
+      "awaitingApproval": "Awaiting CFO Approval",
       "sentForPayment": "Sent for Payment",
       "paid": "Paid",
       "other": "Other"
+    },
+    "invoiceViews": {
+      "myInvoices": "My Invoices",
+      "departmentInvoices": "Department Invoices",
+      "allInvoices": "All Invoices",
+      "approvalAlias": "Approval Alias",
+      "department": "Department",
+      "searchInvoices": "Search invoices...",
+      "filterByStatus": "Filter by status",
+      "filterByDepartment": "Filter by department",
+      "filterByAlias": "Filter by alias",
+      "allStatuses": "All Statuses",
+      "allDepartments": "All Departments",
+      "allAliases": "All Project Managers",
+      "showingResults": "Showing {filtered} of {total} invoices",
+      "noInvoicesFound": "No invoices found matching your filters."
     },
     "amount": {
       "label": "Amount",
@@ -482,7 +502,8 @@
     "debug": "Debug",
     "trace": "Trace",
     "fatal": "Fatal",
-    "critical": "Critical"
+    "critical": "Critical",
+    "report": "To report an issue, please email"
   },
   "KpiDashboard": {
     "title": "KPI Dashboard"
@@ -554,5 +575,19 @@
     "stateMismatchError": "Security validation failed. Please try again.",
     "missingCodeError": "Authorization code was not received. Please try again.",
     "tokenExchangeError": "Failed to exchange authorization code for access token. Please try again."
+  },
+  "maintenance": {
+    "title": "Scheduled Maintenance",
+    "message": "The Isleño Admin UI is currently unavailable due to scheduled maintenance. It will be available again at {time} on {date}. If this time has already passed, please email lewis@isleno.es.",
+    "contactEmail": "lewis@isleno.es",
+    "timeFormat": "HH:mm",
+    "dateFormat": "DD/MM/YYYY",
+    "timezone": "CET",
+    "reason": "Reason: {reason}",
+    "noReason": "No reason provided",
+    "checkingStatus": "Checking maintenance status...",
+    "errorCheckingStatus": "Error checking maintenance status",
+    "retry": "Retry",
+    "refresh": "Refresh Page"
   }
 } 
