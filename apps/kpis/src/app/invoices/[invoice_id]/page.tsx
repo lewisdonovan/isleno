@@ -13,6 +13,8 @@ import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { getStatusBadgeInfo } from '@/lib/utils/invoiceUtils';
 import { OdooInvoice, OdooInvoiceAttachment } from '@isleno/types/odoo';
 import { OdooSupplier, OdooProject, OdooSpendCategory } from '@isleno/types/odoo';
+import { BudgetImpactCard } from '@/components/BudgetImpactCard';
+import { useBudget } from '@/contexts/BudgetContext';
 
 
 
@@ -22,6 +24,7 @@ export default function InvoiceDetailPage() {
   const router = useRouter();
   const invoiceId = params.invoice_id as string;
   const { profile, isLoading: userLoading } = useCurrentUser();
+  const { addApprovedInvoice, isInvoiceApproved: isInvoiceApprovedInSession } = useBudget();
   const DEPARTMENT_IDENTIFIERS = ["Department","Departmento"];
   const PROJECT_IDENTIFIERS = ["Project","Proyecto"];
   const CONSTRUCTION_DEPT_ID = 17;
@@ -176,6 +179,16 @@ export default function InvoiceDetailPage() {
       });
 
       if (response.ok) {
+        // Add to session budget tracking
+        if (invoice.amount_untaxed && selectedDepartment) {
+          addApprovedInvoice(
+            invoice.id,
+            invoice.amount_untaxed,
+            selectedProject?.id,
+            selectedDepartment.id
+          );
+        }
+        
         // Redirect back to invoices list
         router.push('/invoices');
       } else {
@@ -432,7 +445,15 @@ export default function InvoiceDetailPage() {
         </Card>
       )}
 
-
+      {/* Budget Impact Analysis */}
+      {hasExternalBasicPermission && selectedDepartment && invoice?.amount_untaxed && (
+        <BudgetImpactCard
+          analyticAccountId={selectedProject?.id || selectedDepartment.id}
+          analyticAccountName={selectedProject?.name || selectedDepartment.name}
+          invoiceAmount={invoice.amount_untaxed}
+          className="border-l-4 border-l-blue-500"
+        />
+      )}
 
       {/* Actions */}
       <div className="flex gap-3">
@@ -452,11 +473,17 @@ export default function InvoiceDetailPage() {
               userLoading || 
               (selectedDepartment.id === CONSTRUCTION_DEPT_ID && !selectedProject)
             ) ||
-            isInvoiceApproved(invoice)
+            isInvoiceApproved(invoice) ||
+            isInvoiceApprovedInSession(parseInt(invoiceId))
           }
         >
           <Check className="h-4 w-4 mr-2" />
-          {isInvoiceApproved(invoice) ? t('alreadyApproved') : t('approveInvoice')}
+          {isInvoiceApproved(invoice) 
+            ? t('alreadyApproved') 
+            : isInvoiceApprovedInSession(parseInt(invoiceId))
+              ? 'Approved in Session'
+              : t('approveInvoice')
+          }
         </Button>
       </div>
     </div>

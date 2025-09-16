@@ -94,6 +94,51 @@ export interface OdooSearchParams {
 // Odoo domain filter structure
 export type OdooDomain = Array<[string, string, any] | string>;
 
+// account.report.budget (Budget Reports)
+export interface OdooBudget extends OdooRecord {
+  name: string;
+  analytic_account_id?: [number, string]; // Project/Department reference
+  planned_amount?: number;
+  practical_amount?: number; // Actual spent amount
+  theoretical_amount?: number; // Theoretical amount
+  percentage?: number; // Percentage used
+  currency_id?: [number, string];
+  date_from?: string;
+  date_to?: string;
+  company_id?: [number, string];
+}
+
+// Budget impact calculation for session management
+export interface BudgetImpact {
+  budgetId: number;
+  projectId?: number;
+  departmentId?: number;
+  currentBudget: number;
+  currentSpent: number;
+  currentRemaining: number;
+  invoiceAmount: number;
+  projectedSpent: number;
+  projectedRemaining: number;
+  percentageUsed: number;
+  projectedPercentageUsed: number;
+  isOverBudget: boolean;
+  willBeOverBudget: boolean;
+  currency: string;
+}
+
+// Session-based budget tracking (no database storage)
+export interface SessionBudgetState {
+  sessionId: string;
+  approvedInvoices: Array<{
+    invoiceId: number;
+    amount: number;
+    projectId?: number;
+    departmentId?: number;
+    timestamp: Date;
+  }>;
+  budgetImpacts: Map<number, BudgetImpact>; // Key: project/department ID
+}
+
 // Pagination information for API responses
 export interface PaginationInfo {
   page: number;

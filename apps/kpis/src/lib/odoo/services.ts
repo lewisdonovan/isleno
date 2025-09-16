@@ -3,7 +3,7 @@ import { ODOO_MAIN_COMPANY_ID } from "../constants/odoo";
 import { createClient } from '@supabase/supabase-js';
 import { isZeroValueInvoice } from "../utils/invoiceUtils";
 import { ocrNotificationService } from "../services/ocrNotificationService";
-import { OdooSupplier, OdooProject, OdooSpendCategory, OdooAttachment, OdooInvoice } from '@isleno/types/odoo';
+import { OdooSupplier, OdooProject, OdooSpendCategory, OdooAttachment, OdooInvoice, OdooBudget, BudgetImpact } from '@isleno/types/odoo';
 
 const INVOICE_MODEL = 'account.move';
 const SUPPLIER_MODEL = 'res.partner';
@@ -11,6 +11,7 @@ const ATTACHMENT_MODEL = 'ir.attachment';
 const PROJECT_MODEL = 'account.analytic.account';
 const ACCOUNT_MODEL = 'account.account';
 const LINE_ITEM_MODEL = 'account.move.line';
+const BUDGET_MODEL = 'account.report.budget';
 
 export async function getInvoice(invoiceId: number): Promise<OdooInvoice | null> {
     const domain = [
@@ -597,4 +598,153 @@ export async function approveInvoice(invoiceId: number, departmentId?: number, p
     }
 
     return odooApi.write(INVOICE_MODEL, [invoiceId], data);
+}
+
+/**
+ * Get budget data for a specific project or department
+ * @param analyticAccountId - The project or department ID (analytic account ID)
+ * @returns Budget data from Odoo or null if not found
+ */
+export async function getBudgetForAnalyticAccount(analyticAccountId: number): Promise<OdooBudget | null> {
+    try {
+        const domain = [
+            ["analytic_account_id", "=", analyticAccountId],
+            ["company_id", "=", ODOO_MAIN_COMPANY_ID]
+        ];
+
+        const fields = [
+            "id",
+            "name",
+            "analytic_account_id",
+            "planned_amount",
+            "practical_amount",
+            "theoretical_amount",
+            "percentage",
+            "currency_id",
+            "date_from",
+            "date_to",
+            "company_id"
+        ];
+
+        const budgets = await odooApi.searchRead(BUDGET_MODEL, domain, { fields });
+        
+        // Return the most recent budget if multiple exist
+        if (budgets.length > 0) {
+            // Sort by date_from descending to get the most recent budget
+            budgets.sort((a, b) => {
+                const dateA = new Date(a.date_from || '1900-01-01');
+                const dateB = new Date(b.date_from || '1900-01-01');
+                return dateB.getTime() - dateA.getTime();
+            });
+            
+            return budgets[0];
+        }
+        
+        return null;
+    } catch (error) {
+        console.error('Error fetching budget for analytic account:', analyticAccountId, error);
+        return null;
+    }
+}
+
+/**
+ * Calculate budget impact for an invoice approval
+ * @param analyticAccountId - The project or department ID
+ * @param invoiceAmount - The amount of the invoice being approved
+ * @param sessionApprovedAmount - Total amount already approved in this session for this account
+ * @returns Budget impact calculation
+ */
+export async function calculateBudgetImpact(
+    analyticAccountId: number, 
+    invoiceAmount: number, 
+    sessionApprovedAmount: number = 0
+): Promise<BudgetImpact | null> {
+    try {
+        const budget = await getBudgetForAnalyticAccount(analyticAccountId);
+        
+        if (!budget) {
+            console.warn(`No budget found for analytic account ${analyticAccountId}`);
+            return null;
+        }
+
+        const plannedAmount = budget.planned_amount || 0;
+        const practicalAmount = budget.practical_amount || 0;
+        const currency = budget.currency_id?.[1] || 'EUR';
+        
+        // Calculate current state
+        const currentSpent = practicalAmount + sessionApprovedAmount;
+        const currentRemaining = plannedAmount - currentSpent;
+        const percentageUsed = plannedAmount > 0 ? (currentSpent / plannedAmount) * 100 : 0;
+        
+        // Calculate projected state after this invoice
+        const projectedSpent = currentSpent + invoiceAmount;
+        const projectedRemaining = plannedAmount - projectedSpent;
+        const projectedPercentageUsed = plannedAmount > 0 ? (projectedSpent / plannedAmount) * 100 : 0;
+        
+        // Determine budget status
+        const isOverBudget = currentSpent > plannedAmount;
+        const willBeOverBudget = projectedSpent > plannedAmount;
+
+        return {
+            budgetId: budget.id,
+            projectId: analyticAccountId,
+            departmentId: analyticAccountId,
+            currentBudget: plannedAmount,
+            currentSpent,
+            currentRemaining,
+            invoiceAmount,
+            projectedSpent,
+            projectedRemaining,
+            percentageUsed,
+            projectedPercentageUsed,
+            isOverBudget,
+            willBeOverBudget,
+            currency
+        };
+    } catch (error) {
+        console.error('Error calculating budget impact:', error);
+        return null;
+    }
+}
+
+/**
+ * Get all budgets for a list of analytic account IDs
+ * @param analyticAccountIds - Array of project/department IDs
+ * @returns Array of budget data
+ */
+export async function getBudgetsForAnalyticAccounts(analyticAccountIds: number[]): Promise<OdooBudget[]> {
+    try {
+        if (analyticAccountIds.length === 0) {
+            return [];
+        }
+
+        const domain = [
+            ["analytic_account_id", "in", analyticAccountIds],
+            ["company_id", "=", ODOO_MAIN_COMPANY_ID]
+        ];
+
+        const fields = [
+            "id",
+            "name",
+            "analytic_account_id",
+            "planned_amount",
+            "practical_amount",
+            "theoretical_amount",
+            "percentage",
+            "currency_id",
+            "date_from",
+            "date_to",
+            "company_id"
+        ];
+
+        const budgets = await odooApi.searchRead(BUDGET_MODEL, domain, { 
+            fields,
+            order: "date_from desc" // Get most recent budgets first
+        });
+        
+        return budgets;
+    } catch (error) {
+        console.error('Error fetching budgets for analytic accounts:', analyticAccountIds, error);
+        return [];
+    }
 }
