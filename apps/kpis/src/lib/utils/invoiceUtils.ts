@@ -1,3 +1,6 @@
+import * as en from '../../../messages/en.json'
+import * as es from '../../../messages/es.json';
+
 /**
  * Utility functions for invoice processing
  */
@@ -16,19 +19,20 @@ export function isZeroValueInvoice(invoice: { amount_untaxed?: number | null }):
  * @param state - The invoice state
  * @returns object with variant and text for the badge
  */
-export function getStatusBadgeInfo(state?: string): { variant: "default" | "secondary" | "destructive" | "outline", text: string } {
+export function getStatusBadgeInfo(state?: string, locale = "en"): { variant: "default" | "secondary" | "destructive" | "outline", text: string } {
+  const messages = locale === "en" ? en : es;
   switch (state) {
     case 'draft':
-      return { variant: "secondary", text: "Draft" };
+      return { variant: "secondary", text: locale === "en" ? "Draft" : "Borrador" };
     case 'open':
-      return { variant: "destructive", text: "Action Required" };
+      return { variant: "destructive", text: messages.invoices.actionRequired };
     case 'posted':
-      return { variant: "secondary", text: "Awaiting Approval" };
+      return { variant: "secondary", text: messages.invoices.status.awaitingApproval };
     case 'sent':
-      return { variant: "default", text: "Sent for Payment" };
+      return { variant: "default", text: messages.invoices.status.sentForPayment };
     case 'paid':
-      return { variant: "default", text: "Paid" };
+      return { variant: "default", text: messages.invoices.status.paid };
     default:
-      return { variant: "outline", text: "Unknown" };
+      return { variant: "outline", text: messages.invoices.status.other };
   }
 }

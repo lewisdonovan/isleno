@@ -13,7 +13,8 @@
     "./gantt": "./src/gantt.ts",
     "./kpis": "./src/kpis.ts",
     "./db/public": "./db/public.ts",
-    "./integrations": "./src/integrations.ts"
+    "./integrations": "./src/integrations.ts",
+    "./odoo": "./src/odoo.ts"
   },
   "scripts": {
     "build": "echo \"Types package - no build needed\"",

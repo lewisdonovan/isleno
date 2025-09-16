@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,44 +11,10 @@ import { useTranslations } from 'next-intl';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { getStatusBadgeInfo } from '@/lib/utils/invoiceUtils';
+import { OdooInvoice, OdooInvoiceAttachment } from '@isleno/types/odoo';
+import { OdooSupplier, OdooProject, OdooSpendCategory } from '@isleno/types/odoo';
 
-interface Invoice {
-  id: number;
-  partner_id: [number, string];
-  invoice_date: string;
-  invoice_date_due: string;
-  amount_untaxed: number;
-  currency_id: [number, string];
-  attachments: Attachment[];
-  state?: string;
-  name?: string;
-}
 
-interface Attachment {
-  id: number;
-  name: string;
-  mimetype: string;
-  datas: string;
-}
-
-interface Supplier {
-  id: number;
-  name: string;
-  x_studio_accounting_code?: [number, string];
-}
-
-interface Project {
-  id: number;
-  name: string;
-  code?: string;
-  plan_id: [number, string];
-}
-
-interface SpendCategory {
-  id: number;
-  name: string;
-  code: string;
-}
 
 export default function InvoiceDetailPage() {
   const t = useTranslations('invoices');
@@ -60,16 +26,17 @@ export default function InvoiceDetailPage() {
   const PROJECT_IDENTIFIERS = ["Project","Proyecto"];
   const CONSTRUCTION_DEPT_ID = 17;
   
-  const [invoice, setInvoice] = useState<Invoice | null>(null);
-  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [spendCategories, setSpendCategory] = useState<SpendCategory[]>([]);
+  const [invoice, setInvoice] = useState<OdooInvoice | null>(null);
+  const [suppliers, setSuppliers] = useState<OdooSupplier[]>([]);
+  const [projects, setProjects] = useState<OdooProject[]>([]);
+  const [spendCategories, setSpendCategory] = useState<OdooSpendCategory[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedDepartment, setSelectedDepartment] = useState<Project | null>(null);
-  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [selectedDepartment, setSelectedDepartment] = useState<OdooProject | null>(null);
+  const [selectedProject, setSelectedProject] = useState<OdooProject | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [hasExternalBasicPermission, setHasExternalBasicPermission] = useState(false);
   const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
+  const hasAttemptedPopulate = useRef(false);
 
   useEffect(() => {
     if (invoiceId) {
@@ -81,18 +48,38 @@ export default function InvoiceDetailPage() {
     }
   }, [invoiceId]);
 
-  // Pre-populate department when profile and projects are loaded
+  // Pre-populate department based on invoice alias
   useEffect(() => {
-    if (profile?.odoo_group_id && projects.length > 0 && !selectedDepartment) {
-      const userDeptProject = projects.find(p => 
-        p.id === profile.odoo_group_id &&
-        (DEPARTMENT_IDENTIFIERS.includes(p.plan_id[1]))
-      );
-      if (userDeptProject) {
-        setSelectedDepartment(userDeptProject);
+    const prePopulateDepartment = async () => {
+      // Only run if we have invoice data, projects loaded, and haven't attempted yet
+      if (invoice?.x_studio_project_manager_1 && projects.length > 0 && !selectedDepartment) {
+        hasAttemptedPopulate.current = true;
+        try {
+          // Fetch user by invoice alias
+          const response = await fetch(`/api/users/by-alias?alias=${encodeURIComponent(invoice.x_studio_project_manager_1)}`);
+          if (response.ok) {
+            const userData = await response.json();
+            if (userData.user?.department_id) {
+              // Find the department project
+              const userDeptProject = projects.find(p => 
+                p.id === userData.user.department_id &&
+                (DEPARTMENT_IDENTIFIERS.includes(p.plan_id[1]))
+              );
+              if (userDeptProject) {
+                setSelectedDepartment(userDeptProject);
+                return;
+              }
+            }
+          }
+        } catch (error) {
+          console.error('Failed to fetch user by alias:', error);
+        }
+        // If any step fails, leave selectedDepartment as null (user must select manually)
       }
-    }
-  }, [profile, projects, selectedDepartment]);
+    };
+
+    prePopulateDepartment();
+  }, [invoice, projects, loading]);
 
   const fetchInvoice = async () => {
     try {
@@ -211,6 +198,26 @@ export default function InvoiceDetailPage() {
     }
   };
 
+  const getCurrentStatus = (invoice: OdooInvoice) => {
+    if (invoice.x_studio_project_manager_review_status === 'pending') {
+      return { variant: "destructive" as const, text: t('status.actionRequired') };
+    }
+    if (invoice.x_studio_project_manager_review_status === 'approved' && invoice.x_studio_is_over_budget) {
+      return { variant: "secondary" as const, text: t('status.awaitingApproval') };
+    }
+    if (invoice.state === 'posted') {
+      return { variant: "secondary" as const, text: t('status.sentForPayment') };
+    }
+    if (invoice.state === 'paid') {
+      return { variant: "default" as const, text: t('status.paid') };
+    }
+    return { variant: "outline" as const, text: t('status.other') };
+  };
+
+  const isInvoiceApproved = (invoice: OdooInvoice) => {
+    return invoice.x_studio_project_manager_review_status === 'approved';
+  };
+
 
 
   if (loading) {
@@ -239,7 +246,7 @@ export default function InvoiceDetailPage() {
     );
   }
 
-  const supplier = suppliers.find(s => s.id === invoice.partner_id[0]);
+  const supplier = suppliers.find(s => s.id === invoice.partner_id?.[0]);
 
   return (
     <div className="container mx-auto p-4 space-y-6">
@@ -255,11 +262,10 @@ export default function InvoiceDetailPage() {
         </Button>
         <div>
           <h1 className="text-2xl font-bold">{t('invoice')} #{invoice.id}</h1>
-          <p className="text-muted-foreground">{invoice.name || t('noReference')}</p>
         </div>
         {(() => {
-          const badgeInfo = getStatusBadgeInfo(invoice.state);
-          return <Badge variant={badgeInfo.variant} className="text-xs">{badgeInfo.text}</Badge>;
+          const statusInfo = getCurrentStatus(invoice);
+          return <Badge variant={statusInfo.variant} className="text-xs">{statusInfo.text}</Badge>;
         })()}
       </div>
 
@@ -310,7 +316,12 @@ export default function InvoiceDetailPage() {
           <div className="grid gap-4">
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">{t('supplier')}</span>
-              <span className="font-medium">{invoice.partner_id[1]}</span>
+              <span className="font-medium">{invoice.partner_id?.[1] || 'Unknown Supplier'}</span>
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">{t('projectManager')}</span>
+              <span className="font-medium">{invoice.x_studio_project_manager_1 || 'Not Assigned'}</span>
             </div>
             
             <Separator />
@@ -330,8 +341,8 @@ export default function InvoiceDetailPage() {
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">{t('subtotal')}</span>
               <span className="text-xl font-bold">
-                <CurrencySymbol currencyId={invoice.currency_id[1]} />
-                {invoice.amount_untaxed.toFixed(2)}
+                <CurrencySymbol currencyId={invoice.currency_id?.[1] || 'EUR'} />
+                {invoice.amount_untaxed?.toFixed(2) || '0.00'}
               </span>
             </div>
           </div>
@@ -430,15 +441,22 @@ export default function InvoiceDetailPage() {
           className="flex-1"
           onClick={() => router.push('/invoices')}
         >
-          {t('cancel')}
+          {t('backToInvoices')}
         </Button>
         <Button 
           className="flex-1"
           onClick={handleApprove}
-          disabled={hasExternalBasicPermission && (!selectedDepartment || userLoading)}
+          disabled={
+            hasExternalBasicPermission && (
+              !selectedDepartment || 
+              userLoading || 
+              (selectedDepartment.id === CONSTRUCTION_DEPT_ID && !selectedProject)
+            ) ||
+            isInvoiceApproved(invoice)
+          }
         >
           <Check className="h-4 w-4 mr-2" />
-          {t('approveInvoice')}
+          {isInvoiceApproved(invoice) ? t('alreadyApproved') : t('approveInvoice')}
         </Button>
       </div>
     </div>

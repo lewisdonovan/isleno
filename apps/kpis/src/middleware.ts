@@ -10,12 +10,32 @@ export async function middleware(req: NextRequest) {
   
   const supabase = createMiddlewareClient({ req, res })
   
+  const { pathname } = req.nextUrl
+
+  // Check maintenance mode first (before auth checks)
+  try {
+    const { data: maintenanceActive } = await (supabase as any).rpc('is_maintenance_active')
+    
+    if (maintenanceActive) {
+      // Allow access to maintenance page and auth routes during maintenance
+      if (pathname === '/maintenance' || pathname.startsWith('/auth/')) {
+        return res
+      }
+      
+      // Redirect all other routes to maintenance page
+      const maintenanceUrl = req.nextUrl.clone()
+      maintenanceUrl.pathname = '/maintenance'
+      return NextResponse.redirect(maintenanceUrl)
+    }
+  } catch (error) {
+    // If maintenance check fails, log error but continue with normal flow
+    console.error('Error checking maintenance status:', error)
+  }
+  
   // Get user session
   const {
     data: { user },
   } = await supabase.auth.getUser()
-
-  const { pathname } = req.nextUrl
 
   // Allow auth routes regardless of session
   if (pathname.startsWith('/auth/')) {

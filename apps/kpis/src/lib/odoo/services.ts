@@ -3,6 +3,7 @@ import { ODOO_MAIN_COMPANY_ID } from "../constants/odoo";
 import { createClient } from '@supabase/supabase-js';
 import { isZeroValueInvoice } from "../utils/invoiceUtils";
 import { ocrNotificationService } from "../services/ocrNotificationService";
+import { OdooSupplier, OdooProject, OdooSpendCategory, OdooAttachment, OdooInvoice } from '@isleno/types/odoo';
 
 const INVOICE_MODEL = 'account.move';
 const SUPPLIER_MODEL = 'res.partner';
@@ -11,7 +12,7 @@ const PROJECT_MODEL = 'account.analytic.account';
 const ACCOUNT_MODEL = 'account.account';
 const LINE_ITEM_MODEL = 'account.move.line';
 
-export async function getInvoice(invoiceId: number) {
+export async function getInvoice(invoiceId: number): Promise<OdooInvoice | null> {
     const domain = [
         ["id", "=", invoiceId],
         ["move_type", "=", "in_invoice"]
@@ -25,6 +26,7 @@ export async function getInvoice(invoiceId: number) {
         "amount_untaxed", 
         "currency_id",
         "x_studio_project_manager_review_status",
+        "x_studio_project_manager_1",
         "state",
         "name"
     ];
@@ -49,7 +51,7 @@ export async function getInvoice(invoiceId: number) {
     return invoice;
 }
 
-export async function getPendingInvoices(invoiceApprovalAlias?: string) {
+export async function getPendingInvoices(invoiceApprovalAlias?: string): Promise<OdooInvoice[]> {
     
     const domain = [
         ["move_type", "=", "in_invoice"],
@@ -88,7 +90,26 @@ export async function getPendingInvoices(invoiceApprovalAlias?: string) {
     return invoices;
 }
 
-export async function getAllInvoices(invoiceApprovalAlias?: string, skipOcrRefresh: boolean = false) {
+export async function getInvoiceCount(invoiceApprovalAlias?: string): Promise<number> {
+    const domain = [
+        ["move_type", "=", "in_invoice"]
+    ];
+
+    // Add user-specific filtering if invoice_approval_alias is provided
+    if (invoiceApprovalAlias) {
+        domain.push(["x_studio_project_manager_1", "=", invoiceApprovalAlias]);
+    }
+
+    const result = await odooApi.executeKw(INVOICE_MODEL, 'search_count', [domain]);
+    return result;
+}
+
+export async function getAllInvoices(invoiceApprovalAlias?: string, skipOcrRefresh: boolean = false, limit?: number, offset?: number): Promise<{
+  invoices: OdooInvoice[];
+  ocrRefreshPerformed: boolean;
+  zeroValueInvoicesRefreshed: number;
+  zeroValueInvoiceIds: number[];
+}> {
     
     const domain = [
         ["move_type", "=", "in_invoice"]
@@ -108,6 +129,7 @@ export async function getAllInvoices(invoiceApprovalAlias?: string, skipOcrRefre
         "amount_untaxed", 
         "currency_id",
         "x_studio_project_manager_review_status",
+        "x_studio_project_manager_1",
         "state",
         "name",
         "x_studio_is_over_budget",
@@ -116,7 +138,16 @@ export async function getAllInvoices(invoiceApprovalAlias?: string, skipOcrRefre
         "x_studio_ceo_sign_off"
     ];
 
-    const invoices = await odooApi.searchRead(INVOICE_MODEL, domain, { fields });
+    // Add pagination parameters
+    const searchOptions: any = { fields };
+    if (limit !== undefined) {
+        searchOptions.limit = limit;
+    }
+    if (offset !== undefined) {
+        searchOptions.offset = offset;
+    }
+
+    const invoices = await odooApi.searchRead(INVOICE_MODEL, domain, searchOptions);
 
     // Fetch attachments for each invoice
     for (const invoice of invoices) {
@@ -215,7 +246,7 @@ async function refreshOcrDataForInvoices(invoiceIds: number[]) {
     };
 }
 
-export async function getAwaitingApprovalInvoices(invoiceApprovalAlias?: string) {
+export async function getAwaitingApprovalInvoices(invoiceApprovalAlias?: string): Promise<OdooInvoice[]> {
     const domain = [
         ["move_type", "=", "in_invoice"],
         ["x_studio_project_manager_review_status", "=", "approved"],
@@ -264,7 +295,7 @@ export async function getAwaitingApprovalInvoices(invoiceApprovalAlias?: string)
     return invoices;
 }
 
-export async function getSentForPaymentInvoices(invoiceApprovalAlias?: string) {
+export async function getSentForPaymentInvoices(invoiceApprovalAlias?: string): Promise<OdooInvoice[]> {
     const domain = [
         ["move_type", "=", "in_invoice"],
         ["state", "=", "posted"]
@@ -303,7 +334,7 @@ export async function getSentForPaymentInvoices(invoiceApprovalAlias?: string) {
     return invoices;
 }
 
-export async function getPaidInvoices(invoiceApprovalAlias?: string) {
+export async function getPaidInvoices(invoiceApprovalAlias?: string): Promise<OdooInvoice[]> {
     const domain = [
         ["move_type", "=", "in_invoice"],
         ["state", "=", "paid"]
@@ -342,7 +373,7 @@ export async function getPaidInvoices(invoiceApprovalAlias?: string) {
     return invoices;
 }
 
-export async function getOtherInvoices(invoiceApprovalAlias?: string) {
+export async function getOtherInvoices(invoiceApprovalAlias?: string): Promise<OdooInvoice[]> {
     const domain = [
         ["move_type", "=", "in_invoice"],
         "!",
@@ -388,17 +419,21 @@ export async function getOtherInvoices(invoiceApprovalAlias?: string) {
     return invoices;
 }
 
-export async function getSuppliers() {
+export async function getSuppliers(): Promise<OdooSupplier[]> {
+    const domain = [
+        ["company_id", "=", ODOO_MAIN_COMPANY_ID], // Filter by main company
+    ];
     const fields = ["id", "name", "x_studio_accounting_code"];
-    return odooApi.searchRead(SUPPLIER_MODEL, [], { fields });
+    return odooApi.searchRead(SUPPLIER_MODEL, domain, { fields });
 }
 
-export async function getProjects() {
+export async function getProjects(): Promise<OdooProject[]> {
     
     const domain = [
         ["active", "=", true],
         ["name", "!=", false], // Ensure name is not false/null
         ["name", "!=", ""],     // Ensure name is not empty string
+        ["company_id", "=", ODOO_MAIN_COMPANY_ID], // Filter by main company
     ];
     const fields = ["id", "name", "code", "plan_id"];
     const kwargs = {
@@ -408,43 +443,10 @@ export async function getProjects() {
     
     const projects = await odooApi.searchRead(PROJECT_MODEL, domain, { fields, ...kwargs });
     
-    // Debug: Log raw projects data to see what we're getting from Odoo
-    console.log('Raw projects from Odoo:', projects.length, 'items');
-    console.log('Sample projects:', projects.slice(0, 5));
-    
-    // Additional deduplication on the backend as a safety measure
-    // First deduplicate by ID, then by name to handle cases where Odoo returns duplicates
-    const uniqueProjects = projects.reduce((acc: any[], project: any) => {
-        // Check if we already have a project with this ID
-        const existingProjectById = acc.find(p => p.id === project.id);
-        if (existingProjectById) {
-            return acc; // Skip if ID already exists
-        }
-        
-        // Check if we already have a project with this name
-        const existingProjectByName = acc.find(p => p.name === project.name);
-        if (existingProjectByName) {
-            // If we have a duplicate name, prefer the one with a plan_id if available
-            if (project.plan_id && !existingProjectByName.plan_id) {
-                // Replace the existing one with this one that has plan_id
-                const index = acc.findIndex(p => p.name === project.name);
-                acc[index] = project;
-            }
-            return acc; // Skip if name already exists
-        }
-        
-        acc.push(project);
-        return acc;
-    }, []);
-    
-    // Debug: Log deduplication results
-    console.log('After deduplication:', uniqueProjects.length, 'unique items');
-    console.log('Sample unique projects:', uniqueProjects.slice(0, 5));
-    
-    return uniqueProjects;
+    return projects;
 }
 
-export async function getSpendCategories() {
+export async function getSpendCategories(): Promise<OdooSpendCategory[]> {
         
     // Filter for expense accounts that are marked as visible to project managers
     // Note: account.account model may not have 'active' field, so we'll filter by code instead
