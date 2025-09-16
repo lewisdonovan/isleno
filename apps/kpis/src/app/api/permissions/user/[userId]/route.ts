@@ -11,7 +11,7 @@ import { supabaseServer } from '@/lib/supabaseServer'
 // GET /api/permissions/user/[userId] - Get user permissions
 export async function GET(
   request: NextRequest,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
     const supabase = await supabaseServer()
@@ -22,7 +22,7 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { userId } = params
+    const { userId } = await params
 
     // Check if user can view permissions (own or manage permissions)
     const canViewOwn = user.id === userId
@@ -54,7 +54,7 @@ export async function GET(
 // POST /api/permissions/user/[userId] - Assign permission to user
 export async function POST(
   request: NextRequest,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
     const supabase = await supabaseServer()
@@ -75,7 +75,7 @@ export async function POST(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    const { userId } = params
+    const { userId } = await params
     const body = await request.json()
     const { permission_id, conditions, expires_at } = body
 
@@ -115,7 +115,7 @@ export async function POST(
 // DELETE /api/permissions/user/[userId] - Remove permission from user
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
     const supabase = await supabaseServer()
@@ -136,7 +136,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    const { userId } = params
+    const { userId } = await params
     const { searchParams } = new URL(request.url)
     const permissionId = searchParams.get('permission_id')
 

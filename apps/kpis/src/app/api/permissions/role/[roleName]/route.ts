@@ -11,7 +11,7 @@ import { supabaseServer } from '@/lib/supabaseServer'
 // GET /api/permissions/role/[roleName] - Get role permissions
 export async function GET(
   request: NextRequest,
-  { params }: { params: { roleName: string } }
+  { params }: { params: Promise<{ roleName: string }> }
 ) {
   try {
     const supabase = await supabaseServer()
@@ -32,7 +32,7 @@ export async function GET(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    const { roleName } = params
+    const { roleName } = await params
     const permissionsWithDetails = await serverPermissionService.getRolePermissionsWithDetails(roleName)
     
     return NextResponse.json({ 
@@ -51,7 +51,7 @@ export async function GET(
 // POST /api/permissions/role/[roleName] - Assign permission to role
 export async function POST(
   request: NextRequest,
-  { params }: { params: { roleName: string } }
+  { params }: { params: Promise<{ roleName: string }> }
 ) {
   try {
     const supabase = await supabaseServer()
@@ -72,7 +72,7 @@ export async function POST(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    const { roleName } = params
+    const { roleName } = await params
     const body = await request.json()
     const { permission_id } = body
 
@@ -110,7 +110,7 @@ export async function POST(
 // DELETE /api/permissions/role/[roleName] - Remove permission from role
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { roleName: string } }
+  { params }: { params: Promise<{ roleName: string }> }
 ) {
   try {
     const supabase = await supabaseServer()
@@ -131,7 +131,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    const { roleName } = params
+    const { roleName } = await params
     const { searchParams } = new URL(request.url)
     const permissionId = searchParams.get('permission_id')
 
