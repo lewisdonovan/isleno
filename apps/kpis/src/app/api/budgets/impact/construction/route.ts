@@ -6,11 +6,11 @@ import { supabaseServer } from "@/lib/supabaseServer";
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { projectId, spendCategoryId, invoiceAmount, sessionApprovedAmount = 0 } = body;
+    const { projectId, spendCategoryCode, invoiceAmount, sessionApprovedAmount = 0 } = body;
 
-    if (!projectId || !spendCategoryId || !invoiceAmount) {
+    if (!projectId || !spendCategoryCode || !invoiceAmount) {
       return NextResponse.json(
-        { error: 'Missing required parameters: projectId, spendCategoryId, invoiceAmount' },
+        { error: 'Missing required parameters: projectId, spendCategoryCode, invoiceAmount' },
         { status: 400 }
       );
     }
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
     // Calculate construction budget impact
     const budgetImpact = await calculateConstructionBudgetImpact(
       projectId,
-      spendCategoryId,
+      spendCategoryCode,
       invoiceAmount,
       sessionApprovedAmount
     );

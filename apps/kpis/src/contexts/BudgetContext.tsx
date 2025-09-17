@@ -15,7 +15,7 @@ interface BudgetContextType {
   
   // Actions
   calculateBudgetImpact: (analyticAccountId: number, invoiceAmount: number) => Promise<BudgetImpact | null>;
-  calculateConstructionBudgetImpact: (projectId: number, spendCategoryId: number, invoiceAmount: number) => Promise<BudgetImpact | null>;
+  calculateConstructionBudgetImpact: (projectId: number, spendCategoryCode: string, invoiceAmount: number) => Promise<BudgetImpact | null>;
   calculateDepartmentBudgetImpact: (departmentId: number, departmentName: string, invoiceAmount: number, invoiceIssueDate: string) => Promise<BudgetImpact | null>;
   addApprovedInvoice: (invoiceId: number, amount: number, projectId?: number, departmentId?: number) => void;                                                                                                          
   getBudgetImpact: (analyticAccountId: number) => BudgetImpact | undefined;
@@ -74,7 +74,7 @@ export function BudgetProvider({ children }: { children: ReactNode }) {
 
   const calculateConstructionBudgetImpact = useCallback(async (
     projectId: number,
-    spendCategoryId: number,
+    spendCategoryCode: string,
     invoiceAmount: number
   ): Promise<BudgetImpact | null> => {
     try {
@@ -87,7 +87,7 @@ export function BudgetProvider({ children }: { children: ReactNode }) {
         },
         body: JSON.stringify({
           projectId,
-          spendCategoryId,
+          spendCategoryCode,
           invoiceAmount,
           sessionApprovedAmount
         }),

@@ -474,7 +474,7 @@ export default function InvoiceDetailPage() {
           // Construction-specific props
           projectId={selectedProject?.id}
           projectName={selectedProject?.name}
-          spendCategoryId={selectedCategory ? parseInt(selectedCategory) : undefined}
+          spendCategoryCode={selectedCategory || undefined}
           spendCategoryName={spendCategories.find(cat => cat.code === selectedCategory)?.name}
           // Department-specific props
           departmentId={selectedDepartment.id}

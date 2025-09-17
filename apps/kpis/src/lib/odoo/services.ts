@@ -565,7 +565,7 @@ export async function approveInvoice(invoiceId: number, departmentId?: number, p
                 
                 if (projectId && accountingCode) {
                     // Construction invoice - use project and spend category
-                    budgetImpact = await calculateConstructionBudgetImpact(projectId, parseInt(accountingCode), subtotal);
+                    budgetImpact = await calculateConstructionBudgetImpact(projectId, accountingCode, subtotal);
                 } else if (departmentId && invoiceDate) {
                     // Department invoice - use department and invoice date
                     const departmentName = await getDepartmentName(departmentId);
@@ -1053,14 +1053,14 @@ export async function getApprovedInvoicesForDepartmentInMonth(departmentId: numb
 /**
  * Calculate budget impact for construction invoice (project + spend category)
  * @param projectId - The project ID
- * @param spendCategoryId - The spend category ID
+ * @param spendCategoryCode - The spend category code
  * @param invoiceAmount - The amount of the invoice being approved
  * @param sessionApprovedAmount - Total amount already approved in this session
  * @returns Budget impact calculation
  */
 export async function calculateConstructionBudgetImpact(
     projectId: number,
-    spendCategoryId: number,
+    spendCategoryCode: string,
     invoiceAmount: number,
     sessionApprovedAmount: number = 0
 ): Promise<BudgetImpact | null> {
@@ -1074,9 +1074,9 @@ export async function calculateConstructionBudgetImpact(
         }
 
         // Get budget line item for spend category
-        const lineItem = await getBudgetLineItem(budget.id, spendCategoryId.toString());
+        const lineItem = await getBudgetLineItem(budget.id, spendCategoryCode);
         if (!lineItem) {
-            console.warn(`No budget line item found for budget ${budget.id} and spend category ${spendCategoryId}`);
+            console.warn(`No budget line item found for budget ${budget.id} and spend category ${spendCategoryCode}`);
             return null;
         }
         
@@ -1084,7 +1084,7 @@ export async function calculateConstructionBudgetImpact(
         const plannedAmount = lineItem.amount || 0;
 
         // Get approved invoices for this project and spend category
-        const approvedInvoiceData = await getApprovedInvoicesForProjectAndCategory(projectId, spendCategoryId.toString());
+        const approvedInvoiceData = await getApprovedInvoicesForProjectAndCategory(projectId, spendCategoryCode);
         const totalApprovedAmount = approvedInvoiceData.reduce((sum, data) => sum + data.amount, 0);
 
         const currentSpent = totalApprovedAmount + sessionApprovedAmount;
@@ -1103,7 +1103,7 @@ export async function calculateConstructionBudgetImpact(
         return {
             budgetId: budget.id,
             projectId,
-            departmentId: spendCategoryId,
+            departmentId: projectId,
             currentBudget: plannedAmount,
             currentSpent,
             currentRemaining,

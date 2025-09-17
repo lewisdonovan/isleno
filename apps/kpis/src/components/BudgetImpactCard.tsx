@@ -18,7 +18,7 @@ interface BudgetImpactCardProps {
   // Construction-specific props
   projectId?: number;
   projectName?: string;
-  spendCategoryId?: number;
+  spendCategoryCode?: string;
   spendCategoryName?: string;
   // Department-specific props
   departmentId?: number;
@@ -37,7 +37,7 @@ export function BudgetImpactCard({
   className = '',
   projectId,
   projectName,
-  spendCategoryId,
+  spendCategoryCode,
   spendCategoryName,
   departmentId,
   departmentName,
@@ -72,7 +72,7 @@ export function BudgetImpactCard({
             return;
           }
 
-          if (!spendCategoryId) {
+          if (!spendCategoryCode) {
             setError(t('pleaseSelectSpendCategory'));
             setLoading(false);
             return;
@@ -87,7 +87,7 @@ export function BudgetImpactCard({
           }
 
           // Calculate construction budget impact
-          impact = await calculateConstructionBudgetImpact(projectId, spendCategoryId, invoiceAmount);
+          impact = await calculateConstructionBudgetImpact(projectId, spendCategoryCode, invoiceAmount);
         } else {
           // Department invoice logic
           if (!departmentId) {
@@ -136,7 +136,7 @@ export function BudgetImpactCard({
     analyticAccountId, 
     invoiceAmount, 
     projectId, 
-    spendCategoryId, 
+    spendCategoryCode, 
     departmentId, 
     departmentName, 
     invoiceIssueDate, 
