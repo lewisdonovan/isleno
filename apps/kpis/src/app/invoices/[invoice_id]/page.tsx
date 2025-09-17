@@ -118,14 +118,40 @@ export default function InvoiceDetailPage() {
 
   const fetchProjects = async () => {
     try {
+      console.log("🔍 Fetching projects from /api/odoo/projects...");
       const response = await fetch("/api/odoo/projects");
+      console.log("📡 Projects API response status:", response.status);
+      
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error("❌ Projects API failed:", response.status, errorText);
         throw new Error(`Failed to fetch projects: ${response.status}`);
       }
+      
       const data = await response.json();
+      console.log("✅ Projects data received:", {
+        count: Array.isArray(data) ? data.length : 'not array',
+        sample: Array.isArray(data) && data.length > 0 ? data[0] : 'no data',
+        isError: data.error ? true : false
+      });
+      
+      if (data.error) {
+        console.error("❌ Projects API returned error:", data.error);
+        throw new Error(data.error);
+      }
+      
       setProjects(data);
+      
+      // Log department filtering
+      const departments = data.filter((p: any) => p.plan_id && DEPARTMENT_IDENTIFIERS.includes(p.plan_id[1]));
+      console.log("🏢 Department projects found:", {
+        total: data.length,
+        departments: departments.length,
+        departmentNames: departments.map((d: any) => d.name)
+      });
+      
     } catch (error) {
-      console.error("Failed to fetch projects:", error);
+      console.error("❌ Failed to fetch projects:", error);
       setProjects([]);
     }
   };
@@ -146,11 +172,22 @@ export default function InvoiceDetailPage() {
 
   const checkPermissions = async () => {
     try {
+      console.log("🔐 Checking external_basic permission...");
       const response = await fetch("/api/auth/check-external-basic");
+      console.log("📡 Permission API response status:", response.status);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("❌ Permission API failed:", response.status, errorText);
+        setHasExternalBasicPermission(false);
+        return;
+      }
+      
       const data = await response.json();
+      console.log("✅ Permission check result:", data);
       setHasExternalBasicPermission(data.hasPermission);
     } catch (error) {
-      console.error("Failed to check permissions:", error);
+      console.error("❌ Failed to check permissions:", error);
       setHasExternalBasicPermission(false);
     }
   };
@@ -397,26 +434,37 @@ export default function InvoiceDetailPage() {
               <label className="text-sm font-medium">
                 {t('department')} <span className="text-red-500">*</span>
               </label>
-              <select 
-                className="w-full p-3 border rounded-md"
-                value={selectedDepartment?.id || ''}
-                onChange={(e) => {
-                  const dept = projects.find(p => p.id === parseInt(e.target.value));
-                  setSelectedDepartment(dept || null);
-                  // Reset project when department changes
-                  setSelectedProject(null);
-                }}
-                required
-              >
-                <option value="">{t('selectDepartment')}</option>
-                {projects
-                  .filter(p => p.plan_id && (DEPARTMENT_IDENTIFIERS.includes(p.plan_id[1])))
-                  .map((dept) => (
-                    <option key={dept.id} value={dept.id}>
-                      {dept.name}
-                    </option>
-                  ))}
-              </select>
+              {(() => {
+                const departmentProjects = projects.filter(p => p.plan_id && (DEPARTMENT_IDENTIFIERS.includes(p.plan_id[1])));
+                console.log("🎯 Rendering department select:", {
+                  hasPermission: hasExternalBasicPermission,
+                  totalProjects: projects.length,
+                  departmentProjects: departmentProjects.length,
+                  selectedDepartment: selectedDepartment?.id,
+                  departmentOptions: departmentProjects.map(d => ({ id: d.id, name: d.name, plan_id: d.plan_id }))
+                });
+                
+                return (
+                  <select 
+                    className="w-full p-3 border rounded-md"
+                    value={selectedDepartment?.id || ''}
+                    onChange={(e) => {
+                      const dept = projects.find(p => p.id === parseInt(e.target.value));
+                      setSelectedDepartment(dept || null);
+                      // Reset project when department changes
+                      setSelectedProject(null);
+                    }}
+                    required
+                  >
+                    <option value="">{t('selectDepartment')}</option>
+                    {departmentProjects.map((dept) => (
+                      <option key={dept.id} value={dept.id}>
+                        {dept.name}
+                      </option>
+                    ))}
+                  </select>
+                );
+              })()}
             </div>
             
             {/* Project Field - Only visible when "Construction" department is selected */}

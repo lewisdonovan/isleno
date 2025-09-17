@@ -431,22 +431,43 @@ export async function getSuppliers(): Promise<OdooSupplier[]> {
 }
 
 export async function getProjects(): Promise<OdooProject[]> {
-    
-    const domain = [
-        ["active", "=", true],
-        ["name", "!=", false], // Ensure name is not false/null
-        ["name", "!=", ""],     // Ensure name is not empty string
-        ["company_id", "=", ODOO_MAIN_COMPANY_ID], // Filter by main company
-    ];
-    const fields = ["id", "name", "code", "plan_id"];
-    const kwargs = {
-        order: "name asc", // Order by name to ensure consistent results
-        limit: 1000        // Add reasonable limit to prevent excessive data
-    };
-    
-    const projects = await odooApi.searchRead(PROJECT_MODEL, domain, { fields, ...kwargs });
-    
-    return projects;
+    try {
+        console.log("🔍 Odoo getProjects called with:", {
+            domain: [
+                ["active", "=", true],
+                ["name", "!=", false],
+                ["name", "!=", ""],
+                ["company_id", "=", ODOO_MAIN_COMPANY_ID],
+            ],
+            fields: ["id", "name", "code", "plan_id"],
+            companyId: ODOO_MAIN_COMPANY_ID
+        });
+        
+        const domain = [
+            ["active", "=", true],
+            ["name", "!=", false], // Ensure name is not false/null
+            ["name", "!=", ""],     // Ensure name is not empty string
+            ["company_id", "=", ODOO_MAIN_COMPANY_ID], // Filter by main company
+        ];
+        const fields = ["id", "name", "code", "plan_id"];
+        const kwargs = {
+            order: "name asc", // Order by name to ensure consistent results
+            limit: 1000        // Add reasonable limit to prevent excessive data
+        };
+        
+        const projects = await odooApi.searchRead(PROJECT_MODEL, domain, { fields, ...kwargs });
+        
+        console.log("✅ Odoo getProjects result:", {
+            count: projects.length,
+            sample: projects.length > 0 ? projects[0] : 'no data',
+            departments: projects.filter(p => p.plan_id && ["Department", "Departmento"].includes(p.plan_id[1])).length
+        });
+        
+        return projects;
+    } catch (error) {
+        console.error("❌ Odoo getProjects error:", error);
+        throw error;
+    }
 }
 
 export async function getSpendCategories(): Promise<OdooSpendCategory[]> {
