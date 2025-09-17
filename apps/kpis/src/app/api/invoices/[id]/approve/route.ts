@@ -26,7 +26,7 @@ export async function POST(
       return NextResponse.json({ error: 'Access denied: You can only approve invoices assigned to you' }, { status: 403 });
     }
 
-    await approveInvoice(invoiceId, departmentId, projectId, accountingCode, justification, alias);
+    await approveInvoice(invoiceId, departmentId, projectId, accountingCode, justification, alias || undefined);
     return NextResponse.json({ success: true });
   } catch (error: any) {
     const { id } = await params;
