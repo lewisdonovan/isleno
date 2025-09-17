@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -36,10 +37,11 @@ export default function InvoiceTable({
   pagination,
   onPageChange
 }: InvoiceTableProps) {
+  const router = useRouter();
   const t = useTranslations('invoices.invoiceViews');
   const ti = useTranslations('invoices');
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('pending');
+  const [statusFilter, setStatusFilter] = useState('all');
   const [departmentFilter, setDepartmentFilter] = useState('all');
   const [aliasFilter, setAliasFilter] = useState('all');
   const [departments, setDepartments] = useState<Department[]>([]);
@@ -92,7 +94,7 @@ export default function InvoiceTable({
 
   const getStatusBadge = (invoice: OdooInvoice) => {
     if (invoice.x_studio_project_manager_review_status === 'pending') {
-      return <Badge variant="destructive">Action Required</Badge>;
+      return <Badge variant="destructive">{ti('actionRequired')}</Badge>;
     }
     if (invoice.x_studio_project_manager_review_status === 'approved' && invoice.x_studio_is_over_budget) {
       return <Badge variant="secondary">{ti('status.awaitingApproval')}</Badge>;
@@ -174,13 +176,13 @@ export default function InvoiceTable({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="hidden md:table-cell">Invoice</TableHead>
-                <TableHead>Supplier</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Amount</TableHead>
+                <TableHead className="hidden md:table-cell">{t('invoice')}</TableHead>
+                <TableHead>{t('supplier')}</TableHead>
+                <TableHead>{t('date')}</TableHead>
+                <TableHead>{t('amount')}</TableHead>
                 {showAlias && <TableHead>{t('approvalAlias')}</TableHead>}
                 {showDepartment && <TableHead>{t('department')}</TableHead>}
-                <TableHead className="hidden md:table-cell">Status</TableHead>
+                <TableHead className="hidden md:table-cell">{t('status')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -188,7 +190,7 @@ export default function InvoiceTable({
                 <TableRow 
                   key={invoice.id}
                   className="cursor-pointer hover:bg-teal-50 dark:hover:bg-teal-950 transition-colors duration-150"
-                  onClick={() => window.open(`/invoices/${invoice.id}`, '_blank')}
+                  onClick={() => router.push(`/invoices/${invoice.id}`)}
                 >
                   <TableCell className="font-medium hidden md:table-cell">
                     {invoice.name || `Invoice ${invoice.id}`}

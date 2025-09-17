@@ -10,8 +10,6 @@ export interface NavigationItem {
 export const NAVIGATION_ITEMS: NavigationItem[] = [
   { href: '/', label: 'dashboard', icon: 'BarChart3', exact: true },
   { href: '/kpis', label: 'kpis', icon: 'BarChart2' },
-  { href: '/boards', label: 'boards', icon: 'Table' },
-  { href: '/calendar', label: 'calendar', icon: 'Calendar' },
   { href: '/invoices', label: 'invoices', icon: 'FileText' },
   { href: '/admin/user-roles', label: 'user_roles', icon: 'Users' },
 ];

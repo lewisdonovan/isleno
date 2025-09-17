@@ -15,60 +15,33 @@ export const ROUTE_DEFINITIONS: RouteAccess[] = [
     label: 'dashboard',
     icon: 'Home',
     requiresAuth: true,
-    allowedRoles: ['admin', 'internal', 'external_basic', 'team_leader']
+    allowedRoles: ['admin', 'internal', 'department_head', 'default']
   },
   {
     path: '/kpis',
     label: 'kpis', 
     icon: 'BarChart2',
     requiresAuth: true,
-    allowedRoles: ['admin', 'internal', 'team_leader']
-  },
-  // {
-  //   path: '/calendar',
-  //   label: 'calendar',
-  //   icon: 'Calendar',
-  //   requiresAuth: true,
-  //   allowedRoles: ['admin', 'team_leader'],
-  //   requiresSpecialPermission: (permissions) => permissions.canAccessCalendar
-  // },
-  {
-    path: '/gantt',
-    label: 'gantt',
-    icon: 'GanttChartSquare',
-    requiresAuth: true,
-    allowedRoles: ['admin', 'team_leader'],
-    requiresSpecialPermission: (permissions) => permissions.canAccessGantt
-  },
-  {
-    path: '/cashflow',
-    label: 'cashflow',
-    icon: 'DollarSign',
-    requiresAuth: true,
-    allowedRoles: ['admin', 'team_leader'],
-    requiresSpecialPermission: (permissions) => permissions.canAccessCashflow
+    allowedRoles: ['admin', 'internal', 'department_head']
   },
   {
     path: '/invoices',
     label: 'invoices',
     icon: 'FileText',
     requiresAuth: true,
-    allowedRoles: ['admin', 'team_leader', 'external_basic']
+    allowedRoles: ['admin', 'department_head', 'internal', 'default'],
+    requiresSpecialPermission: (permissions, profile) => {
+      // Users with invoice approval alias have access to their own invoices
+      return Boolean(profile?.invoice_approval_alias)
+    }
   },
-  // {
-  //   path: '/boards',
-  //   label: 'boards',
-  //   icon: 'BarChart3',
-  //   requiresAuth: true,
-  //   allowedRoles: ['admin']
-  // },
-  // {
-  //   path: '/charts',
-  //   label: 'charts',
-  //   icon: 'BarChart3',
-  //   requiresAuth: true,
-  //   allowedRoles: ['admin']
-  // }
+  {
+    path: '/admin/user-roles',
+    label: 'user_roles',
+    icon: 'Users',
+    requiresAuth: true,
+    allowedRoles: ['admin']
+  }
 ]
 
 /**
@@ -122,7 +95,7 @@ export function canAccessDepartment(
   profile: UserProfile | null
 ): boolean {
   if (role === 'admin') return true
-  if (role === 'internal' || role === 'team_leader') {
+  if (role === 'internal' || role === 'department_head') {
     return profile?.department_id === departmentId
   }
   return false
@@ -140,7 +113,7 @@ export function getAccessibleDepartments(
     return allDepartments
   }
   
-  if ((role === 'internal' || role === 'team_leader') && profile?.department_id) {
+  if ((role === 'internal' || role === 'department_head') && profile?.department_id) {
     return allDepartments.filter(dept => dept.department_id === profile.department_id)
   }
   
@@ -158,7 +131,7 @@ export function isAdmin(role: UserRoleType): boolean {
  * Check if user is internal staff
  */
 export function isInternalUser(role: UserRoleType): boolean {
-  return role === 'internal' || role === 'team_leader' || role === 'admin'
+  return role === 'internal' || role === 'department_head' || role === 'admin'
 }
 
 /**
@@ -177,8 +150,8 @@ export function getRoleDisplayName(role: UserRoleType): string {
       return 'Administrator'
     case 'internal':
       return 'Internal User'
-    case 'team_leader':
-      return 'Team Leader'
+    case 'department_head':
+      return 'Department Head'
     case 'external_basic':
       return 'External User'
     case 'default':

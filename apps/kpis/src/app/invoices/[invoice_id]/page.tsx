@@ -13,6 +13,8 @@ import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { getStatusBadgeInfo } from '@/lib/utils/invoiceUtils';
 import { OdooInvoice, OdooInvoiceAttachment } from '@isleno/types/odoo';
 import { OdooSupplier, OdooProject, OdooSpendCategory } from '@isleno/types/odoo';
+import { BudgetImpactCard } from '@/components/BudgetImpactCard';
+import { useBudget } from '@/contexts/BudgetContext';
 
 
 
@@ -22,6 +24,7 @@ export default function InvoiceDetailPage() {
   const router = useRouter();
   const invoiceId = params.invoice_id as string;
   const { profile, isLoading: userLoading } = useCurrentUser();
+  const { addApprovedInvoice, isInvoiceApproved: isInvoiceApprovedInSession } = useBudget();
   const DEPARTMENT_IDENTIFIERS = ["Department","Departmento"];
   const PROJECT_IDENTIFIERS = ["Project","Proyecto"];
   const CONSTRUCTION_DEPT_ID = 17;
@@ -36,6 +39,9 @@ export default function InvoiceDetailPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [hasExternalBasicPermission, setHasExternalBasicPermission] = useState(false);
   const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
+  const [showJustificationModal, setShowJustificationModal] = useState(false);
+  const [justificationText, setJustificationText] = useState('');
+  const [budgetImpact, setBudgetImpact] = useState<any>(null);
   const hasAttemptedPopulate = useRef(false);
 
   useEffect(() => {
@@ -154,6 +160,18 @@ export default function InvoiceDetailPage() {
   const handleApprove = async () => {
     if (!invoice) return;
 
+    // Check if budget impact shows over budget
+    if (budgetImpact && budgetImpact.willBeOverBudget) {
+      setShowJustificationModal(true);
+      return;
+    }
+
+    await performApproval();
+  };
+
+  const performApproval = async () => {
+    if (!invoice) return;
+
     try {
       const payload: any = {};
       
@@ -169,6 +187,11 @@ export default function InvoiceDetailPage() {
         payload.accountingCode = selectedCategory;
       }
 
+      // Add justification if provided
+      if (justificationText.trim()) {
+        payload.justification = justificationText.trim();
+      }
+
       const response = await fetch(`/api/invoices/${invoice.id}/approve`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -176,6 +199,16 @@ export default function InvoiceDetailPage() {
       });
 
       if (response.ok) {
+        // Add to session budget tracking
+        if (invoice.amount_untaxed && selectedDepartment) {
+          addApprovedInvoice(
+            invoice.id,
+            invoice.amount_untaxed,
+            selectedProject?.id,
+            selectedDepartment.id
+          );
+        }
+        
         // Redirect back to invoices list
         router.push('/invoices');
       } else {
@@ -320,7 +353,7 @@ export default function InvoiceDetailPage() {
             </div>
             
             <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">{t('projectManager')}</span>
+              <span className="text-muted-foreground">{t('invoiceViews.approvalAlias')}</span>
               <span className="font-medium">{invoice.x_studio_project_manager_1 || 'Not Assigned'}</span>
             </div>
             
@@ -432,9 +465,24 @@ export default function InvoiceDetailPage() {
         </Card>
       )}
 
-
-
-      {/* Actions */}
+      {/* Budget Impact Analysis */}
+      {hasExternalBasicPermission && selectedDepartment && invoice?.amount_untaxed && (
+        <BudgetImpactCard
+          invoiceAmount={invoice.amount_untaxed}
+          className="border-l-4 border-l-blue-500"
+          invoiceType={selectedDepartment.id === CONSTRUCTION_DEPT_ID ? 'construction' : 'department'}
+          // Construction-specific props
+          projectId={selectedProject?.id}
+          projectName={selectedProject?.name}
+          spendCategoryCode={selectedCategory || undefined}
+          spendCategoryName={spendCategories.find(cat => cat.code === selectedCategory)?.name}
+          // Department-specific props
+          departmentId={selectedDepartment.id}
+          departmentName={selectedDepartment.name}
+          invoiceIssueDate={invoice.invoice_date}
+          onBudgetImpactChange={setBudgetImpact}
+        />
+      )}
       <div className="flex gap-3">
         <Button 
           variant="outline" 
@@ -452,13 +500,62 @@ export default function InvoiceDetailPage() {
               userLoading || 
               (selectedDepartment.id === CONSTRUCTION_DEPT_ID && !selectedProject)
             ) ||
-            isInvoiceApproved(invoice)
+            isInvoiceApproved(invoice) ||
+            isInvoiceApprovedInSession(parseInt(invoiceId))
           }
         >
           <Check className="h-4 w-4 mr-2" />
-          {isInvoiceApproved(invoice) ? t('alreadyApproved') : t('approveInvoice')}
+          {isInvoiceApproved(invoice) 
+            ? t('alreadyApproved') 
+            : isInvoiceApprovedInSession(parseInt(invoiceId))
+              ? 'Approved in Session'
+              : t('approveInvoice')
+          }
         </Button>
       </div>
+
+      {/* Budget Justification Modal */}
+      {showJustificationModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-2xl w-full mx-4">
+            <h2 className="text-xl font-bold mb-4">{t('budgetImpact.justificationRequired')}</h2>
+            <p className="text-gray-600 dark:text-gray-300 mb-4">
+              {t('budgetImpact.justificationDescription')}
+            </p>
+            <textarea
+              className="w-full p-3 border rounded-md resize-none h-32 mb-4"
+              placeholder={t('budgetImpact.justificationPlaceholder')}
+              value={justificationText}
+              onChange={(e) => setJustificationText(e.target.value)}
+            />
+            <div className="flex justify-between items-center">
+              <span className={`text-sm ${justificationText.length < 100 ? 'text-red-500' : 'text-green-500'}`}>
+                {t('budgetImpact.justificationMinLength', { count: justificationText.length })}
+              </span>
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setShowJustificationModal(false);
+                    setJustificationText('');
+                  }}
+                >
+                  {t('cancel')}
+                </Button>
+                <Button
+                  onClick={() => {
+                    setShowJustificationModal(false);
+                    performApproval();
+                  }}
+                  disabled={justificationText.length < 100}
+                >
+                  {t('budgetImpact.approveWithJustification')}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

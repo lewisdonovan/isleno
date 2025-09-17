@@ -3,7 +3,7 @@ import { ODOO_MAIN_COMPANY_ID } from "../constants/odoo";
 import { createClient } from '@supabase/supabase-js';
 import { isZeroValueInvoice } from "../utils/invoiceUtils";
 import { ocrNotificationService } from "../services/ocrNotificationService";
-import { OdooSupplier, OdooProject, OdooSpendCategory, OdooAttachment, OdooInvoice } from '@isleno/types/odoo';
+import { OdooSupplier, OdooProject, OdooSpendCategory, OdooAttachment, OdooInvoice, OdooInvoiceLineItem, OdooBudget, OdooBudgetLineItem, BudgetImpact } from '@isleno/types/odoo';
 
 const INVOICE_MODEL = 'account.move';
 const SUPPLIER_MODEL = 'res.partner';
@@ -11,6 +11,8 @@ const ATTACHMENT_MODEL = 'ir.attachment';
 const PROJECT_MODEL = 'account.analytic.account';
 const ACCOUNT_MODEL = 'account.account';
 const LINE_ITEM_MODEL = 'account.move.line';
+const BUDGET_MODEL = 'account.report.budget';
+const BUDGET_LINE_MODEL = 'account.report.budget.item';
 
 export async function getInvoice(invoiceId: number): Promise<OdooInvoice | null> {
     const domain = [
@@ -251,6 +253,7 @@ export async function getAwaitingApprovalInvoices(invoiceApprovalAlias?: string)
         ["move_type", "=", "in_invoice"],
         ["x_studio_project_manager_review_status", "=", "approved"],
         ["x_studio_is_over_budget", "=", true],
+        ["state", "!=", "cancelled"], // Exclude cancelled invoices
         "|",
         ["x_studio_cfo_sign_off", "=", false],
         "&",
@@ -506,10 +509,113 @@ export async function updateInvoice(invoiceId: number, data: any) {
     return odooApi.write(INVOICE_MODEL, [invoiceId], data);
 }
 
-export async function approveInvoice(invoiceId: number, departmentId?: number, projectId?: number, accountingCode?: string) {
+/**
+ * Get department name by department ID
+ * @param departmentId - The department ID
+ * @returns Department name or null if not found
+ */
+async function getDepartmentName(departmentId: number): Promise<string | null> {
+    try {
+        const { supabaseServer } = await import('@/lib/supabaseServer');
+        const supabase = await supabaseServer();
+        
+        const { data: department } = await supabase
+            .from('departments')
+            .select('department_name')
+            .eq('department_id', departmentId.toString())
+            .single();
+            
+        return department?.department_name || null;
+    } catch (error) {
+        console.error('Error getting department name:', error);
+        return null;
+    }
+}
+
+export async function approveInvoice(invoiceId: number, departmentId?: number, projectId?: number, accountingCode?: string, justification?: string, invoiceApprovalAlias?: string) {
     const data: any = {
         "x_studio_project_manager_review_status": "approved"
     };
+
+    // Get invoice details for budget calculations
+    try {
+        const invoiceDetails = await odooApi.searchRead(INVOICE_MODEL, [
+            ["id", "=", invoiceId]
+        ], {
+            fields: ["id", "amount_untaxed", "invoice_date"]
+        });
+
+        if (invoiceDetails && invoiceDetails.length > 0) {
+            const invoice = invoiceDetails[0];
+            const subtotal = invoice.amount_untaxed || 0;
+            const invoiceDate = invoice.invoice_date;
+
+            // Calculate €3000 threshold fields
+            if (subtotal > 3000) {
+                data.x_studio_is_over_budget = true;
+                data.x_studio_amount_over_budget = subtotal - 3000;
+            } else {
+                data.x_studio_is_over_budget = false;
+                data.x_studio_amount_over_budget = 0;
+            }
+
+            // Calculate department/project budget fields
+            try {
+                let budgetImpact = null;
+                
+                if (projectId && accountingCode) {
+                    // Construction invoice - use project and spend category
+                    budgetImpact = await calculateConstructionBudgetImpact(projectId, accountingCode, subtotal);
+                } else if (departmentId && invoiceDate) {
+                    // Department invoice - use department and invoice date
+                    const departmentName = await getDepartmentName(departmentId);
+                    if (departmentName) {
+                        budgetImpact = await calculateDepartmentBudgetImpact(departmentId, departmentName, subtotal, invoiceDate);
+                    }
+                }
+
+                if (budgetImpact && budgetImpact.willBeOverBudget) {
+                    data.x_studio_is_over_project_dept_budget = true;
+                    data.x_studio_amount_over_project_dept_budget = Math.abs(budgetImpact.projectedRemaining);
+                } else {
+                    data.x_studio_is_over_project_dept_budget = false;
+                    data.x_studio_amount_over_project_dept_budget = 0;
+                }
+            } catch (budgetError) {
+                console.error('Error calculating budget impact:', budgetError);
+                // Set default values if budget calculation fails
+                data.x_studio_is_over_project_dept_budget = false;
+                data.x_studio_amount_over_project_dept_budget = 0;
+            }
+        }
+    } catch (error) {
+        console.error('Error getting invoice details for budget calculation:', error);
+        // Set default values if we can't get invoice details
+        data.x_studio_is_over_budget = false;
+        data.x_studio_amount_over_budget = 0;
+        data.x_studio_is_over_project_dept_budget = false;
+        data.x_studio_amount_over_project_dept_budget = 0;
+    }
+
+    // Add justification as a message to the invoice if provided
+    if (justification && invoiceApprovalAlias) {
+        try {
+            const messageContent = `Justification from PM/HOD:\n\n${justification}\n\nSubmitted by ${invoiceApprovalAlias}`;
+            
+            await odooApi.executeKw('mail.message', 'create', [{
+                model: INVOICE_MODEL,
+                res_id: invoiceId,
+                message_type: 'comment',
+                body: messageContent,
+                subject: 'Budget Justification',
+                author_id: 1, // System user
+                date: new Date().toISOString()
+            }]);
+        } catch (error) {
+            console.error('Error adding justification message to invoice:', error);
+            // Continue with approval even if message creation fails
+        }
+    }
 
     // Get non-tax line items for this invoice
     try {
@@ -597,4 +703,588 @@ export async function approveInvoice(invoiceId: number, departmentId?: number, p
     }
 
     return odooApi.write(INVOICE_MODEL, [invoiceId], data);
+}
+
+/**
+ * Get budget data for a specific project (construction invoices)
+ * @param projectId - The project ID (analytic account ID)
+ * @returns Budget data from Odoo or null if not found
+ */
+export async function getBudgetForProject(projectId: number): Promise<OdooBudget | null> {
+    try {
+        // First, get the project name to search for budget by name
+        const projectDomain = [
+            ["id", "=", projectId]
+        ];
+        const projectFields = ["id", "name"];
+        const projects = await odooApi.searchRead(PROJECT_MODEL, projectDomain, { fields: projectFields });
+        
+        if (projects.length === 0) {
+            console.warn(`Project ${projectId} not found`);
+            return null;
+        }
+        
+        const projectName = projects[0].name;
+        
+        // Search for budget by project name (similar to department approach)
+        const domain = [
+            ["company_id", "=", ODOO_MAIN_COMPANY_ID],
+            ["name", "ilike", projectName]
+        ];
+
+        const fields = [
+            "id",
+            "name",
+            "display_name",
+            "company_id",
+            "item_ids",
+            "sequence",
+            "create_date",
+            "create_uid",
+            "write_date",
+            "write_uid"
+        ];
+
+        const budgets = await odooApi.searchRead(BUDGET_MODEL, domain, { 
+            fields,
+            order: "create_date desc" // Get most recent budget first
+        });
+        
+        if (budgets.length > 0) {
+            return budgets[0];
+        }
+        
+        console.warn(`No budget found for project ${projectName} (ID: ${projectId})`);
+        return null;
+    } catch (error) {
+        console.error('Error fetching budget for project:', projectId, error);
+        return null;
+    }
+}
+
+/**
+ * Get budget data for a specific department (non-construction invoices)
+ * @param departmentName - The department name
+ * @returns Budget data from Odoo or null if not found
+ */
+export async function getBudgetForDepartment(departmentName: string): Promise<OdooBudget | null> {
+    try {
+        const domain = [
+            ["company_id", "=", ODOO_MAIN_COMPANY_ID],
+            ["name", "ilike", `Department ${departmentName}`]
+        ];
+
+        const fields = [
+            "id",
+            "name",
+            "display_name",
+            "company_id",
+            "item_ids",
+            "sequence",
+            "create_date",
+            "create_uid",
+            "write_date",
+            "write_uid"
+        ];
+
+        const budgets = await odooApi.searchRead(BUDGET_MODEL, domain, { fields });
+        
+        if (budgets.length > 0) {
+            return budgets[0];
+        }
+        
+        return null;
+    } catch (error) {
+        console.error('Error fetching budget for department:', departmentName, error);
+        return null;
+    }
+}
+
+/**
+ * Get budget line item for a specific spend category
+ * @param budgetId - The budget ID
+ * @param spendCategoryId - The spend category ID
+ * @returns Budget line item data or null if not found
+ */
+export async function getBudgetLineItem(budgetId: number, spendCategoryCode: string): Promise<OdooBudgetLineItem | null> {
+    try {
+        
+        // First, convert account code to account ID
+        const accountRecord = await odooApi.searchRead(ACCOUNT_MODEL, [
+            ["code", "=", spendCategoryCode]
+        ], {
+            fields: ["id"]
+        });
+        
+        if (!accountRecord || accountRecord.length === 0) {
+            console.warn(`No account found with code: ${spendCategoryCode}`);
+            return null;
+        }
+        
+        const accountId = accountRecord[0].id;
+        
+        // Now search for the budget line item using the account ID
+        const domain = [
+            ["budget_id", "=", budgetId],
+            ["account_id", "=", accountId]
+        ];
+
+        const fields = [
+            "id",
+            "budget_id",
+            "account_id",
+            "amount",
+            "date",
+            "display_name",
+            "create_uid",
+            "create_date",
+            "write_uid",
+            "write_date"
+        ];
+
+        const lineItems = await odooApi.searchRead(BUDGET_LINE_MODEL, domain, { fields });
+        
+        if (lineItems.length > 0) {
+            return lineItems[0] as OdooBudgetLineItem;
+        }
+        
+        return null;
+    } catch (error) {
+        console.error('Error fetching budget line item:', budgetId, spendCategoryCode, error);
+        return null;
+    }
+}
+
+/**
+ * Get all budget line items for a budget
+ * @param budgetId - The budget ID
+ * @returns Array of budget line items
+ */
+export async function getAllBudgetLineItems(budgetId: number): Promise<OdooBudgetLineItem[]> {
+    try {
+        const domain = [
+            ["budget_id", "=", budgetId]
+        ];
+
+        // Fetch all budget line item fields
+        const fields = [
+            "id",
+            "budget_id",
+            "account_id",
+            "amount",
+            "date",
+            "display_name",
+            "create_uid",
+            "create_date",
+            "write_uid",
+            "write_date"
+        ];
+
+        const lineItems = await odooApi.searchRead(BUDGET_LINE_MODEL, domain, { fields });
+        
+        return lineItems as OdooBudgetLineItem[];
+    } catch (error) {
+        console.error('Error fetching budget line items:', budgetId, error);
+        return [];
+    }
+}
+
+/**
+ * Get approved invoices for construction project and spend category
+ * @param projectId - The project ID
+ * @param spendCategoryId - The spend category ID
+ * @returns Array of approved invoices
+ */
+export async function getApprovedInvoicesForProjectAndCategory(projectId: number, spendCategoryCode: string): Promise<{invoice: OdooInvoice, amount: number}[]> {
+    try {
+        
+        // First, get the account ID for the spend category code
+        const accountRecord = await odooApi.searchRead(ACCOUNT_MODEL, [
+            ["code", "=", spendCategoryCode]
+        ], {
+            fields: ["id"]
+        });
+        
+        if (!accountRecord || accountRecord.length === 0) {
+            console.warn(`No account found with code: ${spendCategoryCode}`);
+            return [];
+        }
+        
+        const accountId = accountRecord[0].id;
+        
+        // Get approved invoices
+        const domain = [
+            ["move_type", "=", "in_invoice"],
+            ["x_studio_project_manager_review_status", "=", "approved"],
+            ["state", "!=", "cancelled"]
+        ];
+
+        const fields = [
+            "id",
+            "amount_untaxed",
+            "invoice_date_due",
+            "line_ids"
+        ];
+
+        const invoices = await odooApi.searchRead(INVOICE_MODEL, domain, { fields });
+        
+        const result: {invoice: OdooInvoice, amount: number}[] = [];
+        
+        // For each invoice, check its line items
+        for (const invoice of invoices) {
+            if (!invoice.line_ids || invoice.line_ids.length === 0) {
+                continue;
+            }
+            
+            // Get line items for this invoice
+            const lineItems = await odooApi.searchRead(LINE_ITEM_MODEL, [
+                ["id", "in", invoice.line_ids]
+            ], {
+                fields: ["id", "move_id", "account_id", "analytic_distribution", "price_subtotal"]
+            });
+            
+            // Filter line items that match our project and account
+            const matchingLines = lineItems.filter((line: OdooInvoiceLineItem) => {
+                // Check if account matches
+                const lineAccountId = Array.isArray(line.account_id) ? line.account_id[0] : line.account_id;
+                if (lineAccountId !== accountId) {
+                    return false;
+                }
+                
+                // Check if analytic distribution includes our project
+                if (!line.analytic_distribution) {
+                    return false;
+                }
+                
+                return Object.keys(line.analytic_distribution).includes(projectId.toString());
+            });
+            
+            if (matchingLines.length > 0) {
+                // Calculate total amount for matching lines
+                const totalAmount = matchingLines.reduce((sum, line) => sum + (line.price_subtotal || 0), 0);
+                result.push({
+                    invoice: invoice as OdooInvoice,
+                    amount: totalAmount
+                });
+            }
+        }
+        
+        return result;
+    } catch (error) {
+        console.error('Error fetching approved invoices for project and category:', projectId, spendCategoryCode, error);
+        return [];
+    }
+}
+
+/**
+ * Get approved invoices for department in the same month
+ * @param departmentId - The department ID
+ * @param invoiceIssueDate - The issue date of the current invoice
+ * @returns Array of approved invoices
+ */
+export async function getApprovedInvoicesForDepartmentInMonth(departmentId: number, invoiceIssueDate: string): Promise<{invoice: OdooInvoice, amount: number}[]> {
+    try {
+        
+        const targetDate = new Date(invoiceIssueDate);
+        const year = targetDate.getFullYear();
+        const month = targetDate.getMonth() + 1; // JavaScript months are 0-based
+        
+        const startOfMonth = `${year}-${month.toString().padStart(2, '0')}-01`;
+        const endOfMonth = `${year}-${month.toString().padStart(2, '0')}-${new Date(year, month, 0).getDate()}`;
+
+        const domain = [
+            ["move_type", "=", "in_invoice"],
+            ["x_studio_project_manager_review_status", "=", "approved"],
+            ["state", "!=", "cancelled"],
+            ["invoice_date", ">=", startOfMonth],
+            ["invoice_date", "<=", endOfMonth]
+        ];
+
+        const fields = [
+            "id",
+            "amount_untaxed",
+            "invoice_date_due",
+            "line_ids"
+        ];
+
+        const invoices = await odooApi.searchRead(INVOICE_MODEL, domain, { fields });
+        
+        const result: {invoice: OdooInvoice, amount: number}[] = [];
+        
+        // For each invoice, check its line items
+        for (const invoice of invoices) {
+            if (!invoice.line_ids || invoice.line_ids.length === 0) {
+                continue;
+            }
+            
+            // Get line items for this invoice
+            const lineItems = await odooApi.searchRead(LINE_ITEM_MODEL, [
+                ["id", "in", invoice.line_ids]
+            ], {
+                fields: ["id", "move_id", "account_id", "analytic_distribution", "price_subtotal"]
+            });
+            
+            // Filter line items that have the department in analytic distribution
+            const matchingLines = lineItems.filter((line: OdooInvoiceLineItem) => {
+                if (!line.analytic_distribution) {
+                    return false;
+                }
+                
+                return Object.keys(line.analytic_distribution).includes(departmentId.toString());
+            });
+            
+            if (matchingLines.length > 0) {
+                // Calculate total amount for matching lines
+                const totalAmount = matchingLines.reduce((sum, line) => sum + (line.price_subtotal || 0), 0);
+                result.push({
+                    invoice: invoice as OdooInvoice,
+                    amount: totalAmount
+                });
+            }
+        }
+        
+        return result;
+    } catch (error) {
+        console.error('Error fetching approved invoices for department in month:', departmentId, invoiceIssueDate, error);
+        return [];
+    }
+}
+
+/**
+ * Calculate budget impact for construction invoice (project + spend category)
+ * @param projectId - The project ID
+ * @param spendCategoryCode - The spend category code
+ * @param invoiceAmount - The amount of the invoice being approved
+ * @param sessionApprovedAmount - Total amount already approved in this session
+ * @returns Budget impact calculation
+ */
+export async function calculateConstructionBudgetImpact(
+    projectId: number,
+    spendCategoryCode: string,
+    invoiceAmount: number,
+    sessionApprovedAmount: number = 0
+): Promise<BudgetImpact | null> {
+    try {
+        
+        // Get budget for project
+        const budget = await getBudgetForProject(projectId);
+        if (!budget) {
+            console.warn(`No budget found for project ${projectId}`);
+            return null;
+        }
+
+        // Get budget line item for spend category
+        const lineItem = await getBudgetLineItem(budget.id, spendCategoryCode);
+        if (!lineItem) {
+            console.warn(`No budget line item found for budget ${budget.id} and spend category ${spendCategoryCode}`);
+            return null;
+        }
+        
+        // Get the budget amount from the line item
+        const plannedAmount = lineItem.amount || 0;
+
+        // Get approved invoices for this project and spend category
+        const approvedInvoiceData = await getApprovedInvoicesForProjectAndCategory(projectId, spendCategoryCode);
+        const totalApprovedAmount = approvedInvoiceData.reduce((sum, data) => sum + data.amount, 0);
+
+        const currentSpent = totalApprovedAmount + sessionApprovedAmount;
+        const currentRemaining = plannedAmount - currentSpent;
+        const percentageUsed = plannedAmount > 0 ? (currentSpent / plannedAmount) * 100 : 0;
+        
+        // Calculate projected state after this invoice
+        const projectedSpent = currentSpent + invoiceAmount;
+        const projectedRemaining = plannedAmount - projectedSpent;
+        const projectedPercentageUsed = plannedAmount > 0 ? (projectedSpent / plannedAmount) * 100 : 0;
+        
+        // Determine budget status
+        const isOverBudget = currentSpent > plannedAmount;
+        const willBeOverBudget = projectedSpent > plannedAmount;
+
+        return {
+            budgetId: budget.id,
+            projectId,
+            departmentId: projectId,
+            currentBudget: plannedAmount,
+            currentSpent,
+            currentRemaining,
+            invoiceAmount,
+            projectedSpent,
+            projectedRemaining,
+            percentageUsed,
+            projectedPercentageUsed,
+            isOverBudget,
+            willBeOverBudget,
+            currency: 'EUR',
+            isMockData: false
+        };
+    } catch (error) {
+        console.error('Error calculating construction budget impact:', error);
+        return null;
+    }
+}
+
+/**
+ * Calculate budget impact for department invoice
+ * @param departmentId - The department ID
+ * @param departmentName - The department name
+ * @param invoiceAmount - The amount of the invoice being approved
+ * @param invoiceIssueDate - The issue date of the current invoice
+ * @param sessionApprovedAmount - Total amount already approved in this session
+ * @returns Budget impact calculation
+ */
+export async function calculateDepartmentBudgetImpact(
+    departmentId: number,
+    departmentName: string,
+    invoiceAmount: number,
+    invoiceIssueDate: string,
+    sessionApprovedAmount: number = 0
+): Promise<BudgetImpact | null> {
+    try {
+        // Get budget for department
+        const budget = await getBudgetForDepartment(departmentName);
+        if (!budget) {
+            console.warn(`No budget found for department ${departmentName}`);
+            return null;
+        }
+
+        // Get all budget line items
+        const lineItems = await getAllBudgetLineItems(budget.id);
+        const totalPlannedAmount = lineItems.reduce((sum, item) => sum + (item.amount || 0), 0);
+
+        // Get approved invoices for this department in the same month
+        const approvedInvoiceData = await getApprovedInvoicesForDepartmentInMonth(departmentId, invoiceIssueDate);
+        const totalApprovedAmount = approvedInvoiceData.reduce((sum, data) => sum + data.amount, 0);
+
+        const currentSpent = totalApprovedAmount + sessionApprovedAmount;
+        const currentRemaining = totalPlannedAmount - currentSpent;
+        const percentageUsed = totalPlannedAmount > 0 ? (currentSpent / totalPlannedAmount) * 100 : 0;
+        
+        // Calculate projected state after this invoice
+        const projectedSpent = currentSpent + invoiceAmount;
+        const projectedRemaining = totalPlannedAmount - projectedSpent;
+        const projectedPercentageUsed = totalPlannedAmount > 0 ? (projectedSpent / totalPlannedAmount) * 100 : 0;
+        
+        // Determine budget status
+        const isOverBudget = currentSpent > totalPlannedAmount;
+        const willBeOverBudget = projectedSpent > totalPlannedAmount;
+
+        return {
+            budgetId: budget.id,
+            projectId: departmentId,
+            departmentId,
+            currentBudget: totalPlannedAmount,
+            currentSpent,
+            currentRemaining,
+            invoiceAmount,
+            projectedSpent,
+            projectedRemaining,
+            percentageUsed,
+            projectedPercentageUsed,
+            isOverBudget,
+            willBeOverBudget,
+            currency: 'EUR',
+            isMockData: false
+        };
+    } catch (error) {
+        console.error('Error calculating department budget impact:', error);
+        return null;
+    }
+}
+
+/**
+ * Calculate budget impact for an invoice approval (legacy function for backward compatibility)
+ * @param analyticAccountId - The project or department ID
+ * @param invoiceAmount - The amount of the invoice being approved
+ * @param sessionApprovedAmount - Total amount already approved in this session for this account
+ * @returns Budget impact calculation
+ */
+export async function calculateBudgetImpact(
+    analyticAccountId: number, 
+    invoiceAmount: number, 
+    sessionApprovedAmount: number = 0
+): Promise<BudgetImpact | null> {
+    try {
+        // This is a legacy function - use calculateConstructionBudgetImpact or calculateDepartmentBudgetImpact instead
+        console.warn('calculateBudgetImpact is deprecated. Use calculateConstructionBudgetImpact or calculateDepartmentBudgetImpact instead.');
+        
+        // Return mock data for backward compatibility
+        const mockPlannedAmount = 100000; // Mock budget
+        const mockPracticalAmount = 45000; // Mock spent
+        const currency = 'EUR';
+        
+        // Calculate current state
+        const currentSpent = mockPracticalAmount + sessionApprovedAmount;
+        const currentRemaining = mockPlannedAmount - currentSpent;
+        const percentageUsed = mockPlannedAmount > 0 ? (currentSpent / mockPlannedAmount) * 100 : 0;
+        
+        // Calculate projected state after this invoice
+        const projectedSpent = currentSpent + invoiceAmount;
+        const projectedRemaining = mockPlannedAmount - projectedSpent;
+        const projectedPercentageUsed = mockPlannedAmount > 0 ? (projectedSpent / mockPlannedAmount) * 100 : 0;
+        
+        // Determine budget status
+        const isOverBudget = currentSpent > mockPlannedAmount;
+        const willBeOverBudget = projectedSpent > mockPlannedAmount;
+
+        return {
+            budgetId: 0, // Mock ID
+            projectId: analyticAccountId,
+            departmentId: analyticAccountId,
+            currentBudget: mockPlannedAmount,
+            currentSpent,
+            currentRemaining,
+            invoiceAmount,
+            projectedSpent,
+            projectedRemaining,
+            percentageUsed,
+            projectedPercentageUsed,
+            isOverBudget,
+            willBeOverBudget,
+            currency,
+            isMockData: true
+        };
+    } catch (error) {
+        console.error('Error calculating budget impact:', error);
+        return null;
+    }
+}
+
+/**
+ * Get all budgets for a list of analytic account IDs
+ * @param analyticAccountIds - Array of project/department IDs
+ * @returns Array of budget data
+ */
+export async function getBudgetsForAnalyticAccounts(analyticAccountIds: number[]): Promise<OdooBudget[]> {
+    try {
+        if (analyticAccountIds.length === 0) {
+            return [];
+        }
+
+        const domain = [
+            ["company_id", "=", ODOO_MAIN_COMPANY_ID]
+        ];
+
+        const fields = [
+            "id",
+            "name",
+            "display_name",
+            "company_id",
+            "item_ids",
+            "sequence",
+            "create_date",
+            "create_uid",
+            "write_date",
+            "write_uid"
+        ];
+
+        const budgets = await odooApi.searchRead(BUDGET_MODEL, domain, { 
+            fields,
+            order: "create_date desc" // Get most recent budgets first
+        });
+        
+        return budgets;
+    } catch (error) {
+        console.error('Error fetching budgets for analytic accounts:', analyticAccountIds, error);
+        return [];
+    }
 }

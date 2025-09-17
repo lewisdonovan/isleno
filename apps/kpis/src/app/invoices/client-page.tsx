@@ -23,6 +23,7 @@ export default function InvoiceOptionsClient({
   allDepartments 
 }: InvoiceOptionsClientProps) {
   const t = useTranslations('invoices');
+  const tOptions = useTranslations('invoices.invoiceOptions');
 
   return (
     <div className="container mx-auto py-6 space-y-6">
@@ -32,7 +33,7 @@ export default function InvoiceOptionsClient({
             {t('title')}
           </h1>
           <p className="text-muted-foreground">
-            Choose which invoices you'd like to view
+            {tOptions('description')}
           </p>
         </div>
       </div>
@@ -43,16 +44,16 @@ export default function InvoiceOptionsClient({
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <FileText className="h-5 w-5" />
-              My Invoices
+              {tOptions('myInvoices')}
             </CardTitle>
             <CardDescription>
-              View invoices assigned to you for approval
+              {tOptions('myInvoicesDescription')}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Link href="/invoices/me">
               <Button className="w-full">
-                View My Invoices
+                {tOptions('viewMyInvoices')}
               </Button>
             </Link>
           </CardContent>
@@ -64,16 +65,16 @@ export default function InvoiceOptionsClient({
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Building2 className="h-5 w-5" />
-                {userDepartment.department_name} Invoices
+                {userDepartment.department_name} {tOptions('departmentInvoices')}
               </CardTitle>
               <CardDescription>
-                View all invoices from your department
+                {tOptions('departmentInvoicesDescription')}
               </CardDescription>
             </CardHeader>
             <CardContent>
               <Link href={`/invoices/department/${userDepartment.department_id}`}>
                 <Button className="w-full">
-                  View Department Invoices
+                  {tOptions('viewDepartmentInvoices')}
                 </Button>
               </Link>
             </CardContent>
@@ -86,16 +87,16 @@ export default function InvoiceOptionsClient({
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Users className="h-5 w-5" />
-                All Invoices
+                {tOptions('allInvoices')}
               </CardTitle>
               <CardDescription>
-                View all invoices across all departments
+                {tOptions('allInvoicesDescription')}
               </CardDescription>
             </CardHeader>
             <CardContent>
               <Link href="/invoices/all">
                 <Button className="w-full">
-                  View All Invoices
+                  {tOptions('viewAllInvoices')}
                 </Button>
               </Link>
             </CardContent>
@@ -106,7 +107,7 @@ export default function InvoiceOptionsClient({
       {/* Department-specific views for admins */}
       {accessType === 'admin' && allDepartments.length > 0 && (
         <div className="space-y-4">
-          <h2 className="text-2xl font-bold">Department Views</h2>
+          <h2 className="text-2xl font-bold">{tOptions('departmentViews')}</h2>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {allDepartments.map((department) => (
               <Card key={department.department_id} className="hover:shadow-lg transition-shadow">
@@ -116,13 +117,13 @@ export default function InvoiceOptionsClient({
                     {department.department_name}
                   </CardTitle>
                   <CardDescription>
-                    View invoices from {department.department_name}
+                    {tOptions('viewDepartmentInvoicesFrom', { departmentName: department.department_name })}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <Link href={`/invoices/department/${department.department_id}`}>
                     <Button variant="outline" className="w-full">
-                      View Department Invoices
+                      {tOptions('viewDepartmentInvoices')}
                     </Button>
                   </Link>
                 </CardContent>
