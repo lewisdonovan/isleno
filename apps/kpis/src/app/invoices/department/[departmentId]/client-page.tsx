@@ -17,6 +17,7 @@ export default function DepartmentInvoicesClient({
   departmentId 
 }: DepartmentInvoicesClientProps) {
   const t = useTranslations('invoices.invoiceViews');
+  const tOptions = useTranslations('invoices.invoiceOptions');
   const [invoices, setInvoices] = useState<OdooInvoice[]>([]);
   const [pagination, setPagination] = useState<PaginationInfo | null>(null);
   const [loading, setLoading] = useState(true);
@@ -59,19 +60,19 @@ export default function DepartmentInvoicesClient({
             {departmentName} {t('departmentInvoices')}
           </h1>
           <p className="text-muted-foreground">
-            All invoices from users in the {departmentName} department
+            {tOptions('viewDepartmentInvoicesFrom', { departmentName })}
           </p>
         </div>
       </div>
 
       {loading ? (
-        <div className="text-center py-8">Loading invoices...</div>
+        <div className="text-center py-8">{tOptions('loadingInvoices')}</div>
       ) : (
         <InvoiceTable
           invoices={invoices}
           showAlias={true}
-          title={`${departmentName} Department Invoices`}
-          description={`All invoices from users in the ${departmentName} department`}
+          title={`${departmentName} ${t('departmentInvoices')}`}
+          description={tOptions('viewDepartmentInvoicesFrom', { departmentName })}
           pagination={pagination || undefined}
           onPageChange={handlePageChange}
         />

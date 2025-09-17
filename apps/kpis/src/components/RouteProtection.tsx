@@ -5,10 +5,11 @@ import { canAccessDepartment } from '@/lib/rbac'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 import { useTranslations } from 'next-intl'
+import { UserRoleType } from '@isleno/types/auth'
 
 interface RouteProtectionProps {
   children: React.ReactNode
-  requiredRole?: Array<'default' | 'internal' | 'admin' | 'external_basic' | 'team_leader'>
+  requiredRole?: Array<UserRoleType>
   departmentId?: string
   fallbackRoute?: string
 }

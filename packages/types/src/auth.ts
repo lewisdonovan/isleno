@@ -13,7 +13,7 @@ export interface UserProfile {
   role?: UserRoleType
 }
 
-export type UserRoleType = 'default' | 'internal' | 'admin' | 'external_basic' | 'department_head'
+export type UserRoleType = 'default' | 'internal' | 'admin' | 'external_basic' | 'department_head' | 'team_leader'
 
 export interface UserPermissions {
   canAccessKpis: boolean

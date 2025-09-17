@@ -5,6 +5,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/app-sidebar"
 import { ThemeProvider } from "@/components/theme-provider"
 import { SessionProvider } from "@/components/providers/SessionProvider"
+import { BudgetProvider } from "@/contexts/BudgetContext"
 import { NextIntlClientProvider } from 'next-intl';
 import { cookies, headers } from 'next/headers';
 import { Toaster } from "@/components/ui/sonner";
@@ -56,22 +57,24 @@ export default async function RootLayout({
             disableTransitionOnChange
           >
             <SessionProvider>
-              {isAuthPage ? (
-                // Clean layout for auth pages - no sidebar or top bar
-                <main className="min-h-screen">
-                  {children}
-                </main>
-              ) : (
-                // Normal layout with sidebar and top bar for app pages
-            <SidebarProvider defaultOpen={false}>
-              <div className="flex min-h-screen w-full">
-                <AppSidebar />
-                <main className="flex-1 min-w-0">
-                  {children}
-                </main>
-              </div>
-            </SidebarProvider>
-              )}
+              <BudgetProvider>
+                {isAuthPage ? (
+                  // Clean layout for auth pages - no sidebar or top bar
+                  <main className="min-h-screen">
+                    {children}
+                  </main>
+                ) : (
+                  // Normal layout with sidebar and top bar for app pages
+              <SidebarProvider defaultOpen={false}>
+                <div className="flex min-h-screen w-full">
+                  <AppSidebar />
+                  <main className="flex-1 min-w-0">
+                    {children}
+                  </main>
+                </div>
+              </SidebarProvider>
+                )}
+              </BudgetProvider>
             </SessionProvider>
             <Toaster />
           </ThemeProvider>
