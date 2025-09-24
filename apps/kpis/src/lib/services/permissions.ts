@@ -225,6 +225,7 @@ export class ServerPermissionService {
       const rolePermissions: Record<string, string[]> = {
         'default': [], // No permissions - new users
         'internal': ['kpi.view', 'department.view'], // Department-scoped access only
+        'internal_user': ['kpi.view', 'department.view'], // Department-scoped access only
         'department_head': ['kpi.view', 'department.view', 'user.view'], // Department-scoped access + user management
         'admin': ['kpi.view', 'kpi.create', 'kpi.edit', 'kpi.delete', 'department.view', 'department.create', 'department.edit', 'user.view', 'user.edit', 'invoice.view', 'invoice.create', 'invoice.edit', 'invoice.delete', 'invoice.approve'] // All permissions
       }
@@ -840,6 +841,7 @@ export class ClientPermissionService {
       const rolePermissions: Record<string, string[]> = {
         'default': [], // No permissions - new users
         'internal': ['kpi.view', 'department.view'], // Department-scoped access only
+        'internal_user': ['kpi.view', 'department.view'], // Department-scoped access only
         'department_head': ['kpi.view', 'department.view', 'user.view'], // Department-scoped access + user management
         'admin': ['kpi.view', 'kpi.create', 'kpi.edit', 'kpi.delete', 'department.view', 'department.create', 'department.edit', 'user.view', 'user.edit', 'invoice.view', 'invoice.create', 'invoice.edit', 'invoice.delete', 'invoice.approve'] // All permissions
       }

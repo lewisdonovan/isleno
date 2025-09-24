@@ -15,21 +15,21 @@ export const ROUTE_DEFINITIONS: RouteAccess[] = [
     label: 'dashboard',
     icon: 'Home',
     requiresAuth: true,
-    allowedRoles: ['admin', 'internal', 'department_head', 'default']
+    allowedRoles: ['admin', 'internal', 'internal_user', 'department_head', 'default']
   },
   {
     path: '/kpis',
     label: 'kpis', 
     icon: 'BarChart2',
     requiresAuth: true,
-    allowedRoles: ['admin', 'internal', 'department_head']
+    allowedRoles: ['admin', 'internal', 'internal_user', 'department_head']
   },
   {
     path: '/invoices',
     label: 'invoices',
     icon: 'FileText',
     requiresAuth: true,
-    allowedRoles: ['admin', 'department_head', 'internal', 'default'],
+    allowedRoles: ['admin', 'department_head', 'internal', 'internal_user', 'default'],
     requiresSpecialPermission: (permissions, profile) => {
       // Users with invoice approval alias have access to their own invoices
       return Boolean(profile?.invoice_approval_alias)
@@ -95,7 +95,7 @@ export function canAccessDepartment(
   profile: UserProfile | null
 ): boolean {
   if (role === 'admin') return true
-  if (role === 'internal' || role === 'department_head') {
+  if (role === 'internal' || role === 'internal_user' || role === 'department_head') {
     return profile?.department_id === departmentId
   }
   return false
@@ -113,7 +113,7 @@ export function getAccessibleDepartments(
     return allDepartments
   }
   
-  if ((role === 'internal' || role === 'department_head') && profile?.department_id) {
+  if ((role === 'internal' || role === 'internal_user' || role === 'department_head') && profile?.department_id) {
     return allDepartments.filter(dept => dept.department_id === profile.department_id)
   }
   
@@ -131,7 +131,7 @@ export function isAdmin(role: UserRoleType): boolean {
  * Check if user is internal staff
  */
 export function isInternalUser(role: UserRoleType): boolean {
-  return role === 'internal' || role === 'department_head' || role === 'admin'
+  return role === 'internal' || role === 'internal_user' || role === 'department_head' || role === 'admin'
 }
 
 /**
@@ -149,6 +149,8 @@ export function getRoleDisplayName(role: UserRoleType): string {
     case 'admin':
       return 'Administrator'
     case 'internal':
+      return 'Internal User'
+    case 'internal_user':
       return 'Internal User'
     case 'department_head':
       return 'Department Head'
