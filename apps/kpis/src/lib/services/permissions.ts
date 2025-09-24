@@ -224,6 +224,7 @@ export class ServerPermissionService {
       // Define basic role permissions according to new specifications
       const rolePermissions: Record<string, string[]> = {
         'default': [], // No permissions - new users
+        'external_basic': ['invoice.view'], // Can view their own invoices
         'internal': ['kpi.view', 'department.view'], // Department-scoped access only
         'internal_user': ['kpi.view', 'department.view'], // Department-scoped access only
         'department_head': ['kpi.view', 'department.view', 'user.view'], // Department-scoped access + user management
@@ -840,6 +841,7 @@ export class ClientPermissionService {
       // Define basic role permissions according to new specifications
       const rolePermissions: Record<string, string[]> = {
         'default': [], // No permissions - new users
+        'external_basic': ['invoice.view'], // Can view their own invoices
         'internal': ['kpi.view', 'department.view'], // Department-scoped access only
         'internal_user': ['kpi.view', 'department.view'], // Department-scoped access only
         'department_head': ['kpi.view', 'department.view', 'user.view'], // Department-scoped access + user management
