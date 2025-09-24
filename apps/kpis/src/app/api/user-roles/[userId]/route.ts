@@ -124,7 +124,7 @@ export async function POST(
     }
 
     // Validate role
-    const validRoles = ['admin', 'department_head', 'default']
+    const validRoles = ['admin', 'department_head', 'internal_user', 'default']
     if (!validRoles.includes(role)) {
       return NextResponse.json({ error: 'Invalid role' }, { status: 400 })
     }

@@ -79,9 +79,11 @@ export function useCurrentUser(): EnhancedUser {
         // Process role data - use the highest priority role if multiple exist
         const getHighestPriorityRole = (roles: Array<{ role: string }>): UserRoleType => {
           const rolePriority: Record<string, number> = {
-            'admin': 4,
+            'admin': 5,
+            'department_head': 4,
             'team_leader': 3,
             'internal': 2,
+            'internal_user': 2,
             'external_basic': 1,
             'default': 0
           }
