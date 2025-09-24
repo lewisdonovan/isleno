@@ -44,7 +44,9 @@ export class InvoicePermissionService {
       // Define role permissions for invoice access
       const rolePermissions: Record<string, string[]> = {
         'default': [], // No permissions - new users
+        'external_basic': ['invoice.view'], // Can view their own invoices
         'internal': ['invoice.view'], // Can view invoices
+        'internal_user': ['invoice.view'], // Can view invoices
         'department_head': ['invoice.view'], // Can view invoices
         'admin': ['invoice.view', 'invoice.create', 'invoice.edit', 'invoice.delete', 'invoice.approve'] // All invoice permissions
       }
