@@ -16,6 +16,13 @@ export async function GET(request: NextRequest) {
 
     // Check invoice access level
     const { canView, accessType, aliases } = await invoicePermissionService.getInvoiceAccessLevel(user.id);
+    
+    console.log('Invoice access check:', { 
+      userId: user.id, 
+      canView, 
+      accessType, 
+      aliases 
+    });
 
     if (!canView) {
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
@@ -73,12 +80,17 @@ export async function GET(request: NextRequest) {
       // Department head: get invoices from all users in their department
       // For department heads, we need to get all invoices first, then paginate client-side
       // This is not ideal but necessary due to Odoo's limitation with multiple aliases
+      console.log('Department head access - aliases:', aliases);
       const allInvoices = [];
       for (const alias of aliases) {
+        console.log(`Fetching invoices for alias: ${alias}`);
         const aliasInvoices = await getAllInvoices(alias);
         const invoices = Array.isArray(aliasInvoices) ? aliasInvoices : aliasInvoices.invoices;
+        console.log(`Found ${invoices.length} invoices for alias ${alias}`);
         allInvoices.push(...invoices);
       }
+      
+      console.log(`Total invoices found: ${allInvoices.length}`);
       
       // Calculate total count
       totalCount = allInvoices.length;

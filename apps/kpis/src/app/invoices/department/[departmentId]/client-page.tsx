@@ -29,12 +29,14 @@ export default function DepartmentInvoicesClient({
   const fetchInvoices = async (page: number = 1) => {
     try {
       setLoading(true);
+      console.log('Fetching invoices for department:', departmentId);
       const response = await fetch(`/api/invoices?page=${page}&limit=20`);
       if (!response.ok) {
         throw new Error('Failed to fetch invoices');
       }
       
       const data = await response.json();
+      console.log('API response:', data);
       setInvoices(data.invoices || []);
       setPagination(data.pagination || null);
     } catch (error) {
