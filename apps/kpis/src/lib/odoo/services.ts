@@ -602,8 +602,8 @@ export async function approveInvoice(invoiceId: number, departmentId?: number, p
         try {
             const messageContent = `Justification from PM/HOD:\n\n${justification}\n\nSubmitted by ${invoiceApprovalAlias}`;
             
-            await odooApi.executeKw('mail.message', 'create', [{
-                model: INVOICE_MODEL,
+            const messageResult = await odooApi.executeKw('mail.message', 'create', [{
+                res_model: INVOICE_MODEL,
                 res_id: invoiceId,
                 message_type: 'comment',
                 body: messageContent,
@@ -611,9 +611,12 @@ export async function approveInvoice(invoiceId: number, departmentId?: number, p
                 author_id: 1, // System user
                 date: new Date().toISOString()
             }]);
+            
+            console.log('Successfully added justification message to invoice:', messageResult);
         } catch (error) {
             console.error('Error adding justification message to invoice:', error);
-            // Continue with approval even if message creation fails
+            // Re-throw the error so it can be handled by the calling function
+            throw new Error(`Failed to add justification message: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
     }
 
