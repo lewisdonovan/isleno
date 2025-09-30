@@ -62,12 +62,16 @@ export async function getCurrentUserInvoiceAlias(): Promise<{
  */
 export async function hasExternalBasicPermission(): Promise<boolean> {
   try {
+    console.log("🔐 Checking external_basic permission...");
     const supabase = await supabaseServer();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
     if (authError || !user) {
+      console.log("❌ No authenticated user:", authError?.message);
       return false;
     }
+
+    console.log("👤 User authenticated:", { id: user.id, email: user.email });
 
     const { data: roles, error: rolesError } = await supabase
       .from('user_roles')
@@ -75,13 +79,17 @@ export async function hasExternalBasicPermission(): Promise<boolean> {
       .eq('user_id', user.id);
 
     if (rolesError) {
-      console.error('Failed to fetch user roles:', rolesError);
+      console.error('❌ Failed to fetch user roles:', rolesError);
       return false;
     }
 
-    return roles.some(role => role.role === 'external_basic');
+    console.log("🎭 User roles:", roles);
+    const hasPermission = roles.some(role => role.role === 'external_basic');
+    console.log("✅ External basic permission:", hasPermission);
+    
+    return hasPermission;
   } catch (error) {
-    console.error('Error checking user permissions:', error);
+    console.error('❌ Error checking user permissions:', error);
     return false;
   }
 } 
