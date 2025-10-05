@@ -602,15 +602,12 @@ export async function approveInvoice(invoiceId: number, departmentId?: number, p
         try {
             const messageContent = `Justification from PM/HOD:\n\n${justification}\n\nSubmitted by ${invoiceApprovalAlias}`;
             
-            const messageResult = await odooApi.executeKw('mail.message', 'create', [{
-                res_model: INVOICE_MODEL,
-                res_id: invoiceId,
+            // Use message_post method on the invoice record instead of creating mail.message directly
+            const messageResult = await odooApi.executeKw(INVOICE_MODEL, 'message_post', [invoiceId], {
                 message_type: 'comment',
-                body: messageContent,
-                subject: 'Budget Justification',
-                author_id: 1, // System user
-                date: new Date().toISOString()
-            }]);
+                subtype_id: 1,
+                body: messageContent
+            });
             
             console.log('Successfully added justification message to invoice:', messageResult);
         } catch (error) {
