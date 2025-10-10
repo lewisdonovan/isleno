@@ -17,7 +17,8 @@ const BUDGET_LINE_MODEL = 'account.report.budget.item';
 export async function getInvoice(invoiceId: number): Promise<OdooInvoice | null> {
     const domain = [
         ["id", "=", invoiceId],
-        ["move_type", "=", "in_invoice"]
+        ["move_type", "=", "in_invoice"],
+        ["state", "!=", "cancel"]
     ];
 
     const fields = [
@@ -58,6 +59,7 @@ export async function getPendingInvoices(invoiceApprovalAlias?: string): Promise
     const domain = [
         ["move_type", "=", "in_invoice"],
         ["x_studio_project_manager_review_status", "=", "pending"],
+        ["state", "!=", "cancel"]
     ];
 
     // Add user-specific filtering if invoice_approval_alias is provided
@@ -94,7 +96,8 @@ export async function getPendingInvoices(invoiceApprovalAlias?: string): Promise
 
 export async function getInvoiceCount(invoiceApprovalAlias?: string): Promise<number> {
     const domain = [
-        ["move_type", "=", "in_invoice"]
+        ["move_type", "=", "in_invoice"],
+        ["state", "!=", "cancel"]
     ];
 
     // Add user-specific filtering if invoice_approval_alias is provided
@@ -114,8 +117,8 @@ export async function getAllInvoices(invoiceApprovalAlias?: string, skipOcrRefre
 }> {
     
     const domain = [
-        ["move_type", "=", "in_invoice"]
-        // Remove the status filter to get all invoices
+        ["move_type", "=", "in_invoice"],
+        ["state", "!=", "cancel"]
     ];
 
     // Add user-specific filtering if invoice_approval_alias is provided
@@ -167,28 +170,105 @@ export async function getAllInvoices(invoiceApprovalAlias?: string, skipOcrRefre
 
     // If OCR refresh is enabled and there are zero-value invoices, start background refresh
     if (!skipOcrRefresh && zeroValueInvoices.length > 0) {
-        const invoiceIds = zeroValueInvoices.map(inv => inv.id);
+        // Filter to only include invoices that actually have attachments
+        // This prevents repeated API calls for invoices that legitimately have no attachments
+        const invoicesWithAttachments = zeroValueInvoices.filter(inv => 
+            inv.attachments && inv.attachments.length > 0
+        );
         
-        // Notify that OCR refresh is starting
-        ocrNotificationService.startRefresh(invoiceIds);
-        
-        // Start background OCR refresh without blocking the response
-        refreshOcrDataForInvoices(invoiceIds)
-            .then(result => {
-                ocrNotificationService.completeRefresh(result);
-            })
-            .catch(error => {
-                console.error('Background OCR refresh failed:', error);
-                ocrNotificationService.failRefresh(error instanceof Error ? error.message : 'Unknown error');
-            });
+        if (invoicesWithAttachments.length > 0) {
+            const invoiceIds = invoicesWithAttachments.map(inv => inv.id);
+            
+            console.log(`Found ${zeroValueInvoices.length} zero-value invoices, ${invoicesWithAttachments.length} have attachments to process`);
+            
+            // Notify that OCR refresh is starting
+            ocrNotificationService.startRefresh(invoiceIds);
+            
+            // Start background OCR refresh without blocking the response
+            refreshOcrDataForInvoices(invoiceIds)
+                .then(result => {
+                    ocrNotificationService.completeRefresh(result);
+                })
+                .catch(error => {
+                    console.error('Background OCR refresh failed:', error);
+                    ocrNotificationService.failRefresh(error instanceof Error ? error.message : 'Unknown error');
+                });
+        } else {
+            console.log(`Found ${zeroValueInvoices.length} zero-value invoices, but none have attachments to process`);
+        }
     }
+
+    // Determine which invoices were actually processed for OCR
+    const processedForOcr = !skipOcrRefresh && zeroValueInvoices.length > 0
+        ? zeroValueInvoices.filter(inv => inv.attachments && inv.attachments.length > 0)
+        : [];
 
     return {
         invoices,
-        ocrRefreshPerformed: !skipOcrRefresh && zeroValueInvoices.length > 0,
-        zeroValueInvoicesRefreshed: zeroValueInvoices.length,
-        zeroValueInvoiceIds: zeroValueInvoices.map(inv => inv.id)
+        ocrRefreshPerformed: !skipOcrRefresh && processedForOcr.length > 0,
+        zeroValueInvoicesRefreshed: processedForOcr.length,
+        zeroValueInvoiceIds: processedForOcr.map(inv => inv.id)
     };
+}
+
+/**
+ * Ensure invoice has proper attachment linkage for OCR processing
+ * This fixes the "document not found" issue by linking attachments to message_main_attachment_id
+ */
+async function ensureInvoiceAttachmentLinkage(invoiceId: number): Promise<boolean> {
+    try {
+        // Fetch the invoice to check message_main_attachment_id
+        const invoiceData = await odooApi.searchRead(INVOICE_MODEL, [
+            ["id", "=", invoiceId]
+        ], {
+            fields: ["id", "message_main_attachment_id"]
+        });
+
+        if (!invoiceData || invoiceData.length === 0) {
+            console.error(`Invoice ${invoiceId} not found`);
+            return false;
+        }
+
+        const invoice = invoiceData[0];
+        const hasMainAttachment = invoice.message_main_attachment_id && 
+                                  (Array.isArray(invoice.message_main_attachment_id) ? 
+                                   invoice.message_main_attachment_id[0] : 
+                                   invoice.message_main_attachment_id);
+
+        // If message_main_attachment_id is already set, no action needed
+        if (hasMainAttachment) {
+            console.log(`Invoice ${invoiceId} already has main attachment linked`);
+            return true;
+        }
+
+        // Check if there are any attachments for this invoice
+        const attachments = await odooApi.searchRead(ATTACHMENT_MODEL, [
+            ["res_model", "=", INVOICE_MODEL],
+            ["res_id", "=", invoiceId]
+        ], {
+            fields: ["id", "name", "mimetype"],
+            limit: 1
+        });
+
+        if (attachments.length === 0) {
+            console.log(`Invoice ${invoiceId} has no attachments to link`);
+            return false;
+        }
+
+        // Link the first attachment as the main attachment
+        const attachmentId = attachments[0].id;
+        console.log(`Linking attachment ${attachmentId} to invoice ${invoiceId} as message_main_attachment_id`);
+        
+        await odooApi.write(INVOICE_MODEL, [invoiceId], {
+            message_main_attachment_id: attachmentId
+        });
+
+        console.log(`Successfully linked attachment ${attachmentId} to invoice ${invoiceId}`);
+        return true;
+    } catch (error) {
+        console.error(`Failed to ensure attachment linkage for invoice ${invoiceId}:`, error);
+        return false;
+    }
 }
 
 /**
@@ -204,19 +284,42 @@ async function refreshOcrDataForInvoices(invoiceIds: number[]) {
     for (let i = 0; i < invoiceIds.length; i++) {
         const invoiceId = invoiceIds[i];
         try {
+            // Step 1: Ensure attachment is properly linked (fixes "document not found" issue)
+            const attachmentLinked = await ensureInvoiceAttachmentLinkage(invoiceId);
+            
+            if (!attachmentLinked) {
+                console.warn(`Invoice ${invoiceId} has no attachment to link, skipping OCR refresh`);
+                results.push({ 
+                    invoiceId, 
+                    success: false, 
+                    error: 'No attachment found to process',
+                    attachmentLinkage: 'no_attachment'
+                });
+                ocrNotificationService.updateProgress(i + 1, invoiceIds.length);
+                continue;
+            }
+
+            // Step 2: Trigger OCR processing
             await odooApi.executeKw(
                 'account.move',
                 'action_reload_ai_data',
                 [[invoiceId]]
             );
+            
             console.log(`Successfully refreshed OCR data for invoice ${invoiceId}`);
-            results.push({ invoiceId, success: true, error: null });
+            results.push({ 
+                invoiceId, 
+                success: true, 
+                error: null,
+                attachmentLinkage: 'linked'
+            });
         } catch (error) {
             console.error(`Failed to refresh OCR data for invoice ${invoiceId}:`, error);
             results.push({ 
                 invoiceId, 
                 success: false, 
-                error: error instanceof Error ? error.message : 'Unknown error' 
+                error: error instanceof Error ? error.message : 'Unknown error',
+                attachmentLinkage: 'unknown'
             });
         }
         
@@ -229,13 +332,18 @@ async function refreshOcrDataForInvoices(invoiceIds: number[]) {
     
     const successful = results.filter(r => r.success).length;
     const failed = results.filter(r => !r.success).length;
+    const noAttachment = results.filter(r => r.attachmentLinkage === 'no_attachment').length;
     
-    console.log(`Background OCR refresh completed in ${duration}ms: ${successful}/${invoiceIds.length} successful, ${failed} failed`);
+    console.log(`Background OCR refresh completed in ${duration}ms: ${successful}/${invoiceIds.length} successful, ${failed} failed, ${noAttachment} without attachments`);
     
     // Log detailed results for debugging
     if (failed > 0) {
         const failedInvoices = results.filter(r => !r.success);
-        console.log('Failed invoices:', failedInvoices.map(r => ({ id: r.invoiceId, error: r.error })));
+        console.log('Failed invoices:', failedInvoices.map(r => ({ 
+            id: r.invoiceId, 
+            error: r.error,
+            attachmentStatus: r.attachmentLinkage 
+        })));
     }
     
     return {
@@ -253,7 +361,7 @@ export async function getAwaitingApprovalInvoices(invoiceApprovalAlias?: string)
         ["move_type", "=", "in_invoice"],
         ["x_studio_project_manager_review_status", "=", "approved"],
         ["x_studio_is_over_budget", "=", true],
-        ["state", "!=", "cancelled"], // Exclude cancelled invoices
+        ["state", "!=", "cancel"], // Exclude cancelled invoices
         "|",
         ["x_studio_cfo_sign_off", "=", false],
         "&",
@@ -302,6 +410,7 @@ export async function getSentForPaymentInvoices(invoiceApprovalAlias?: string): 
     const domain = [
         ["move_type", "=", "in_invoice"],
         ["state", "=", "posted"]
+        // Note: "posted" state already excludes cancelled invoices by definition
     ];
 
     // Add user-specific filtering if invoice_approval_alias is provided
@@ -341,6 +450,7 @@ export async function getPaidInvoices(invoiceApprovalAlias?: string): Promise<Od
     const domain = [
         ["move_type", "=", "in_invoice"],
         ["state", "=", "paid"]
+        // Note: "paid" state already excludes cancelled invoices by definition
     ];
 
     // Add user-specific filtering if invoice_approval_alias is provided
@@ -379,6 +489,7 @@ export async function getPaidInvoices(invoiceApprovalAlias?: string): Promise<Od
 export async function getOtherInvoices(invoiceApprovalAlias?: string): Promise<OdooInvoice[]> {
     const domain = [
         ["move_type", "=", "in_invoice"],
+        ["state", "!=", "cancel"],
         "!",
         ["x_studio_project_manager_review_status", "=", "pending"],
         "!",
@@ -937,7 +1048,7 @@ export async function getApprovedInvoicesForProjectAndCategory(projectId: number
         const domain = [
             ["move_type", "=", "in_invoice"],
             ["x_studio_project_manager_review_status", "=", "approved"],
-            ["state", "!=", "cancelled"]
+            ["state", "!=", "cancel"]
         ];
 
         const fields = [
@@ -1016,7 +1127,7 @@ export async function getApprovedInvoicesForDepartmentInMonth(departmentId: numb
         const domain = [
             ["move_type", "=", "in_invoice"],
             ["x_studio_project_manager_review_status", "=", "approved"],
-            ["state", "!=", "cancelled"],
+            ["state", "!=", "cancel"],
             ["invoice_date", ">=", startOfMonth],
             ["invoice_date", "<=", endOfMonth]
         ];
