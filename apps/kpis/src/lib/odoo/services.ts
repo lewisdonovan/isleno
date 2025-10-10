@@ -17,7 +17,8 @@ const BUDGET_LINE_MODEL = 'account.report.budget.item';
 export async function getInvoice(invoiceId: number): Promise<OdooInvoice | null> {
     const domain = [
         ["id", "=", invoiceId],
-        ["move_type", "=", "in_invoice"]
+        ["move_type", "=", "in_invoice"],
+        ["state", "!=", "cancel"]
     ];
 
     const fields = [
@@ -58,6 +59,7 @@ export async function getPendingInvoices(invoiceApprovalAlias?: string): Promise
     const domain = [
         ["move_type", "=", "in_invoice"],
         ["x_studio_project_manager_review_status", "=", "pending"],
+        ["state", "!=", "cancel"]
     ];
 
     // Add user-specific filtering if invoice_approval_alias is provided
@@ -94,7 +96,8 @@ export async function getPendingInvoices(invoiceApprovalAlias?: string): Promise
 
 export async function getInvoiceCount(invoiceApprovalAlias?: string): Promise<number> {
     const domain = [
-        ["move_type", "=", "in_invoice"]
+        ["move_type", "=", "in_invoice"],
+        ["state", "!=", "cancel"]
     ];
 
     // Add user-specific filtering if invoice_approval_alias is provided
@@ -114,8 +117,8 @@ export async function getAllInvoices(invoiceApprovalAlias?: string, skipOcrRefre
 }> {
     
     const domain = [
-        ["move_type", "=", "in_invoice"]
-        // Remove the status filter to get all invoices
+        ["move_type", "=", "in_invoice"],
+        ["state", "!=", "cancel"]
     ];
 
     // Add user-specific filtering if invoice_approval_alias is provided
@@ -358,7 +361,7 @@ export async function getAwaitingApprovalInvoices(invoiceApprovalAlias?: string)
         ["move_type", "=", "in_invoice"],
         ["x_studio_project_manager_review_status", "=", "approved"],
         ["x_studio_is_over_budget", "=", true],
-        ["state", "!=", "cancelled"], // Exclude cancelled invoices
+        ["state", "!=", "cancel"], // Exclude cancelled invoices
         "|",
         ["x_studio_cfo_sign_off", "=", false],
         "&",
@@ -407,6 +410,7 @@ export async function getSentForPaymentInvoices(invoiceApprovalAlias?: string): 
     const domain = [
         ["move_type", "=", "in_invoice"],
         ["state", "=", "posted"]
+        // Note: "posted" state already excludes cancelled invoices by definition
     ];
 
     // Add user-specific filtering if invoice_approval_alias is provided
@@ -446,6 +450,7 @@ export async function getPaidInvoices(invoiceApprovalAlias?: string): Promise<Od
     const domain = [
         ["move_type", "=", "in_invoice"],
         ["state", "=", "paid"]
+        // Note: "paid" state already excludes cancelled invoices by definition
     ];
 
     // Add user-specific filtering if invoice_approval_alias is provided
@@ -484,6 +489,7 @@ export async function getPaidInvoices(invoiceApprovalAlias?: string): Promise<Od
 export async function getOtherInvoices(invoiceApprovalAlias?: string): Promise<OdooInvoice[]> {
     const domain = [
         ["move_type", "=", "in_invoice"],
+        ["state", "!=", "cancel"],
         "!",
         ["x_studio_project_manager_review_status", "=", "pending"],
         "!",
@@ -1042,7 +1048,7 @@ export async function getApprovedInvoicesForProjectAndCategory(projectId: number
         const domain = [
             ["move_type", "=", "in_invoice"],
             ["x_studio_project_manager_review_status", "=", "approved"],
-            ["state", "!=", "cancelled"]
+            ["state", "!=", "cancel"]
         ];
 
         const fields = [
@@ -1121,7 +1127,7 @@ export async function getApprovedInvoicesForDepartmentInMonth(departmentId: numb
         const domain = [
             ["move_type", "=", "in_invoice"],
             ["x_studio_project_manager_review_status", "=", "approved"],
-            ["state", "!=", "cancelled"],
+            ["state", "!=", "cancel"],
             ["invoice_date", ">=", startOfMonth],
             ["invoice_date", "<=", endOfMonth]
         ];

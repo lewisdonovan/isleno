@@ -42,6 +42,12 @@ Implemented automatic attachment linking that programmatically sets `message_mai
   - Prevents endless API calls on invoices that don't need OCR
   - Improves performance and reduces unnecessary load
 
+- Added **cancelled invoice filtering** across all invoice fetch functions:
+  - `getAllInvoices()`, `getInvoice()`, `getPendingInvoices()`, `getInvoiceCount()`, `getOtherInvoices()`
+  - Filters applied at the Odoo API level using `["state", "!=", "cancelled"]`
+  - Reduces data transfer and processing overhead
+  - Note: `getSentForPaymentInvoices()` and `getPaidInvoices()` inherently exclude cancelled by their state filters
+
 ### 2. Enhanced Single Invoice Refresh (`apps/kpis/src/app/api/invoices/[id]/refresh-ocr/route.ts`)
 
 - Integrated attachment linkage into the single invoice refresh endpoint

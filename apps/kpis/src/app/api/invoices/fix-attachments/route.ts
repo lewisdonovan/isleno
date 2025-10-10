@@ -146,9 +146,10 @@ export async function GET() {
   try {
     console.log('Starting automatic attachment linkage fix for all zero-value invoices');
 
-    // Find all invoices with zero or null amount_untaxed
+    // Find all invoices with zero or null amount_untaxed (excluding cancelled)
     const invoices = await odooApi.searchRead(INVOICE_MODEL, [
       ["move_type", "=", "in_invoice"],
+      ["state", "!=", "cancel"],
       "|",
       ["amount_untaxed", "=", 0],
       ["amount_untaxed", "=", false]
