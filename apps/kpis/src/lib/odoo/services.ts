@@ -78,13 +78,7 @@ export async function getInvoice(invoiceId: number): Promise<OdooInvoice | null>
             }
 
             // CRITICAL: Reset Extract error state (this is what the "Retry" button does!)
-            console.log(`Resetting extract error state for invoice ${invoiceId}...`);
-            await odooApi.write(INVOICE_MODEL, [invoiceId], {
-                extract_state: 'no_extract_requested',
-                extract_status: false,
-                extract_error_message: false
-            });
-            console.log(`Extract error state cleared`);
+            await resetExtractErrorState(invoiceId);
 
             // Trigger OCR processing
             console.log(`Triggering OCR for invoice ${invoiceId}...`);
@@ -97,7 +91,7 @@ export async function getInvoice(invoiceId: number): Promise<OdooInvoice | null>
                 console.log(`OCR triggered successfully for invoice ${invoiceId}, result:`, ocrResult);
             } catch (ocrError: any) {
                 console.error(`OCR trigger failed for invoice ${invoiceId}:`, ocrError.message);
-                throw ocrError; // Re-throw so we can see it failed
+                // Error will be handled by outer catch to allow invoice viewing even on failure
             }
             
             console.log(`Auto-fix completed for invoice ${invoiceId} - extract state reset and OCR triggered`);
@@ -268,6 +262,20 @@ export async function getAllInvoices(invoiceApprovalAlias?: string, skipOcrRefre
 }
 
 /**
+ * Reset the extract error state for an invoice
+ * This is what the "Retry" button does to clear previous OCR errors
+ */
+async function resetExtractErrorState(invoiceId: number): Promise<void> {
+    console.log(`Resetting extract error state for invoice ${invoiceId}...`);
+    await odooApi.write(INVOICE_MODEL, [invoiceId], {
+        extract_state: 'no_extract_requested',
+        extract_status: false,
+        extract_error_message: false
+    });
+    console.log(`Extract error state cleared for invoice ${invoiceId}`);
+}
+
+/**
  * Ensure invoice has proper attachment linkage for OCR processing
  * This fixes the "document not found" issue by linking attachments and regenerating access tokens
  */
@@ -319,13 +327,7 @@ async function ensureInvoiceAttachmentLinkage(invoiceId: number): Promise<boolea
         }
 
         // CRITICAL: Reset Extract error state (this is what the "Retry" button does!)
-        console.log(`Resetting extract error state for invoice ${invoiceId}...`);
-        await odooApi.write(INVOICE_MODEL, [invoiceId], {
-            extract_state: 'no_extract_requested',
-            extract_status: false,
-            extract_error_message: false
-        });
-        console.log(`Extract error state cleared for invoice ${invoiceId}`);
+        await resetExtractErrorState(invoiceId);
 
         return true;
     } catch (error) {
