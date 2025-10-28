@@ -514,7 +514,7 @@ export default function InvoiceDetailPage() {
       )}
 
       {/* Budget Impact Analysis */}
-      {hasExternalBasicPermission && selectedDepartment && invoice?.amount_untaxed && (
+      {hasExternalBasicPermission && selectedDepartment && invoice?.amount_untaxed ? (
         <BudgetImpactCard
           invoiceAmount={invoice.amount_untaxed}
           className="border-l-4 border-l-blue-500"
@@ -530,7 +530,7 @@ export default function InvoiceDetailPage() {
           invoiceIssueDate={invoice.invoice_date}
           onBudgetImpactChange={setBudgetImpact}
         />
-      )}
+      ): null}
       <div className="flex gap-3">
         <Button 
           variant="outline" 
